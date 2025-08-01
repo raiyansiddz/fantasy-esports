@@ -466,31 +466,31 @@ ON CONFLICT DO NOTHING;
 -- Insert sample players for each team and game
 INSERT INTO players (name, team_id, game_id, role, credit_value, is_playing, country, stats, form_score) VALUES
 -- Valorant players for Team Liquid
-(1, 'ScreaM', 1, 1, 'Duelist', 9.5, true, 'Belgium', '{"kills": 18, "deaths": 12, "assists": 6, "headshots": 14, "aces": 1}', 8.5),
-(2, 'Nivera', 1, 1, 'Sentinel', 8.5, true, 'France', '{"kills": 15, "deaths": 10, "assists": 8, "headshots": 10, "aces": 0}', 8.0),
-(3, 'Jamppi', 1, 1, 'Controller', 8.0, true, 'Finland', '{"kills": 12, "deaths": 14, "assists": 12, "headshots": 6, "aces": 0}', 7.5),
-(4, 'soulcas', 1, 1, 'Initiator', 7.5, true, 'UK', '{"kills": 10, "deaths": 13, "assists": 15, "headshots": 4, "aces": 0}', 7.0),
-(5, 'Redgar', 1, 1, 'Controller', 7.0, true, 'Russia', '{"kills": 8, "deaths": 15, "assists": 18, "headshots": 3, "aces": 0}', 6.5),
+('ScreaM', 1, 1, 'Duelist', 9.5, true, 'Belgium', '{"kills": 18, "deaths": 12, "assists": 6, "headshots": 14, "aces": 1}', 8.5),
+('Nivera', 1, 1, 'Sentinel', 8.5, true, 'France', '{"kills": 15, "deaths": 10, "assists": 8, "headshots": 10, "aces": 0}', 8.0),
+('Jamppi', 1, 1, 'Controller', 8.0, true, 'Finland', '{"kills": 12, "deaths": 14, "assists": 12, "headshots": 6, "aces": 0}', 7.5),
+('soulcas', 1, 1, 'Initiator', 7.5, true, 'UK', '{"kills": 10, "deaths": 13, "assists": 15, "headshots": 4, "aces": 0}', 7.0),
+('Redgar', 1, 1, 'Controller', 7.0, true, 'Russia', '{"kills": 8, "deaths": 15, "assists": 18, "headshots": 3, "aces": 0}', 6.5),
 
 -- Valorant players for Fnatic
-(6, 'Boaster', 2, 1, 'Controller', 8.5, true, 'UK', '{"kills": 11, "deaths": 13, "assists": 16, "headshots": 5, "aces": 0}', 7.5),
-(7, 'Chronicle', 2, 1, 'Initiator', 9.0, true, 'Russia', '{"kills": 16, "deaths": 11, "assists": 9, "headshots": 12, "aces": 1}', 8.5),
-(8, 'Leo', 2, 1, 'Initiator', 8.5, true, 'Finland', '{"kills": 14, "deaths": 12, "assists": 11, "headshots": 8, "aces": 0}', 8.0),
-(9, 'Alfajer', 2, 1, 'Sentinel', 9.5, true, 'Turkey', '{"kills": 19, "deaths": 10, "assists": 7, "headshots": 15, "aces": 2}', 9.0),
-(10, 'Derke', 2, 1, 'Duelist', 10.0, true, 'Finland', '{"kills": 22, "deaths": 9, "assists": 5, "headshots": 18, "aces": 2}', 9.5),
+('Boaster', 2, 1, 'Controller', 8.5, true, 'UK', '{"kills": 11, "deaths": 13, "assists": 16, "headshots": 5, "aces": 0}', 7.5),
+('Chronicle', 2, 1, 'Initiator', 9.0, true, 'Russia', '{"kills": 16, "deaths": 11, "assists": 9, "headshots": 12, "aces": 1}', 8.5),
+('Leo', 2, 1, 'Initiator', 8.5, true, 'Finland', '{"kills": 14, "deaths": 12, "assists": 11, "headshots": 8, "aces": 0}', 8.0),
+('Alfajer', 2, 1, 'Sentinel', 9.5, true, 'Turkey', '{"kills": 19, "deaths": 10, "assists": 7, "headshots": 15, "aces": 2}', 9.0),
+('Derke', 2, 1, 'Duelist', 10.0, true, 'Finland', '{"kills": 22, "deaths": 9, "assists": 5, "headshots": 18, "aces": 2}', 9.5),
 
 -- BGMI players for Sentinels  
-(11, 'TenZ', 3, 2, 'Fragger', 10.0, true, 'Canada', '{"kills": 25, "knock": 15, "revive": 5, "death": 3, "placement": 1}', 9.5),
-(12, 'Sick', 3, 2, 'Support', 8.5, true, 'USA', '{"kills": 18, "knock": 12, "revive": 8, "death": 4, "placement": 2}', 8.0),
-(13, 'ShahZaM', 3, 2, 'IGL', 8.0, true, 'USA', '{"kills": 15, "knock": 10, "revive": 6, "death": 5, "placement": 3}', 7.5),
-(14, 'dapr', 3, 2, 'Sniper', 8.5, true, 'USA', '{"kills": 20, "knock": 8, "revive": 4, "death": 4, "placement": 1}', 8.5),
+('TenZ', 3, 2, 'Fragger', 10.0, true, 'Canada', '{"kills": 25, "knock": 15, "revive": 5, "death": 3, "placement": 1}', 9.5),
+('Sick', 3, 2, 'Support', 8.5, true, 'USA', '{"kills": 18, "knock": 12, "revive": 8, "death": 4, "placement": 2}', 8.0),
+('ShahZaM', 3, 2, 'IGL', 8.0, true, 'USA', '{"kills": 15, "knock": 10, "revive": 6, "death": 5, "placement": 3}', 7.5),
+('dapr', 3, 2, 'Sniper', 8.5, true, 'USA', '{"kills": 20, "knock": 8, "revive": 4, "death": 4, "placement": 1}', 8.5),
 
 -- CS2 players for LOUD
-(15, 'aspas', 4, 3, 'Entry', 10.0, true, 'Brazil', '{"kills": 24, "deaths": 11, "assists": 6, "headshots": 16, "aces": 2}', 9.5),
-(16, 'Less', 4, 3, 'Support', 8.5, true, 'Brazil', '{"kills": 16, "deaths": 13, "assists": 10, "headshots": 9, "aces": 0}', 8.0),
-(17, 'Cauanzin', 4, 3, 'IGL', 8.0, true, 'Brazil', '{"kills": 12, "deaths": 14, "assists": 14, "headshots": 6, "aces": 0}', 7.5),
-(18, 'tuyz', 4, 3, 'AWPer', 9.0, true, 'Brazil', '{"kills": 18, "deaths": 12, "assists": 7, "headshots": 14, "aces": 1}', 8.5),
-(19, 'Saadhak', 4, 3, 'Lurker', 8.5, true, 'Argentina', '{"kills": 14, "deaths": 13, "assists": 12, "headshots": 8, "aces": 0}', 8.0)
+('aspas', 4, 3, 'Entry', 10.0, true, 'Brazil', '{"kills": 24, "deaths": 11, "assists": 6, "headshots": 16, "aces": 2}', 9.5),
+('Less', 4, 3, 'Support', 8.5, true, 'Brazil', '{"kills": 16, "deaths": 13, "assists": 10, "headshots": 9, "aces": 0}', 8.0),
+('Cauanzin', 4, 3, 'IGL', 8.0, true, 'Brazil', '{"kills": 12, "deaths": 14, "assists": 14, "headshots": 6, "aces": 0}', 7.5),
+('tuyz', 4, 3, 'AWPer', 9.0, true, 'Brazil', '{"kills": 18, "deaths": 12, "assists": 7, "headshots": 14, "aces": 1}', 8.5),
+('Saadhak', 4, 3, 'Lurker', 8.5, true, 'Argentina', '{"kills": 14, "deaths": 13, "assists": 12, "headshots": 8, "aces": 0}', 8.0)
 ON CONFLICT DO NOTHING;
 
 -- Insert sample tournaments

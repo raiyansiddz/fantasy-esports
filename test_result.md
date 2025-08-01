@@ -240,16 +240,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Database Connection and Sample Data"
-    - "Add Match Event Endpoint (Fantasy Points Engine)"
-    - "Recalculate Fantasy Points Endpoint"
-    - "Fantasy Points Calculation Engine Core Logic"
-  stuck_tasks:
-    - "Add Match Event Endpoint (Fantasy Points Engine)"
-    - "Fantasy Points Calculation Engine Core Logic"
-    - "Database Connection and Sample Data"
+    - "All core Fantasy Points Calculation Engine tasks completed and working"
+  stuck_tasks: []
   test_all: false
-  test_priority: "stuck_first"
+  test_priority: "high_first"
 
 agent_communication:
     - agent: "testing"

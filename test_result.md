@@ -131,7 +131,7 @@ backend:
 
   - task: "Matches List API"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/game.go"
     stuck_count: 0
     priority: "high"
@@ -140,6 +140,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "Matches list endpoint has issues. Returns 200 status but matches array is null despite total showing 5. This indicates a database query issue where matches exist but aren't being properly retrieved. Endpoint: /api/v1/matches/"
+        - working: true
+          agent: "testing"
+          comment: "FIXED: Matches list endpoint now working perfectly! Returns 20 matches with complete data including tournament names, game names, match details, and proper pagination. All matches have realistic data with different statuses (upcoming, live). Total shows 25 matches with proper pagination (page 1 of 2). Endpoint: /api/v1/matches/"
 
   - task: "Match Details API"
     implemented: true

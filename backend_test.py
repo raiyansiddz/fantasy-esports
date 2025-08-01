@@ -83,7 +83,8 @@ def test_add_match_event():
             "points": 2.0,
             "round_number": 5,
             "timestamp": datetime.now().isoformat() + "Z",
-            "description": "Entry frag"
+            "description": "Entry frag",
+            "additional_data": {}
         }
         
         response = requests.post(url, json=payload, headers=headers, timeout=10)

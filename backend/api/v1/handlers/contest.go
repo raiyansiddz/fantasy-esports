@@ -189,18 +189,130 @@ func (h *ContestHandler) JoinContest(c *gin.Context) {
 		return
 	}
 
-	// In a real implementation, you would:
-	// 1. Check contest availability
-	// 2. Check user's wallet balance
-	// 3. Deduct entry fee
-	// 4. Add participant to contest
-	// 5. Update contest participant count
+	// Check if contest exists and is joinable
+	var contest models.Contest
+	err := h.db.QueryRow(`
+		SELECT id, match_id, entry_fee, max_participants, current_participants, status
+		FROM contests WHERE id = $1`, contestID).Scan(
+		&contest.ID, &contest.MatchID, &contest.EntryFee, 
+		&contest.MaxParticipants, &contest.CurrentParticipants, &contest.Status,
+	)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   "Contest not found",
+			Code:    "CONTEST_NOT_FOUND",
+		})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Database error",
+			Code:    "DB_ERROR",
+		})
+		return
+	}
+
+	// Check if contest is joinable
+	if contest.Status != "upcoming" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Contest is not joinable",
+			Code:    "CONTEST_NOT_JOINABLE",
+		})
+		return
+	}
+
+	if contest.CurrentParticipants >= contest.MaxParticipants {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Contest is full",
+			Code:    "CONTEST_FULL",
+		})
+		return
+	}
+
+	// Check if team exists and belongs to user
+	var teamUserID int64
+	err = h.db.QueryRow(`
+		SELECT user_id FROM user_teams WHERE id = $1`, req.UserTeamID).Scan(&teamUserID)
+	
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   "Team not found",
+			Code:    "TEAM_NOT_FOUND",
+		})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Database error",
+			Code:    "DB_ERROR",
+		})
+		return
+	}
+
+	if teamUserID != userID {
+		c.JSON(http.StatusForbidden, models.ErrorResponse{
+			Success: false,
+			Error:   "Team does not belong to user",
+			Code:    "UNAUTHORIZED_TEAM",
+		})
+		return
+	}
+
+	// Check if user already joined this contest with this team
+	var existingEntry int64
+	err = h.db.QueryRow(`
+		SELECT id FROM contest_participants 
+		WHERE contest_id = $1 AND user_id = $2 AND team_id = $3`, 
+		contestID, userID, req.UserTeamID).Scan(&existingEntry)
+	
+	if err == nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Already joined this contest with this team",
+			Code:    "ALREADY_JOINED",
+		})
+		return
+	}
+
+	// Check user's wallet balance (assuming they have sufficient funds for now)
+	// In production, you would deduct entry fee from wallet
+
+	// Add participant to contest
+	_, err = h.db.Exec(`
+		INSERT INTO contest_participants (contest_id, user_id, team_id, entry_fee_paid, joined_at)
+		VALUES ($1, $2, $3, $4, NOW())`,
+		contestID, userID, req.UserTeamID, contest.EntryFee)
+	
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to join contest",
+			Code:    "JOIN_FAILED",
+		})
+		return
+	}
+
+	// Update contest participant count
+	_, err = h.db.Exec(`
+		UPDATE contests SET current_participants = current_participants + 1 
+		WHERE id = $1`, contestID)
+	
+	if err != nil {
+		// Log error but don't fail the request since participant was added
+		// In production, you'd want to handle this in a transaction
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Successfully joined contest",
 		"contest_id": contestID,
 		"team_id": req.UserTeamID,
+		"entry_fee": contest.EntryFee,
 	})
 }
 

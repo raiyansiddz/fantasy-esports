@@ -453,6 +453,11 @@ INSERT INTO games (name, code, category, description, is_active, scoring_rules, 
 '{"total_players": 5, "min_per_role": 1, "max_per_role": 2}', 5)
 ON CONFLICT (code) DO NOTHING;
 
+-- Insert system user for admin operations
+INSERT INTO users (mobile, email, first_name, last_name, is_verified, is_active, account_status, kyc_status, referral_code) VALUES
+('SYSTEM_ADMIN', 'system@fantasy-esports.com', 'System', 'Administrator', true, true, 'active', 'verified', 'SYS_ADMIN')
+ON CONFLICT (mobile) DO NOTHING;
+
 -- Insert sample teams
 INSERT INTO teams (name, short_name, region, is_active) VALUES
 ('Team Liquid', 'TL', 'NA', true),

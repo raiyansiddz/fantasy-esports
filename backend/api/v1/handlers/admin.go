@@ -871,14 +871,65 @@ func (h *AdminHandler) RecalculateFantasyPointsForPlayer(matchID string, playerI
                 return h.createSampleFantasyTeamsIfNeeded(matchID, playerID)
         }
         
-        // TODO: Implement actual points recalculation logic here
-        // This would involve:
-        // 1. Get all match events for this player
-        // 2. Calculate points based on game scoring rules
-        // 3. Apply captain/vice-captain multipliers
-        // 4. Update user_teams.total_points for affected teams
+        // ⭐ REAL FANTASY POINTS CALCULATION ENGINE IMPLEMENTATION ⭐
         
-        return teamsAffected, nil
+        // Step 1: Get all match events for this player
+        basePoints, err := h.calculatePlayerBasePoints(matchID, playerID)
+        if err != nil {
+                return 0, err
+        }
+        
+        // Step 2: Find all fantasy teams containing this player and update their points
+        rows, err := h.db.Query(`
+                SELECT ut.id, tp.is_captain, tp.is_vice_captain
+                FROM user_teams ut 
+                JOIN team_players tp ON ut.id = tp.team_id 
+                WHERE tp.player_id = $1 AND ut.match_id = $2`, 
+                playerID, matchID)
+        
+        if err != nil {
+                return 0, err
+        }
+        defer rows.Close()
+        
+        teamsUpdated := 0
+        for rows.Next() {
+                var teamID int64
+                var isCaptain, isViceCaptain bool
+                
+                if err := rows.Scan(&teamID, &isCaptain, &isViceCaptain); err != nil {
+                        continue
+                }
+                
+                // Step 3: Apply captain/vice-captain multipliers
+                finalPoints := basePoints
+                if isCaptain {
+                        finalPoints = basePoints * 2.0 // Captain gets 2x points
+                } else if isViceCaptain {
+                        finalPoints = basePoints * 1.5 // Vice-captain gets 1.5x points
+                }
+                
+                // Step 4: Update team_players.points_earned for this player
+                _, err = h.db.Exec(`
+                        UPDATE team_players 
+                        SET points_earned = $1 
+                        WHERE team_id = $2 AND player_id = $3`,
+                        finalPoints, teamID, playerID)
+                
+                if err != nil {
+                        continue
+                }
+                
+                // Step 5: Recalculate total points for the team
+                err = h.recalculateTeamTotalPoints(teamID)
+                if err != nil {
+                        continue
+                }
+                
+                teamsUpdated++
+        }
+        
+        return teamsUpdated, nil
 }
 
 // Helper function to create sample fantasy teams for testing

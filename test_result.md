@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the fixed Fantasy Points Calculation Engine in the GoLang fantasy sports backend on localhost:8080. Focus on Admin Login, Add Match Event, and Recalculate Points endpoints to verify the FIXES: 1) Add Match Event now works without DB_ERROR, 2) Real database counts instead of hardcoded values (1250), 3) PostgreSQL compatibility (STRING_AGG)."
+user_problem_statement: "Test the completed Fantasy Points Calculation Engine in the GoLang fantasy sports backend on localhost:8080. Focus on Admin Login, Add Match Event, and Recalculate Points endpoints to verify the IMPLEMENTATION: 1) Complete RecalculateFantasyPointsForPlayer() logic with captain/vice-captain multipliers, 2) Complete RecalculateAllFantasyPoints() with real database counts, 3) Full fantasy points calculation with game scoring rules."
 
 backend:
   - task: "Admin Login Endpoint"

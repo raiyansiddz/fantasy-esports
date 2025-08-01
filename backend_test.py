@@ -354,7 +354,8 @@ def test_error_handling():
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         payload = {
             "event_type": "kill",
-            "points": 2.0
+            "points": 2.0,
+            "additional_data": {}
             # Missing player_id and timestamp
         }
         

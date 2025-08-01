@@ -336,7 +336,8 @@ def test_error_handling():
             "player_id": 99999,
             "event_type": "kill",
             "points": 2.0,
-            "timestamp": datetime.now().isoformat() + "Z"
+            "timestamp": datetime.now().isoformat() + "Z",
+            "additional_data": {}
         }
         
         response = requests.post(url, json=payload, headers=headers, timeout=10)

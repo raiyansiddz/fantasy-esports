@@ -2,6 +2,7 @@
 """
 Fantasy Sports Backend API Testing Script
 Tests the GoLang fantasy sports backend running on the configured URL
+Focus: Fantasy Points Calculation Engine Testing
 """
 
 import requests
@@ -11,6 +12,9 @@ from datetime import datetime
 
 # Get backend URL from environment - using localhost since external URL routes to frontend
 BACKEND_URL = "http://localhost:8080"
+
+# Global admin token storage
+ADMIN_TOKEN = None
 
 def print_test_header(test_name):
     """Print formatted test header"""

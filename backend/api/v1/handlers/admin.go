@@ -237,7 +237,6 @@ func (h *AdminHandler) StartManualScoring(c *gin.Context) {
 // @Router /admin/matches/{id}/events [post]
 func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 	matchID := c.Param("id")
-	adminID := c.GetInt64("admin_id")
 
 	var req models.AddEventRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

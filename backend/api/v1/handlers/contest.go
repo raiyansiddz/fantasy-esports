@@ -540,7 +540,71 @@ func (h *ContestHandler) UpdateTeam(c *gin.Context) {
 
 func (h *ContestHandler) GetMyTeams(c *gin.Context) {
         userID := c.GetInt64("user_id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID, "teams": []models.UserTeam{}})
+        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+        offset := (page - 1) * limit
+
+        query := `SELECT ut.id, ut.match_id, ut.team_name, ut.captain_player_id, 
+                         ut.vice_captain_player_id, ut.total_credits_used, ut.total_points,
+                         ut.final_rank, ut.is_locked, ut.created_at, ut.updated_at,
+                         cp.name as captain_name, vcp.name as vice_captain_name,
+                         m.name as match_name, m.scheduled_at
+                  FROM user_teams ut
+                  LEFT JOIN players cp ON ut.captain_player_id = cp.id
+                  LEFT JOIN players vcp ON ut.vice_captain_player_id = vcp.id
+                  LEFT JOIN matches m ON ut.match_id = m.id
+                  WHERE ut.user_id = $1
+                  ORDER BY ut.created_at DESC
+                  LIMIT $2 OFFSET $3`
+
+        rows, err := h.db.Query(query, userID, limit, offset)
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to fetch teams",
+                        Code:    "DB_ERROR",
+                })
+                return
+        }
+        defer rows.Close()
+
+        var teams []models.UserTeam
+        for rows.Next() {
+                var team models.UserTeam
+                var captainName, viceCaptainName, matchName sql.NullString
+                var scheduledAt sql.NullTime
+                
+                err := rows.Scan(
+                        &team.ID, &team.MatchID, &team.TeamName, &team.CaptainPlayerID,
+                        &team.ViceCaptainPlayerID, &team.TotalCreditsUsed, &team.TotalPoints,
+                        &team.FinalRank, &team.IsLocked, &team.CreatedAt, &team.UpdatedAt,
+                        &captainName, &viceCaptainName, &matchName, &scheduledAt,
+                )
+                if err != nil {
+                        continue
+                }
+                
+                if captainName.Valid {
+                        team.CaptainName = &captainName.String
+                }
+                if viceCaptainName.Valid {
+                        team.ViceCaptainName = &viceCaptainName.String
+                }
+                
+                teams = append(teams, team)
+        }
+
+        // Get total count
+        var total int
+        h.db.QueryRow("SELECT COUNT(*) FROM user_teams WHERE user_id = $1", userID).Scan(&total)
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "teams":   teams,
+                "total":   total,
+                "page":    page,
+                "user_id": userID,
+        })
 }
 
 func (h *ContestHandler) GetTeamDetails(c *gin.Context) {

@@ -253,6 +253,7 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 	var systemUserID int64 = 2 // Default to user ID 2 as system admin
 	
 	// Try to find the SYSTEM_ADMIN user
+	var err error
 	err = h.db.QueryRow("SELECT id FROM users WHERE mobile = 'SYSTEM_ADMIN' LIMIT 1").Scan(&systemUserID)
 	if err != nil {
 		// If SYSTEM_ADMIN doesn't exist, try to find admin user as regular user

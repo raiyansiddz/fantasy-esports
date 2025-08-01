@@ -678,7 +678,77 @@ func (h *ContestHandler) GetTeamDetails(c *gin.Context) {
 
 func (h *ContestHandler) DeleteTeam(c *gin.Context) {
         teamID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "team_id": teamID, "message": "Team deleted"})
+        userID := c.GetInt64("user_id")
+
+        // Check if team exists and belongs to user
+        var teamUserID int64
+        var isLocked bool
+        err := h.db.QueryRow(`
+                SELECT user_id, is_locked FROM user_teams WHERE id = $1`, teamID).Scan(&teamUserID, &isLocked)
+        
+        if err == sql.ErrNoRows {
+                c.JSON(http.StatusNotFound, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Team not found",
+                        Code:    "TEAM_NOT_FOUND",
+                })
+                return
+        } else if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Database error",
+                        Code:    "DB_ERROR",
+                })
+                return
+        }
+
+        if teamUserID != userID {
+                c.JSON(http.StatusForbidden, models.ErrorResponse{
+                        Success: false,
+                        Error:   "You don't have permission to delete this team",
+                        Code:    "UNAUTHORIZED",
+                })
+                return
+        }
+
+        if isLocked {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Cannot delete locked team (match may have started)",
+                        Code:    "TEAM_LOCKED",
+                })
+                return
+        }
+
+        // Check if team is part of any contests
+        var contestCount int
+        h.db.QueryRow(`SELECT COUNT(*) FROM contest_participants WHERE team_id = $1`, teamID).Scan(&contestCount)
+        
+        if contestCount > 0 {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Cannot delete team that is participating in contests",
+                        Code:    "TEAM_IN_CONTEST",
+                })
+                return
+        }
+
+        // Delete team (team_players will be cascade deleted)
+        _, err = h.db.Exec("DELETE FROM user_teams WHERE id = $1", teamID)
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to delete team",
+                        Code:    "DELETE_FAILED",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "team_id": teamID,
+                "message": "Team deleted successfully",
+        })
 }
 
 func (h *ContestHandler) CloneTeam(c *gin.Context) {

@@ -127,13 +127,13 @@ func (h *AdminHandler) Login(c *gin.Context) {
 // @Router /admin/matches/live-scoring [get]
 func (h *AdminHandler) GetLiveScoringMatches(c *gin.Context) {
 	query := `SELECT m.id, m.name, m.scheduled_at, m.status, m.map, t.name as tournament_name,
-			         GROUP_CONCAT(tm.name SEPARATOR ' vs ') as teams
+			         STRING_AGG(tm.name, ' vs ') as teams
 			  FROM matches m
 			  LEFT JOIN tournaments t ON m.tournament_id = t.id
 			  LEFT JOIN match_participants mp ON m.id = mp.match_id
 			  LEFT JOIN teams tm ON mp.team_id = tm.id
 			  WHERE m.status IN ('live', 'upcoming')
-			  GROUP BY m.id
+			  GROUP BY m.id, m.name, m.scheduled_at, m.status, m.map, t.name
 			  ORDER BY m.scheduled_at`
 
 	rows, err := h.db.Query(query)

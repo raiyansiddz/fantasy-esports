@@ -535,7 +535,188 @@ func (h *ContestHandler) CreateTeam(c *gin.Context) {
 // Additional team management methods
 func (h *ContestHandler) UpdateTeam(c *gin.Context) {
         teamID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "team_id": teamID, "message": "Team updated"})
+        userID := c.GetInt64("user_id")
+
+        var req struct {
+                TeamName  string                   `json:"team_name"`
+                Players   []models.PlayerSelection `json:"players"`
+        }
+
+        if err := c.ShouldBindJSON(&req); err != nil {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid request format",
+                        Code:    "INVALID_REQUEST",
+                })
+                return
+        }
+
+        // Check if team exists and belongs to user
+        var teamUserID int64
+        var isLocked bool
+        var matchID int64
+        err := h.db.QueryRow(`
+                SELECT user_id, is_locked, match_id FROM user_teams WHERE id = $1`, teamID).Scan(&teamUserID, &isLocked, &matchID)
+        
+        if err == sql.ErrNoRows {
+                c.JSON(http.StatusNotFound, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Team not found",
+                        Code:    "TEAM_NOT_FOUND",
+                })
+                return
+        } else if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Database error",
+                        Code:    "DB_ERROR",
+                })
+                return
+        }
+
+        if teamUserID != userID {
+                c.JSON(http.StatusForbidden, models.ErrorResponse{
+                        Success: false,
+                        Error:   "You don't have permission to update this team",
+                        Code:    "UNAUTHORIZED",
+                })
+                return
+        }
+
+        if isLocked {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Cannot update locked team (match may have started)",
+                        Code:    "TEAM_LOCKED",
+                })
+                return
+        }
+
+        // If only updating team name
+        if req.TeamName != "" && len(req.Players) == 0 {
+                _, err = h.db.Exec(`
+                        UPDATE user_teams SET team_name = $1, updated_at = NOW() WHERE id = $2`,
+                        req.TeamName, teamID)
+                
+                if err != nil {
+                        c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                                Success: false,
+                                Error:   "Failed to update team name",
+                                Code:    "UPDATE_FAILED",
+                        })
+                        return
+                }
+
+                c.JSON(http.StatusOK, gin.H{
+                        "success": true,
+                        "team_id": teamID,
+                        "message": "Team name updated successfully",
+                })
+                return
+        }
+
+        // If updating players, validate the new team composition
+        if len(req.Players) > 0 {
+                // Get game rules for validation
+                var game models.Game
+                err := h.db.QueryRow(`
+                        SELECT g.id, g.total_team_size, g.max_players_per_team, g.min_players_per_team
+                        FROM games g
+                        JOIN matches m ON g.id = m.game_id
+                        WHERE m.id = $1`, matchID).Scan(
+                        &game.ID, &game.TotalTeamSize, &game.MaxPlayersPerTeam, &game.MinPlayersPerTeam,
+                )
+
+                if err != nil {
+                        c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                                Success: false,
+                                Error:   "Invalid match ID",
+                                Code:    "INVALID_MATCH",
+                        })
+                        return
+                }
+
+                // Validate team composition
+                errors := utils.ValidateTeamComposition(req.Players, game)
+                if len(errors) > 0 {
+                        c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                                Success: false,
+                                Error:   errors[0],
+                                Code:    "VALIDATION_FAILED",
+                        })
+                        return
+                }
+
+                // Calculate new total credits and find captain/vice-captain
+                var captainID, viceCaptainID int64
+                var totalCredits float64
+                
+                for _, player := range req.Players {
+                        var creditValue float64
+                        err := h.db.QueryRow(`SELECT credit_value FROM players WHERE id = $1`, player.PlayerID).Scan(&creditValue)
+                        if err != nil {
+                                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                                        Success: false,
+                                        Error:   "Invalid player ID: " + strconv.FormatInt(player.PlayerID, 10),
+                                        Code:    "INVALID_PLAYER",
+                                })
+                                return
+                        }
+                        
+                        totalCredits += creditValue
+                        if player.IsCaptain {
+                                captainID = player.PlayerID
+                        }
+                        if player.IsViceCaptain {
+                                viceCaptainID = player.PlayerID
+                        }
+                }
+
+                if totalCredits > 100.0 {
+                        c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                                Success: false,
+                                Error:   fmt.Sprintf("Total credits (%.1f) exceed limit of 100", totalCredits),
+                                Code:    "CREDITS_EXCEEDED",
+                        })
+                        return
+                }
+
+                // Update team with new details
+                _, err = h.db.Exec(`
+                        UPDATE user_teams 
+                        SET team_name = $1, captain_player_id = $2, vice_captain_player_id = $3, 
+                            total_credits_used = $4, updated_at = NOW()
+                        WHERE id = $5`,
+                        req.TeamName, captainID, viceCaptainID, totalCredits, teamID)
+                
+                if err != nil {
+                        c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                                Success: false,
+                                Error:   "Failed to update team",
+                                Code:    "UPDATE_FAILED",
+                        })
+                        return
+                }
+
+                // Delete existing players and add new ones
+                h.db.Exec("DELETE FROM team_players WHERE team_id = $1", teamID)
+                
+                for _, player := range req.Players {
+                        var realTeamID int64
+                        h.db.QueryRow(`SELECT team_id FROM players WHERE id = $1`, player.PlayerID).Scan(&realTeamID)
+                        
+                        h.db.Exec(`
+                                INSERT INTO team_players (team_id, player_id, real_team_id, is_captain, is_vice_captain)
+                                VALUES ($1, $2, $3, $4, $5)`,
+                                teamID, player.PlayerID, realTeamID, player.IsCaptain, player.IsViceCaptain)
+                }
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "team_id": teamID,
+                "message": "Team updated successfully",
+        })
 }
 
 func (h *ContestHandler) GetMyTeams(c *gin.Context) {

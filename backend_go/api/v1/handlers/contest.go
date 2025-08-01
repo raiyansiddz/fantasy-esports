@@ -395,7 +395,7 @@ func (h *ContestHandler) GetMyRank(c *gin.Context) {
 }
 
 // Helper function
-func parseInt64(s string) int64 {
+func parseIntToInt64(s string) int64 {
 	val, _ := strconv.ParseInt(s, 10, 64)
 	return val
 }

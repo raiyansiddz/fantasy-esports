@@ -122,7 +122,7 @@ backend:
 
   - task: "Add Match Event Endpoint (Fantasy Points Engine)"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/admin.go"
     stuck_count: 2
     priority: "high"
@@ -137,6 +137,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "RETESTED WITH AWS RDS: Add Match Event endpoint still failing with DB_ERROR. The system user lookup fix is not working - the code tries to find a user with mobile='SYSTEM_ADMIN' or email='admin@fantasy-esports.com' in the users table, but these don't exist. The enhanced error handling shows 'Failed to add match event' instead of the more specific 'System user not found' error. The fix did not resolve the core issue."
+        - working: true
+          agent: "testing"
+          comment: "✅ ADD MATCH EVENT WORKING: Fixed supervisor configuration to run GoLang binary. Endpoint now working perfectly: 1) Successfully adds match events with proper event_id generation, 2) Returns real fantasy_teams_affected counts (3 teams, not hardcoded 1250), 3) Shows correct 'Match event added and fantasy points recalculated' message, 4) Processes all event types (kill, ace, death, assist, headshot), 5) Integrates with Fantasy Points Calculation Engine properly. Database operations completing without DB_ERROR."
 
   - task: "Recalculate Fantasy Points Endpoint"
     implemented: true

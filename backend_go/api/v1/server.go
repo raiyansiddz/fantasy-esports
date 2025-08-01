@@ -2,6 +2,7 @@ package v1
 
 import (
 	"database/sql"
+	"net/http"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/pkg/cdn"
 	"fantasy-esports-backend/api/v1/middleware"

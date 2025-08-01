@@ -853,7 +853,7 @@ func (h *AdminHandler) GetLiveDashboard(c *gin.Context) {
 }
 
 // @Summary Complete match
-// @Description Mark match as completed and distribute prizes
+// @Description Mark match as completed and distribute prizes with real logic
 // @Tags Admin Scoring
 // @Accept json
 // @Produce json
@@ -875,13 +875,48 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 		return
 	}
 
-	// Update match status
-	_, err := h.db.Exec(`
+	// ⭐ REAL MATCH COMPLETION AND PRIZE DISTRIBUTION IMPLEMENTATION ⭐
+	
+	// Step 1: Start transaction for all completion operations
+	tx, err := h.db.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to start completion transaction",
+			Code:    "TRANSACTION_ERROR",
+		})
+		return
+	}
+	defer tx.Rollback()
+	
+	// Step 2: Validate match can be completed
+	var currentStatus string
+	err = tx.QueryRow("SELECT status FROM matches WHERE id = $1", matchID).Scan(&currentStatus)
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   "Match not found",
+			Code:    "MATCH_NOT_FOUND",
+		})
+		return
+	}
+	
+	if currentStatus == "completed" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Match is already completed",
+			Code:    "ALREADY_COMPLETED",
+		})
+		return
+	}
+	
+	// Step 3: Update match status and winner
+	_, err = tx.Exec(`
 		UPDATE matches 
 		SET status = 'completed', winner_team_id = $1, updated_at = NOW()
 		WHERE id = $2`,
 		req.FinalResult.WinnerTeamID, matchID)
-
+	
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
@@ -890,23 +925,108 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 		})
 		return
 	}
+	
+	// Step 4: Finalize all fantasy team scores
+	finalizedTeams, err := h.finalizeFantasyTeamScores(tx, matchID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to finalize fantasy scores",
+			Code:    "FANTASY_FINALIZATION_ERROR",
+		})
+		return
+	}
+	
+	// Step 5: Calculate and freeze final leaderboards
+	leaderboardsFinalized, err := h.finalizeContestLeaderboards(tx, matchID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to finalize leaderboards",
+			Code:    "LEADERBOARD_FINALIZATION_ERROR",
+		})
+		return
+	}
+	
+	// Step 6: Distribute prizes if requested
+	var prizeDistribution map[string]interface{}
+	if req.DistributePrizes {
+		prizeDistribution, err = h.distributePrizes(tx, matchID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+				Success: false,
+				Error:   "Failed to distribute prizes",
+				Code:    "PRIZE_DISTRIBUTION_ERROR",
+			})
+			return
+		}
+	}
+	
+	// Step 7: Update contest statuses
+	contestsUpdated, err := h.updateContestStatuses(tx, matchID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to update contest statuses",
+			Code:    "CONTEST_UPDATE_ERROR",
+		})
+		return
+	}
+	
+	// Step 8: Send notifications if requested
+	var notificationsSent int
+	if req.SendNotifications {
+		notificationsSent, err = h.sendMatchCompletionNotifications(tx, matchID, req.FinalResult.WinnerTeamID)
+		if err != nil {
+			// Log error but don't fail the entire operation
+			notificationsSent = 0
+		}
+	}
+	
+	// Step 9: Update player and team statistics
+	statsUpdated, err := h.updateMatchStatistics(tx, matchID, req.FinalResult.WinnerTeamID, req.FinalResult.MVPPlayerID)
+	if err != nil {
+		// Log error but don't fail the entire operation
+		statsUpdated = false
+	}
+	
+	// Step 10: Commit all changes
+	if err = tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to commit match completion",
+			Code:    "COMMIT_ERROR",
+		})
+		return
+	}
+	
+	// Step 11: Send real-time completion broadcasts
+	h.broadcastMatchCompletion(matchID, req.FinalResult.WinnerTeamID, req.FinalResult.MVPPlayerID)
+	
+	// Build comprehensive response
+	response := gin.H{
+		"success":              true,
+		"match_id":             matchID,
+		"winner_team":          req.FinalResult.WinnerTeamID,
+		"mvp_player":           req.FinalResult.MVPPlayerID,
+		"final_score":          req.FinalResult.FinalScore,
+		"match_duration":       req.FinalResult.MatchDuration,
+		"fantasy_teams_finalized": finalizedTeams,
+		"leaderboards_finalized":  leaderboardsFinalized,
+		"contests_updated":        contestsUpdated,
+		"notifications_sent":      notificationsSent,
+		"statistics_updated":      statsUpdated,
+		"prizes_distributed":      req.DistributePrizes,
+		"completion_timestamp":    time.Now(),
+		"message":                "Match completed successfully with full processing",
+	}
+	
+	// Add prize distribution details if prizes were distributed
+	if prizeDistribution != nil {
+		response["prize_distribution"] = prizeDistribution
+	}
 
-	// In production, this would:
-	// 1. Finalize all fantasy team scores
-	// 2. Calculate final leaderboards
-	// 3. Distribute prizes if requested
-	// 4. Send notifications if requested
-	// 5. Update contest statuses
-
-	c.JSON(http.StatusOK, gin.H{
-		"success":            true,
-		"match_id":           matchID,
-		"winner_team":        req.FinalResult.WinnerTeamID,
-		"mvp_player":         req.FinalResult.MVPPlayerID,
-		"prizes_distributed": req.DistributePrizes,
-		"notifications_sent": req.SendNotifications,
-		"message":            "Match completed successfully",
-	})
+	c.JSON(http.StatusOK, response)
 }
 
 // @Summary Get match events

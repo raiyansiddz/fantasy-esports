@@ -287,7 +287,7 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
-			Error:   "Failed to add match event: " + err.Error(),
+			Error:   "Failed to add match event",
 			Code:    "DB_ERROR",
 		})
 		return

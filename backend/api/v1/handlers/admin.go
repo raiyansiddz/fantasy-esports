@@ -2094,3 +2094,316 @@ func parseAdminInt64(s string) int64 {
 	val, _ := strconv.ParseInt(s, 10, 64)
 	return val
 }
+
+// ⭐ MATCH STATE MANAGEMENT HELPER FUNCTIONS ⭐
+
+// validateMatchStateTransition validates if a match state transition is allowed
+func (h *AdminHandler) validateMatchStateTransition(currentStatus, newStatus string) (bool, string) {
+	// Define valid state transitions
+	validTransitions := map[string][]string{
+		"upcoming": {"live", "cancelled", "postponed"},
+		"live":     {"completed", "cancelled", "paused"},
+		"paused":   {"live", "cancelled", "completed"},
+		"postponed": {"upcoming", "cancelled"},
+		"cancelled": {}, // No transitions from cancelled
+		"completed": {}, // No transitions from completed
+	}
+	
+	allowedStates, exists := validTransitions[currentStatus]
+	if !exists {
+		return false, fmt.Sprintf("Unknown current status: %s", currentStatus)
+	}
+	
+	for _, allowedState := range allowedStates {
+		if allowedState == newStatus {
+			return true, ""
+		}
+	}
+	
+	return false, fmt.Sprintf("Invalid transition from %s to %s", currentStatus, newStatus)
+}
+
+// validateMatchScore validates match score data
+func (h *AdminHandler) validateMatchScore(req models.UpdateMatchScoreRequest, bestOf int, matchType string) (map[string]interface{}, error) {
+	validation := make(map[string]interface{})
+	
+	// Basic score validation
+	if req.Team1Score < 0 || req.Team2Score < 0 {
+		return nil, fmt.Errorf("scores cannot be negative")
+	}
+	
+	// Best-of validation
+	maxWins := (bestOf + 1) / 2
+	if req.Team1Score > maxWins || req.Team2Score > maxWins {
+		return nil, fmt.Errorf("score exceeds maximum wins for best-of-%d match", bestOf)
+	}
+	
+	// Check if match should be completed based on score
+	if req.Team1Score == maxWins || req.Team2Score == maxWins {
+		validation["should_be_completed"] = true
+		if req.Team1Score > req.Team2Score {
+			validation["winner_team"] = 1
+		} else {
+			validation["winner_team"] = 2
+		}
+	} else {
+		validation["should_be_completed"] = false
+	}
+	
+	validation["max_wins_needed"] = maxWins
+	validation["match_type"] = matchType
+	validation["current_progress"] = fmt.Sprintf("%d-%d", req.Team1Score, req.Team2Score)
+	
+	return validation, nil
+}
+
+// updateMatchParticipantScores updates scores for match participants
+func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, team1Score, team2Score int) error {
+	// Get participating teams
+	rows, err := tx.Query(`
+		SELECT team_id FROM match_participants WHERE match_id = $1 ORDER BY id LIMIT 2`, matchID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	
+	var teamIDs []int64
+	for rows.Next() {
+		var teamID int64
+		if err := rows.Scan(&teamID); err != nil {
+			continue
+		}
+		teamIDs = append(teamIDs, teamID)
+	}
+	
+	if len(teamIDs) < 2 {
+		return fmt.Errorf("insufficient teams found for match")
+	}
+	
+	// Update team scores
+	_, err = tx.Exec(`
+		UPDATE match_participants 
+		SET team_score = $1 
+		WHERE match_id = $2 AND team_id = $3`, team1Score, matchID, teamIDs[0])
+	if err != nil {
+		return err
+	}
+	
+	_, err = tx.Exec(`
+		UPDATE match_participants 
+		SET team_score = $1 
+		WHERE match_id = $2 AND team_id = $3`, team2Score, matchID, teamIDs[1])
+	
+	return err
+}
+
+// handleMatchCompletion handles completion logic when match status changes to completed
+func (h *AdminHandler) handleMatchCompletion(tx *sql.Tx, matchID string, winnerTeamID *int64) (map[string]interface{}, error) {
+	completionData := make(map[string]interface{})
+	
+	// Recalculate all fantasy points one final time
+	teamsRecalculated, leaderboardsUpdated, err := h.recalculateAllFantasyPointsTx(tx, matchID, true)
+	if err != nil {
+		return nil, err
+	}
+	
+	completionData["teams_recalculated"] = teamsRecalculated
+	completionData["leaderboards_updated"] = leaderboardsUpdated
+	completionData["completion_time"] = time.Now()
+	
+	if winnerTeamID != nil {
+		completionData["winner_team_id"] = *winnerTeamID
+	}
+	
+	return completionData, nil
+}
+
+// broadcastMatchUpdate broadcasts match updates via WebSocket
+func (h *AdminHandler) broadcastMatchUpdate(matchID, status, finalScore string) {
+	// TODO: Implement real WebSocket broadcasting
+	// This would send updates to all connected clients monitoring this match
+	// For now, this is a placeholder for the broadcasting system
+}
+
+// recalculateAllFantasyPointsTx is a transaction-based version of RecalculateAllFantasyPoints
+func (h *AdminHandler) recalculateAllFantasyPointsTx(tx *sql.Tx, matchID string, forceRecalc bool) (int, int, error) {
+	// Count total teams for this match directly
+	var teamsAffected int
+	err := tx.QueryRow(`
+		SELECT COUNT(*) FROM user_teams WHERE match_id = $1`, matchID).Scan(&teamsAffected)
+	
+	if err != nil || teamsAffected == 0 {
+		return 0, 0, nil
+	}
+	
+	// Get all fantasy teams for this match
+	rows, err := tx.Query(`
+		SELECT id FROM user_teams WHERE match_id = $1`, matchID)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer rows.Close()
+	
+	teamsRecalculated := 0
+	
+	// For each team, recalculate all player points
+	for rows.Next() {
+		var teamID int64
+		if err := rows.Scan(&teamID); err != nil {
+			continue
+		}
+		
+		// Get all players in this team
+		playerRows, err := tx.Query(`
+			SELECT tp.player_id, tp.is_captain, tp.is_vice_captain
+			FROM team_players tp
+			WHERE tp.team_id = $1`, teamID)
+		if err != nil {
+			continue
+		}
+		
+		// Calculate points for each player in the team
+		for playerRows.Next() {
+			var playerID int64
+			var isCaptain, isViceCaptain bool
+			
+			if err := playerRows.Scan(&playerID, &isCaptain, &isViceCaptain); err != nil {
+				continue
+			}
+			
+			// Calculate base points for this player
+			basePoints, err := h.calculatePlayerBasePointsTx(tx, matchID, playerID)
+			if err != nil {
+				continue
+			}
+			
+			// Apply captain/vice-captain multipliers
+			finalPoints := basePoints
+			if isCaptain {
+				finalPoints = basePoints * 2.0 // Captain gets 2x points
+			} else if isViceCaptain {
+				finalPoints = basePoints * 1.5 // Vice-captain gets 1.5x points
+			}
+			
+			// Update team_players.points_earned
+			tx.Exec(`
+				UPDATE team_players 
+				SET points_earned = $1 
+				WHERE team_id = $2 AND player_id = $3`,
+				finalPoints, teamID, playerID)
+		}
+		playerRows.Close()
+		
+		// Recalculate team total points
+		err = h.recalculateTeamTotalPointsTx(tx, teamID)
+		if err == nil {
+			teamsRecalculated++
+		}
+	}
+	
+	// Update contest rankings and count leaderboards updated
+	leaderboardsUpdated, err := h.updateAllContestLeaderboardsTx(tx, matchID)
+	if err != nil {
+		leaderboardsUpdated = 0
+	}
+	
+	return teamsRecalculated, leaderboardsUpdated, nil
+}
+
+// updateContestStatuses updates contest statuses when match is completed
+func (h *AdminHandler) updateContestStatuses(tx *sql.Tx, matchID string) (int, error) {
+	result, err := tx.Exec(`
+		UPDATE contests 
+		SET status = 'completed', updated_at = NOW()
+		WHERE match_id = $1 AND status != 'completed'`, matchID)
+	
+	if err != nil {
+		return 0, err
+	}
+	
+	rowsAffected, _ := result.RowsAffected()
+	return int(rowsAffected), nil
+}
+
+// sendMatchCompletionNotifications sends notifications to users
+func (h *AdminHandler) sendMatchCompletionNotifications(tx *sql.Tx, matchID string, winnerTeamID *int64) (int, error) {
+	// Get all users with teams in this match
+	rows, err := tx.Query(`
+		SELECT DISTINCT ut.user_id
+		FROM user_teams ut
+		WHERE ut.match_id = $1`, matchID)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	
+	notificationsSent := 0
+	
+	for rows.Next() {
+		var userID int64
+		if err := rows.Scan(&userID); err != nil {
+			continue
+		}
+		
+		// Insert notification record
+		_, err = tx.Exec(`
+			INSERT INTO notifications (user_id, title, message, type, data, created_at)
+			VALUES ($1, $2, $3, $4, $5, NOW())`,
+			userID, "Match Completed", 
+			fmt.Sprintf("Match %s has been completed and final results are available", matchID),
+			"match_completion", fmt.Sprintf(`{"match_id": "%s"}`, matchID))
+		
+		if err == nil {
+			notificationsSent++
+		}
+	}
+	
+	return notificationsSent, nil
+}
+
+// updateMatchStatistics updates player and team statistics
+func (h *AdminHandler) updateMatchStatistics(tx *sql.Tx, matchID string, winnerTeamID *int64, mvpPlayerID int64) (bool, error) {
+	// Update team win/loss records
+	if winnerTeamID != nil {
+		// Update winner team stats
+		_, err := tx.Exec(`
+			UPDATE teams 
+			SET matches_won = matches_won + 1, matches_played = matches_played + 1
+			WHERE id = $1`, *winnerTeamID)
+		if err != nil {
+			return false, err
+		}
+		
+		// Update loser team stats
+		_, err = tx.Exec(`
+			UPDATE teams 
+			SET matches_lost = matches_lost + 1, matches_played = matches_played + 1
+			WHERE id IN (
+				SELECT team_id FROM match_participants 
+				WHERE match_id = $1 AND team_id != $2
+			)`, matchID, *winnerTeamID)
+		if err != nil {
+			return false, err
+		}
+	}
+	
+	// Update MVP player stats if specified
+	if mvpPlayerID > 0 {
+		_, err := tx.Exec(`
+			UPDATE players 
+			SET mvp_awards = mvp_awards + 1
+			WHERE id = $1`, mvpPlayerID)
+		if err != nil {
+			return false, err
+		}
+	}
+	
+	return true, nil
+}
+
+// broadcastMatchCompletion broadcasts match completion via WebSocket
+func (h *AdminHandler) broadcastMatchCompletion(matchID string, winnerTeamID *int64, mvpPlayerID int64) {
+	// TODO: Implement real WebSocket broadcasting for match completion
+	// This would notify all connected clients about the match completion
+	// For now, this is a placeholder
+}

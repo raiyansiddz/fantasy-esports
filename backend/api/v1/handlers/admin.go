@@ -249,15 +249,21 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 		return
 	}
 
-	// Insert match event
+	// Insert match event using system user ID for admin operations
+	var systemUserID int64
+	err = h.db.QueryRow("SELECT id FROM users WHERE mobile = 'SYSTEM_ADMIN'").Scan(&systemUserID)
+	if err != nil {
+		systemUserID = 1 // fallback to first user if system user not found
+	}
+
 	var eventID int64
-	err := h.db.QueryRow(`
+	err = h.db.QueryRow(`
 		INSERT INTO match_events (match_id, player_id, event_type, points, round_number, 
 								 description, additional_data, created_by, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
 		RETURNING id`,
 		matchID, req.PlayerID, req.EventType, req.Points,
-		req.RoundNumber, req.Description, req.AdditionalData, adminID).Scan(&eventID)
+		req.RoundNumber, req.Description, req.AdditionalData, systemUserID).Scan(&eventID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{

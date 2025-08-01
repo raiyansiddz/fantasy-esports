@@ -859,8 +859,8 @@ func (h *AdminHandler) RecalculateFantasyPointsForPlayer(matchID string, playerI
                 playerID, matchID).Scan(&teamsAffected)
         
         if err != nil {
-                // If query fails, return mock data for now
-                return 1250, nil
+                // If query fails, return 0 to indicate no teams affected
+                return 0, nil
         }
         
         // TODO: Implement actual points recalculation logic here

@@ -143,7 +143,7 @@ backend:
 
   - task: "Recalculate Fantasy Points Endpoint"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/admin.go"
     stuck_count: 1
     priority: "high"
@@ -158,6 +158,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "RETESTED WITH AWS RDS: Recalculate Points endpoint still returning hardcoded values (teams_affected=1500, leaderboards_updated=25) instead of real database counts. The fix to remove hardcoded values was not effective. The RecalculateAllFantasyPoints function is still returning hardcoded fallback values instead of actual database query results."
+        - working: true
+          agent: "testing"
+          comment: "✅ RECALCULATE POINTS WORKING: Fixed supervisor configuration to run GoLang binary. Endpoint now working perfectly: 1) Returns real database counts (teams_affected=3, leaderboards_updated=34, not hardcoded 1500/25), 2) Shows correct 'Fantasy points recalculated successfully' message, 3) Processes all parameter variations correctly (force_recalculate, notify_users, recalculate_leaderboards), 4) Different matches show different counts confirming real database operations, 5) Complete integration with Fantasy Points Calculation Engine. All database operations completing successfully."
 
   - task: "Fantasy Points Calculation Engine Core Logic"
     implemented: true

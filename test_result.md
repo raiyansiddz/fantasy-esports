@@ -197,8 +197,12 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
-  stuck_tasks: []
+  current_focus:
+    - "Add Match Event Endpoint (Fantasy Points Engine)"
+    - "Fantasy Points Calculation Engine Core Logic"
+  stuck_tasks:
+    - "Add Match Event Endpoint (Fantasy Points Engine)"
+    - "Fantasy Points Calculation Engine Core Logic"
   test_all: false
   test_priority: "high_first"
 
@@ -207,3 +211,5 @@ agent_communication:
       message: "Completed comprehensive testing of GoLang fantasy sports backend. Most endpoints working well with good sample data. Two critical issues found: 1) Matches list returns null array despite having data, 2) Match details endpoint returns database error. These appear to be query-related issues in the match handlers. Backend server is running properly on localhost:8080 with PostgreSQL database connected."
     - agent: "testing"
       message: "MAJOR SUCCESS: All 3 critical endpoints are now working perfectly! Fixed supervisor configuration to run GoLang binary instead of Python server. All tests passing: 1) Matches List API returns 20 matches with complete data and pagination, 2) Match Details API returns full match info with teams, 3) Match Players API returns 50 players with complete stats. Backend running smoothly on localhost:8080 with PostgreSQL database. All sample data is properly populated and realistic."
+    - agent: "testing"
+      message: "FANTASY POINTS ENGINE TESTING COMPLETE: Mixed results for the newly implemented Fantasy Points Calculation Engine. ✅ SUCCESSES: 1) Admin login working perfectly with JWT token generation, 2) Recalculate points endpoint working with correct 'fantasy points recalculated' message instead of old mock message, 3) Database connection and sample data working. ❌ CRITICAL ISSUES: 1) Add match event endpoint failing with DB_ERROR due to foreign key constraint issue (match_events.created_by references users(id) but admin handler uses admin_users(id)), 2) Recalculate points still returns hardcoded values (1500/25) instead of real database counts. The engine is partially implemented but blocked by database schema issues."

@@ -463,6 +463,82 @@ INSERT INTO teams (name, short_name, region, is_active) VALUES
 ('DRX', 'DRX', 'KR', true)
 ON CONFLICT DO NOTHING;
 
+-- Insert sample players for each team and game
+INSERT INTO players (name, team_id, game_id, role, credit_value, is_playing, country, stats, form_score) VALUES
+-- Valorant players for Team Liquid
+(1, 'ScreaM', 1, 1, 'Duelist', 9.5, true, 'Belgium', '{"kills": 18, "deaths": 12, "assists": 6, "headshots": 14, "aces": 1}', 8.5),
+(2, 'Nivera', 1, 1, 'Sentinel', 8.5, true, 'France', '{"kills": 15, "deaths": 10, "assists": 8, "headshots": 10, "aces": 0}', 8.0),
+(3, 'Jamppi', 1, 1, 'Controller', 8.0, true, 'Finland', '{"kills": 12, "deaths": 14, "assists": 12, "headshots": 6, "aces": 0}', 7.5),
+(4, 'soulcas', 1, 1, 'Initiator', 7.5, true, 'UK', '{"kills": 10, "deaths": 13, "assists": 15, "headshots": 4, "aces": 0}', 7.0),
+(5, 'Redgar', 1, 1, 'Controller', 7.0, true, 'Russia', '{"kills": 8, "deaths": 15, "assists": 18, "headshots": 3, "aces": 0}', 6.5),
+
+-- Valorant players for Fnatic
+(6, 'Boaster', 2, 1, 'Controller', 8.5, true, 'UK', '{"kills": 11, "deaths": 13, "assists": 16, "headshots": 5, "aces": 0}', 7.5),
+(7, 'Chronicle', 2, 1, 'Initiator', 9.0, true, 'Russia', '{"kills": 16, "deaths": 11, "assists": 9, "headshots": 12, "aces": 1}', 8.5),
+(8, 'Leo', 2, 1, 'Initiator', 8.5, true, 'Finland', '{"kills": 14, "deaths": 12, "assists": 11, "headshots": 8, "aces": 0}', 8.0),
+(9, 'Alfajer', 2, 1, 'Sentinel', 9.5, true, 'Turkey', '{"kills": 19, "deaths": 10, "assists": 7, "headshots": 15, "aces": 2}', 9.0),
+(10, 'Derke', 2, 1, 'Duelist', 10.0, true, 'Finland', '{"kills": 22, "deaths": 9, "assists": 5, "headshots": 18, "aces": 2}', 9.5),
+
+-- BGMI players for Sentinels  
+(11, 'TenZ', 3, 2, 'Fragger', 10.0, true, 'Canada', '{"kills": 25, "knock": 15, "revive": 5, "death": 3, "placement": 1}', 9.5),
+(12, 'Sick', 3, 2, 'Support', 8.5, true, 'USA', '{"kills": 18, "knock": 12, "revive": 8, "death": 4, "placement": 2}', 8.0),
+(13, 'ShahZaM', 3, 2, 'IGL', 8.0, true, 'USA', '{"kills": 15, "knock": 10, "revive": 6, "death": 5, "placement": 3}', 7.5),
+(14, 'dapr', 3, 2, 'Sniper', 8.5, true, 'USA', '{"kills": 20, "knock": 8, "revive": 4, "death": 4, "placement": 1}', 8.5),
+
+-- CS2 players for LOUD
+(15, 'aspas', 4, 3, 'Entry', 10.0, true, 'Brazil', '{"kills": 24, "deaths": 11, "assists": 6, "headshots": 16, "aces": 2}', 9.5),
+(16, 'Less', 4, 3, 'Support', 8.5, true, 'Brazil', '{"kills": 16, "deaths": 13, "assists": 10, "headshots": 9, "aces": 0}', 8.0),
+(17, 'Cauanzin', 4, 3, 'IGL', 8.0, true, 'Brazil', '{"kills": 12, "deaths": 14, "assists": 14, "headshots": 6, "aces": 0}', 7.5),
+(18, 'tuyz', 4, 3, 'AWPer', 9.0, true, 'Brazil', '{"kills": 18, "deaths": 12, "assists": 7, "headshots": 14, "aces": 1}', 8.5),
+(19, 'Saadhak', 4, 3, 'Lurker', 8.5, true, 'Argentina', '{"kills": 14, "deaths": 13, "assists": 12, "headshots": 8, "aces": 0}', 8.0)
+ON CONFLICT DO NOTHING;
+
+-- Insert sample tournaments
+INSERT INTO tournaments (name, game_id, description, start_date, end_date, prize_pool, total_teams, status, is_featured, logo_url, banner_url) VALUES
+('VCT Masters 2025', 1, 'Premier Valorant tournament featuring top teams from around the world', '2025-08-01 10:00:00', '2025-08-15 23:59:59', 1000000.00, 16, 'upcoming', true, 'https://example.com/vct-logo.png', 'https://example.com/vct-banner.png'),
+('BGMI World Championship', 2, 'The ultimate BGMI tournament with the best mobile esports teams', '2025-07-15 09:00:00', '2025-07-30 22:00:00', 750000.00, 32, 'live', true, 'https://example.com/bgmi-logo.png', 'https://example.com/bgmi-banner.png'),
+('CS2 Major Championship', 3, 'Counter-Strike 2 Major tournament with legendary teams', '2025-09-01 12:00:00', '2025-09-20 20:00:00', 2000000.00, 24, 'upcoming', true, 'https://example.com/cs2-logo.png', 'https://example.com/cs2-banner.png'),
+('VCT Regional Finals', 1, 'Regional qualifying tournament for VCT Masters', '2025-07-20 14:00:00', '2025-07-25 18:00:00', 250000.00, 8, 'live', false, NULL, NULL)
+ON CONFLICT DO NOTHING;
+
+-- Insert sample matches
+INSERT INTO matches (tournament_id, game_id, name, scheduled_at, lock_time, status, match_type, map, best_of, result) VALUES
+(1, 1, 'Team Liquid vs Fnatic - Group A', '2025-08-02 15:00:00', '2025-08-02 14:50:00', 'upcoming', 'group', 'Haven', 3, NULL),
+(1, 1, 'Sentinels vs LOUD - Group B', '2025-08-02 18:00:00', '2025-08-02 17:50:00', 'upcoming', 'group', 'Bind', 3, NULL),
+(2, 2, 'Squad Alpha vs Team Beta - Quarters', '2025-07-25 12:00:00', '2025-07-25 11:50:00', 'live', 'elimination', 'Erangel', 1, NULL),
+(3, 3, 'Championship Finals', '2025-09-15 19:00:00', '2025-09-15 18:50:00', 'upcoming', 'final', 'Dust2', 5, NULL),
+(4, 1, 'Regional Semi-Final', '2025-07-24 16:00:00', '2025-07-24 15:50:00', 'live', 'elimination', 'Icebox', 3, NULL)
+ON CONFLICT DO NOTHING;
+
+-- Insert match participants (link teams to matches)
+INSERT INTO match_participants (match_id, team_id, seed, team_score, points_earned) VALUES
+(1, 1, 1, 0, 0.0), -- Team Liquid in match 1
+(1, 2, 2, 0, 0.0), -- Fnatic in match 1
+(2, 3, 1, 0, 0.0), -- Sentinels in match 2
+(2, 4, 2, 0, 0.0), -- LOUD in match 2
+(3, 5, 1, 0, 0.0), -- Paper Rex in match 3
+(3, 6, 2, 0, 0.0), -- DRX in match 3
+(4, 1, 1, 0, 0.0), -- Team Liquid in match 4
+(4, 4, 2, 0, 0.0), -- LOUD in match 4
+(5, 2, 1, 0, 0.0), -- Fnatic in match 5
+(5, 3, 2, 0, 0.0)  -- Sentinels in match 5
+ON CONFLICT DO NOTHING;
+
+-- Insert sample contests
+INSERT INTO contests (match_id, name, contest_type, entry_fee, max_participants, total_prize_pool, is_guaranteed, prize_distribution, contest_rules, status, created_by) VALUES
+(1, 'Mega Contest - TL vs FNC', 'public', 50.00, 10000, 450000.00, true, 
+'[{"rank_from": 1, "rank_to": 1, "prize": 150000.00, "percentage": 33.33}, {"rank_from": 2, "rank_to": 10, "prize": 25000.00, "percentage": 55.56}, {"rank_from": 11, "rank_to": 100, "prize": 2750.00, "percentage": 11.11}]',
+'{"team_size": 5, "captain_multiplier": 2.0, "vice_captain_multiplier": 1.5, "max_players_per_team": 2, "min_players_per_team": 1, "total_credits": 100}', 'upcoming', 1),
+
+(2, 'Winner Takes All - SEN vs LOUD', 'public', 100.00, 5000, 450000.00, true,
+'[{"rank_from": 1, "rank_to": 1, "prize": 300000.00, "percentage": 66.67}, {"rank_from": 2, "rank_to": 5, "prize": 37500.00, "percentage": 33.33}]',
+'{"team_size": 4, "captain_multiplier": 2.0, "vice_captain_multiplier": 1.5, "max_players_per_team": 2, "min_players_per_team": 1, "total_credits": 100}', 'upcoming', 1),
+
+(3, 'BGMI Squad Championship', 'public', 25.00, 20000, 400000.00, false,
+'[{"rank_from": 1, "rank_to": 1, "prize": 100000.00, "percentage": 25.0}, {"rank_from": 2, "rank_to": 20, "prize": 15000.00, "percentage": 75.0}]',
+'{"team_size": 4, "captain_multiplier": 2.0, "vice_captain_multiplier": 1.5, "max_players_per_team": 2, "min_players_per_team": 1, "total_credits": 100}', 'live', 1)
+ON CONFLICT DO NOTHING;
+
 -- Insert sample admin user
 INSERT INTO admin_users (username, email, password_hash, full_name, role, permissions, is_active) VALUES
 ('admin', 'admin@fantasy-esports.com', '$2a$10$rQ7gJz5QZ5Z5Z5Z5Z5Z5Zu5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z', 'Super Admin', 'super_admin', 

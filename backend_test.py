@@ -10,8 +10,8 @@ import json
 import sys
 from datetime import datetime
 
-# Get backend URL from environment - using the configured external URL
-BACKEND_URL = "https://dddcc1a8-b860-47dd-8bea-7d62766daf57.preview.emergentagent.com"
+# Get backend URL from environment - using localhost since external URL routes to frontend
+BACKEND_URL = "http://localhost:8080"
 
 # Global admin token storage
 ADMIN_TOKEN = None

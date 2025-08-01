@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"strconv"
+	"strings"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/models"
 	"github.com/gin-gonic/gin"

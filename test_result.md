@@ -116,14 +116,17 @@ backend:
         - working: true
           agent: "testing"
           comment: "Admin login working perfectly. Returns proper JWT token for user 'admin' with role 'super_admin'. Authentication successful with username 'admin' and password 'admin123'. Token generation and admin user data retrieval working correctly."
+        - working: true
+          agent: "testing"
+          comment: "RETESTED: Admin login still working perfectly with restored AWS RDS database connection. JWT token generation successful, admin user data retrieved correctly from PostgreSQL database."
 
   - task: "Add Match Event Endpoint (Fantasy Points Engine)"
     implemented: true
     working: false
     file: "/app/backend/api/v1/handlers/admin.go"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
           agent: "testing"
@@ -131,14 +134,17 @@ backend:
         - working: "FIXING"
           agent: "main"
           comment: "FIXES APPLIED: 1) Fixed PostgreSQL compatibility by replacing GROUP_CONCAT with STRING_AGG, 2) Enhanced system user lookup with better error handling instead of fallback to user ID 1, 3) Added proper error messages for system user not found scenarios. Ready for retesting."
+        - working: false
+          agent: "testing"
+          comment: "RETESTED WITH AWS RDS: Add Match Event endpoint still failing with DB_ERROR. The system user lookup fix is not working - the code tries to find a user with mobile='SYSTEM_ADMIN' or email='admin@fantasy-esports.com' in the users table, but these don't exist. The enhanced error handling shows 'Failed to add match event' instead of the more specific 'System user not found' error. The fix did not resolve the core issue."
 
   - task: "Recalculate Fantasy Points Endpoint"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/api/v1/handlers/admin.go"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
           agent: "testing"
@@ -146,14 +152,17 @@ backend:
         - working: "FIXING"
           agent: "main"
           comment: "FIXES APPLIED: Removed hardcoded value 1250 from RecalculateFantasyPointsForPlayer function and replaced with 0 when query fails. The function now returns actual database counts. Ready for retesting to verify real database counts are returned."
+        - working: false
+          agent: "testing"
+          comment: "RETESTED WITH AWS RDS: Recalculate Points endpoint still returning hardcoded values (teams_affected=1500, leaderboards_updated=25) instead of real database counts. The fix to remove hardcoded values was not effective. The RecalculateAllFantasyPoints function is still returning hardcoded fallback values instead of actual database query results."
 
   - task: "Fantasy Points Calculation Engine Core Logic"
     implemented: true
     working: false
     file: "/app/backend/api/v1/handlers/admin.go"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
           agent: "testing"
@@ -161,6 +170,9 @@ backend:
         - working: "FIXING"
           agent: "main"
           comment: "COMPREHENSIVE FIXES APPLIED: 1) Fixed foreign key constraint by enhancing system user lookup, 2) Fixed PostgreSQL compatibility with STRING_AGG, 3) Removed hardcoded values (1250) and replaced with real database counts, 4) Enhanced error handling throughout. All critical database issues addressed."
+        - working: false
+          agent: "testing"
+          comment: "RETESTED WITH AWS RDS: Fantasy Points Calculation Engine still has critical issues. ❌ Add Match Event: Still failing with DB_ERROR due to system user lookup issues. ❌ PostgreSQL STRING_AGG: Live scoring endpoint still returns DB_ERROR, indicating STRING_AGG fix not working. ❌ Real Database Counts: Still returning hardcoded values (1500/25). None of the 3 critical fixes are working properly with the restored AWS RDS database."
 
   - task: "Health Check Endpoint"
     implemented: true
@@ -173,18 +185,24 @@ backend:
         - working: true
           agent: "testing"
           comment: "Health check endpoint working perfectly. Returns proper JSON response with status 'healthy' and service name 'fantasy-esports-backend'. Tested on localhost:8080/health."
+        - working: true
+          agent: "testing"
+          comment: "RETESTED: Health check still working perfectly with AWS RDS database connection restored."
 
   - task: "Database Connection and Sample Data"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/db"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
         - working: true
           agent: "testing"
           comment: "Database connection working. PostgreSQL database connected with sample data. Found 20 matches, tournaments, games, and players data. Database schema exists but has foreign key constraint issue in match_events table where created_by references users(id) instead of allowing admin_users(id)."
+        - working: false
+          agent: "testing"
+          comment: "RETESTED WITH AWS RDS: Database connection has issues. Backend logs show 'Failed to run migrations: migration failed: pq: permission denied for schema public'. The AWS RDS database connection is established but there are permission issues preventing proper database operations. This explains why all database-dependent endpoints are failing with DB_ERROR."
 
 frontend:
   - task: "Frontend Integration"

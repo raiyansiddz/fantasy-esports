@@ -251,9 +251,19 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 
 	// Insert match event using system user ID for admin operations
 	var systemUserID int64
-	err = h.db.QueryRow("SELECT id FROM users WHERE mobile = 'SYSTEM_ADMIN'").Scan(&systemUserID)
+	err = h.db.QueryRow("SELECT id FROM users WHERE mobile = 'SYSTEM_ADMIN' LIMIT 1").Scan(&systemUserID)
 	if err != nil {
-		systemUserID = 1 // fallback to first user if system user not found
+		// If system user doesn't exist, use admin ID as regular user
+		// First, try to get the admin user as a regular user
+		err = h.db.QueryRow("SELECT id FROM users WHERE mobile = 'admin' OR email = 'admin@fantasy-esports.com' LIMIT 1").Scan(&systemUserID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+				Success: false,
+				Error:   "System user not found - please contact administrator",
+				Code:    "SYSTEM_USER_NOT_FOUND",
+			})
+			return
+		}
 	}
 
 	var eventID int64

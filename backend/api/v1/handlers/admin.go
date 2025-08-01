@@ -898,9 +898,9 @@ func (h *AdminHandler) createSampleFantasyTeamsIfNeeded(matchID string, playerID
                 captainID   int64
                 viceCapID   int64
         }{
-                {2, "Dream Team Alpha", playerID, playerID + 1},
-                {2, "Pro Squad Beta", playerID + 2, playerID},
-                {2, "Elite Gaming", playerID, playerID + 3},
+                {2, "Dream Team Alpha", 1, 2},    // ScreaM captain, Nivera vice
+                {2, "Pro Squad Beta", 2, 1},     // Nivera captain, ScreaM vice
+                {2, "Elite Gaming", 1, 3},       // ScreaM captain, Jamppi vice
         }
         
         teamsCreated := 0
@@ -917,10 +917,10 @@ func (h *AdminHandler) createSampleFantasyTeamsIfNeeded(matchID string, playerID
                         continue
                 }
                 
-                // Add the specific player to this team
+                // Add the specific player to this team (all teams will have ScreaM)
                 _, err = h.db.Exec(`
                         INSERT INTO team_players (team_id, player_id, real_team_id, is_captain, is_vice_captain)
-                        VALUES ($1, $2, (SELECT team_id FROM players WHERE id = $2), $3, $4)
+                        VALUES ($1, $2, 1, $3, $4)
                         ON CONFLICT (team_id, player_id) DO NOTHING`,
                         teamID, playerID, playerID == team.captainID, playerID == team.viceCapID)
                 

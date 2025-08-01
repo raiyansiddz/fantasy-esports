@@ -313,11 +313,119 @@ func (h *GameHandler) GetTournamentDetails(c *gin.Context) {
 // @Success 200 {object} map[string]interface{}
 // @Router /matches [get]
 func (h *GameHandler) GetMatches(c *gin.Context) {
-	// Implementation for getting matches
+	tournamentID := c.Query("tournament_id")
+	gameID := c.Query("game_id")
+	status := c.Query("status")
+	dateFrom := c.Query("date_from")
+	dateTo := c.Query("date_to")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+
+	offset := (page - 1) * limit
+
+	query := `SELECT m.id, m.tournament_id, m.game_id, m.name, m.scheduled_at, m.lock_time,
+	                 m.status, m.match_type, m.map, m.best_of, m.result, m.winner_team_id,
+	                 m.created_at, m.updated_at, t.name as tournament_name, g.name as game_name
+	          FROM matches m
+	          LEFT JOIN tournaments t ON m.tournament_id = t.id
+	          JOIN games g ON m.game_id = g.id
+	          WHERE 1=1`
+	args := []interface{}{}
+	argCount := 1
+
+	if tournamentID != "" {
+		query += " AND m.tournament_id = $" + strconv.Itoa(argCount)
+		args = append(args, tournamentID)
+		argCount++
+	}
+
+	if gameID != "" {
+		query += " AND m.game_id = $" + strconv.Itoa(argCount)
+		args = append(args, gameID)
+		argCount++
+	}
+
+	if status != "" {
+		query += " AND m.status = $" + strconv.Itoa(argCount)
+		args = append(args, status)
+		argCount++
+	}
+
+	if dateFrom != "" {
+		query += " AND DATE(m.scheduled_at) >= $" + strconv.Itoa(argCount)
+		args = append(args, dateFrom)
+		argCount++
+	}
+
+	if dateTo != "" {
+		query += " AND DATE(m.scheduled_at) <= $" + strconv.Itoa(argCount)
+		args = append(args, dateTo)
+		argCount++
+	}
+
+	query += " ORDER BY m.scheduled_at ASC LIMIT $" + strconv.Itoa(argCount) + " OFFSET $" + strconv.Itoa(argCount+1)
+	args = append(args, limit, offset)
+
+	rows, err := h.db.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to fetch matches",
+			Code:    "DB_ERROR",
+		})
+		return
+	}
+	defer rows.Close()
+
+	var matches []models.Match
+	for rows.Next() {
+		var match models.Match
+		var tournamentName, gameName *string
+		err := rows.Scan(
+			&match.ID, &match.TournamentID, &match.GameID, &match.Name,
+			&match.ScheduledAt, &match.LockTime, &match.Status, &match.MatchType,
+			&match.Map, &match.BestOf, &match.Result, &match.WinnerTeamID,
+			&match.CreatedAt, &match.UpdatedAt, &tournamentName, &gameName,
+		)
+		if err != nil {
+			continue
+		}
+		match.TournamentName = tournamentName
+		match.GameName = gameName
+		matches = append(matches, match)
+	}
+
+	// Get total count
+	countQuery := "SELECT COUNT(*) FROM matches m WHERE 1=1"
+	countArgs := []interface{}{}
+	countArgCount := 1
+
+	if tournamentID != "" {
+		countQuery += " AND m.tournament_id = $" + strconv.Itoa(countArgCount)
+		countArgs = append(countArgs, tournamentID)
+		countArgCount++
+	}
+	if gameID != "" {
+		countQuery += " AND m.game_id = $" + strconv.Itoa(countArgCount)
+		countArgs = append(countArgs, gameID)
+		countArgCount++
+	}
+	if status != "" {
+		countQuery += " AND m.status = $" + strconv.Itoa(countArgCount)
+		countArgs = append(countArgs, status)
+		countArgCount++
+	}
+
+	var total int
+	h.db.QueryRow(countQuery, countArgs...).Scan(&total)
+	totalPages := (total + limit - 1) / limit
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"matches": []models.Match{},
-		"message": "Matches endpoint implemented",
+		"matches": matches,
+		"total":   total,
+		"page":    page,
+		"pages":   totalPages,
 	})
 }
 

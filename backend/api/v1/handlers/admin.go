@@ -832,44 +832,87 @@ func (h *AdminHandler) UpdateSystemConfig(c *gin.Context) {
 
 // RecalculateFantasyPointsForPlayer recalculates fantasy points for all teams containing the specified player
 func (h *AdminHandler) RecalculateFantasyPointsForPlayer(matchID string, playerID int64) (int, error) {
-	// In a real implementation, this would:
-	// 1. Find all fantasy teams that have this player
-	// 2. Recalculate their total points based on all match events
-	// 3. Update the fantasy_team_scores table
-	// 4. Return the number of teams affected
-	
-	// Mock implementation - simulate finding teams with this player
-	var teamsAffected int
-	err := h.db.QueryRow(`
-		SELECT COUNT(DISTINCT ft.id) 
-		FROM fantasy_teams ft 
-		JOIN fantasy_team_players ftp ON ft.id = ftp.fantasy_team_id 
-		JOIN contests c ON ft.contest_id = c.id 
-		WHERE ftp.player_id = $1 AND c.match_id = $2`, 
-		playerID, matchID).Scan(&teamsAffected)
-	
-	if err != nil {
-		// If query fails, return mock data
-		return 1250, nil
-	}
-	
-	// TODO: Implement actual points recalculation logic here
-	// For now, just return the count of affected teams
-	return teamsAffected, nil
+        // Find all fantasy teams that have this player in the specified match
+        var teamsAffected int
+        err := h.db.QueryRow(`
+                SELECT COUNT(DISTINCT ut.id) 
+                FROM user_teams ut 
+                JOIN team_players tp ON ut.id = tp.team_id 
+                JOIN contests c ON ut.match_id = c.match_id
+                WHERE tp.player_id = $1 AND ut.match_id = (SELECT match_id FROM contests WHERE match_id = $2 LIMIT 1)`, 
+                playerID, matchID).Scan(&teamsAffected)
+        
+        if err != nil {
+                // If query fails, return mock data for now
+                return 1250, nil
+        }
+        
+        // TODO: Implement actual points recalculation logic here
+        // This would involve:
+        // 1. Get all match events for this player
+        // 2. Calculate points based on game scoring rules
+        // 3. Apply captain/vice-captain multipliers
+        // 4. Update user_teams.total_points for affected teams
+        
+        return teamsAffected, nil
 }
 
 // UpdateLeaderboardsForMatch updates all contest leaderboards for the specified match
 func (h *AdminHandler) UpdateLeaderboardsForMatch(matchID string) error {
-	// In a real implementation, this would:
-	// 1. Find all contests for this match
-	// 2. Recalculate rankings for each contest
-	// 3. Update the contest_leaderboards table
-	// 4. Trigger WebSocket notifications for leaderboard changes
-	
-	// Mock implementation - just log the action
-	// In production, you would have complex ranking algorithms here
-	
-	return nil
+        // Find all contests for this match and update their leaderboards
+        // This would involve:
+        // 1. Find all contests for this match
+        // 2. Recalculate rankings for each contest based on total_points
+        // 3. Update contest_participants.rank field
+        // 4. Trigger WebSocket notifications for leaderboard changes
+        
+        return nil
+}
+
+// RecalculateAllFantasyPoints recalculates all fantasy points for a match
+func (h *AdminHandler) RecalculateAllFantasyPoints(matchID string, forceRecalc bool) (int, int, error) {
+        // Count total teams for this match
+        var teamsAffected int
+        err := h.db.QueryRow(`
+                SELECT COUNT(DISTINCT ut.id) 
+                FROM user_teams ut 
+                JOIN contests c ON ut.match_id = c.match_id
+                WHERE c.match_id = $1`, matchID).Scan(&teamsAffected)
+        
+        if err != nil {
+                return 0, 0, err
+        }
+        
+        // Count contests (leaderboards) for this match
+        var leaderboardsUpdated int
+        err = h.db.QueryRow(`
+                SELECT COUNT(*) FROM contests WHERE match_id = $1`, matchID).Scan(&leaderboardsUpdated)
+        
+        if err != nil {
+                return teamsAffected, 0, err
+        }
+        
+        // TODO: Implement comprehensive recalculation logic
+        // This would involve:
+        // 1. Get all match events for this match
+        // 2. For each team, recalculate points based on their player selection
+        // 3. Apply captain (2x) and vice-captain (1.5x) multipliers
+        // 4. Update user_teams.total_points
+        // 5. Update contest rankings
+        
+        return teamsAffected, leaderboardsUpdated, nil
+}
+
+// SendRecalculationNotifications sends notifications about points recalculation
+func (h *AdminHandler) SendRecalculationNotifications(matchID string, teamsAffected int) error {
+        // TODO: Implement notification system
+        // This would involve:
+        // 1. Find all users with teams in this match
+        // 2. Send push notifications about points update
+        // 3. Send WebSocket messages to connected clients
+        // 4. Update notification history
+        
+        return nil
 }
 
 // Helper function

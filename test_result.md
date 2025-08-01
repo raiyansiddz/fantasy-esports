@@ -170,6 +170,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Match players endpoint working perfectly. Returns 10 players with complete data including stats, roles, team information. Players from Team Liquid and Fnatic with realistic Valorant player data. Endpoint: /api/v1/matches/1/players"
+        - working: true
+          agent: "testing"
+          comment: "CONFIRMED: Match players endpoint still working excellently! Now returns 50 players with complete data including stats, roles, team information, credit values, and form scores. Players from Team Liquid and Fnatic with realistic Valorant player data including ScreaM, Derke, Alfajer, Chronicle, etc. Proper sorting by credit value and filtering options available. Endpoint: /api/v1/matches/1/players"
 
   - task: "Tournaments List API"
     implemented: true

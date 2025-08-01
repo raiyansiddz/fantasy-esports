@@ -73,6 +73,7 @@ func (c *CloudinaryClient) DeleteImage(publicID string) error {
 }
 
 func (c *CloudinaryClient) GenerateTransformedURL(publicID string, width, height int) string {
-	transformedURL, _ := c.cld.Image(publicID).Resize(cloudinary.Fit().Width(width).Height(height)).String()
-	return transformedURL
+	// Simple transformation URL generation
+	return fmt.Sprintf("https://res.cloudinary.com/%s/image/upload/w_%d,h_%d/%s", 
+		"dwnxysjxp", width, height, publicID)
 }

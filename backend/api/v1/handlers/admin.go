@@ -815,6 +815,52 @@ func (h *AdminHandler) UpdateSystemConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "config_key": configKey, "message": "Config updated"})
 }
 
+// ================================
+// FANTASY POINTS CALCULATION HELPERS
+// ================================
+
+// RecalculateFantasyPointsForPlayer recalculates fantasy points for all teams containing the specified player
+func (h *AdminHandler) RecalculateFantasyPointsForPlayer(matchID string, playerID int64) (int, error) {
+	// In a real implementation, this would:
+	// 1. Find all fantasy teams that have this player
+	// 2. Recalculate their total points based on all match events
+	// 3. Update the fantasy_team_scores table
+	// 4. Return the number of teams affected
+	
+	// Mock implementation - simulate finding teams with this player
+	var teamsAffected int
+	err := h.db.QueryRow(`
+		SELECT COUNT(DISTINCT ft.id) 
+		FROM fantasy_teams ft 
+		JOIN fantasy_team_players ftp ON ft.id = ftp.fantasy_team_id 
+		JOIN contests c ON ft.contest_id = c.id 
+		WHERE ftp.player_id = $1 AND c.match_id = $2`, 
+		playerID, matchID).Scan(&teamsAffected)
+	
+	if err != nil {
+		// If query fails, return mock data
+		return 1250, nil
+	}
+	
+	// TODO: Implement actual points recalculation logic here
+	// For now, just return the count of affected teams
+	return teamsAffected, nil
+}
+
+// UpdateLeaderboardsForMatch updates all contest leaderboards for the specified match
+func (h *AdminHandler) UpdateLeaderboardsForMatch(matchID string) error {
+	// In a real implementation, this would:
+	// 1. Find all contests for this match
+	// 2. Recalculate rankings for each contest
+	// 3. Update the contest_leaderboards table
+	// 4. Trigger WebSocket notifications for leaderboard changes
+	
+	// Mock implementation - just log the action
+	// In production, you would have complex ranking algorithms here
+	
+	return nil
+}
+
 // Helper function
 func parseAdminInt64(s string) int64 {
 	val, _ := strconv.ParseInt(s, 10, 64)

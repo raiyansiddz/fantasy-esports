@@ -471,7 +471,7 @@ func (h *AdminHandler) BulkUpdateEvents(c *gin.Context) {
 }
 
 // @Summary Update match score
-// @Description Update overall match score and status
+// @Description Update overall match score and status with complex state management
 // @Tags Admin Scoring
 // @Accept json
 // @Produce json
@@ -493,13 +493,73 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 		return
 	}
 
-	// Update match with score information
-	_, err := h.db.Exec(`
+	// ⭐ COMPLEX MATCH STATE MANAGEMENT IMPLEMENTATION ⭐
+	
+	// Step 1: Get current match details for validation
+	var currentMatch struct {
+		ID         int64
+		Status     string
+		BestOf     int
+		MatchType  string
+		LockTime   time.Time
+	}
+	
+	err := h.db.QueryRow(`
+		SELECT id, status, best_of, match_type, lock_time
+		FROM matches WHERE id = $1`, matchID).Scan(
+		&currentMatch.ID, &currentMatch.Status, &currentMatch.BestOf,
+		&currentMatch.MatchType, &currentMatch.LockTime)
+	
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   "Match not found",
+			Code:    "MATCH_NOT_FOUND",
+		})
+		return
+	}
+	
+	// Step 2: Validate state transitions
+	validTransition, validationError := h.validateMatchStateTransition(currentMatch.Status, req.MatchStatus)
+	if !validTransition {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   validationError,
+			Code:    "INVALID_STATE_TRANSITION",
+		})
+		return
+	}
+	
+	// Step 3: Handle different match types and scoring scenarios
+	scoreValidation, err := h.validateMatchScore(req, currentMatch.BestOf, currentMatch.MatchType)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   err.Error(),
+			Code:    "INVALID_SCORE",
+		})
+		return
+	}
+	
+	// Step 4: Start transaction for atomic updates
+	tx, err := h.db.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to start transaction",
+			Code:    "TRANSACTION_ERROR",
+		})
+		return
+	}
+	defer tx.Rollback()
+	
+	// Step 5: Update match with comprehensive score information
+	_, err = tx.Exec(`
 		UPDATE matches 
 		SET status = $1, winner_team_id = $2, updated_at = NOW()
 		WHERE id = $3`,
 		req.MatchStatus, req.WinnerTeamID, matchID)
-
+	
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
@@ -508,15 +568,68 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 		})
 		return
 	}
+	
+	// Step 6: Update match participants with scores
+	if req.Team1Score >= 0 && req.Team2Score >= 0 {
+		err = h.updateMatchParticipantScores(tx, matchID, req.Team1Score, req.Team2Score)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+				Success: false,
+				Error:   "Failed to update participant scores",
+				Code:    "PARTICIPANT_UPDATE_ERROR",
+			})
+			return
+		}
+	}
+	
+	// Step 7: Handle match completion logic if status is completed
+	var completionData map[string]interface{}
+	if req.MatchStatus == "completed" {
+		completionData, err = h.handleMatchCompletion(tx, matchID, req.WinnerTeamID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+				Success: false,
+				Error:   "Failed to complete match processing",
+				Code:    "COMPLETION_ERROR",
+			})
+			return
+		}
+	}
+	
+	// Step 8: Commit transaction
+	if err = tx.Commit(); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to commit match updates",
+			Code:    "COMMIT_ERROR",
+		})
+		return
+	}
+	
+	// Step 9: Trigger real-time updates
+	h.broadcastMatchUpdate(matchID, req.MatchStatus, req.FinalScore)
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":      true,
-		"match_id":     matchID,
-		"final_score":  req.FinalScore,
-		"winner_team":  req.WinnerTeamID,
-		"status":       req.MatchStatus,
-		"message":      "Match score updated successfully",
-	})
+	response := gin.H{
+		"success":           true,
+		"match_id":          matchID,
+		"final_score":       req.FinalScore,
+		"team1_score":       req.Team1Score,
+		"team2_score":       req.Team2Score,
+		"current_round":     req.CurrentRound,
+		"winner_team":       req.WinnerTeamID,
+		"status":            req.MatchStatus,
+		"match_duration":    req.MatchDuration,
+		"score_validation":  scoreValidation,
+		"state_transition":  "valid",
+		"message":           "Match score updated successfully with state management",
+	}
+	
+	// Add completion data if match was completed
+	if completionData != nil {
+		response["completion_data"] = completionData
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // @Summary Recalculate fantasy points

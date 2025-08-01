@@ -1815,6 +1815,279 @@ func (h *AdminHandler) updateContestLeaderboardTx(tx *sql.Tx, contestID int64) e
         return err
 }
 
+// ⭐ MATCH COMPLETION HELPER FUNCTIONS ⭐
+
+// finalizeFantasyTeamScores finalizes all fantasy team scores for a match
+func (h *AdminHandler) finalizeFantasyTeamScores(tx *sql.Tx, matchID string) (int, error) {
+	// Get all fantasy teams for this match
+	rows, err := tx.Query(`
+		SELECT id FROM user_teams WHERE match_id = $1`, matchID)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	
+	teamsFinalized := 0
+	
+	for rows.Next() {
+		var teamID int64
+		if err := rows.Scan(&teamID); err != nil {
+			continue
+		}
+		
+		// Mark team as finalized and lock scores
+		_, err = tx.Exec(`
+			UPDATE user_teams 
+			SET is_finalized = true, finalized_at = NOW()
+			WHERE id = $1`, teamID)
+		
+		if err == nil {
+			teamsFinalized++
+		}
+	}
+	
+	return teamsFinalized, nil
+}
+
+// finalizeContestLeaderboards finalizes and freezes contest leaderboards
+func (h *AdminHandler) finalizeContestLeaderboards(tx *sql.Tx, matchID string) (int, error) {
+	// Get all contests for this match
+	rows, err := tx.Query(`
+		SELECT id FROM contests WHERE match_id = $1`, matchID)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	
+	leaderboardsFinalized := 0
+	
+	for rows.Next() {
+		var contestID int64
+		if err := rows.Scan(&contestID); err != nil {
+			continue
+		}
+		
+		// Update final rankings one last time
+		err = h.updateContestLeaderboardTx(tx, contestID)
+		if err != nil {
+			continue
+		}
+		
+		// Mark contest as finalized
+		_, err = tx.Exec(`
+			UPDATE contests 
+			SET status = 'completed', is_finalized = true, finalized_at = NOW()
+			WHERE id = $1`, contestID)
+		
+		if err == nil {
+			leaderboardsFinalized++
+		}
+	}
+	
+	return leaderboardsFinalized, nil
+}
+
+// distributePrizes distributes prizes to winners
+func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]interface{}, error) {
+	prizeDistribution := make(map[string]interface{})
+	
+	// Get all contests for this match that have prizes
+	rows, err := tx.Query(`
+		SELECT id, prize_pool, winner_percentage, runner_up_percentage
+		FROM contests 
+		WHERE match_id = $1 AND prize_pool > 0`, matchID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	totalPrizesDistributed := 0.0
+	contestsWithPrizes := 0
+	winnersRewarded := 0
+	
+	for rows.Next() {
+		var contestID int64
+		var prizePool, winnerPct, runnerUpPct float64
+		
+		if err := rows.Scan(&contestID, &prizePool, &winnerPct, &runnerUpPct); err != nil {
+			continue
+		}
+		
+		// Get top 3 winners for this contest
+		winnerRows, err := tx.Query(`
+			SELECT cp.user_id, cp.rank, ut.total_points
+			FROM contest_participants cp
+			JOIN user_teams ut ON cp.team_id = ut.id
+			WHERE cp.contest_id = $1 AND cp.rank <= 3
+			ORDER BY cp.rank`, contestID)
+		
+		if err != nil {
+			continue
+		}
+		
+		// Distribute prizes to winners
+		for winnerRows.Next() {
+			var userID int64
+			var rank int
+			var totalPoints float64
+			
+			if err := winnerRows.Scan(&userID, &rank, &totalPoints); err != nil {
+				continue
+			}
+			
+			var prizeAmount float64
+			switch rank {
+			case 1:
+				prizeAmount = prizePool * (winnerPct / 100.0)
+			case 2:
+				prizeAmount = prizePool * (runnerUpPct / 100.0)
+			case 3:
+				prizeAmount = prizePool * 0.1 // 10% for third place
+			}
+			
+			if prizeAmount > 0 {
+				// Add prize to user's wallet
+				_, err = tx.Exec(`
+					INSERT INTO wallet_transactions (user_id, transaction_type, amount, description, status, created_at)
+					VALUES ($1, 'prize_credit', $2, $3, 'completed', NOW())`,
+					userID, prizeAmount, fmt.Sprintf("Prize for contest %d (Rank %d)", contestID, rank))
+				
+				if err == nil {
+					// Update user's wallet balance
+					tx.Exec(`
+						UPDATE wallets 
+						SET balance = balance + $1, updated_at = NOW()
+						WHERE user_id = $2`, prizeAmount, userID)
+					
+					totalPrizesDistributed += prizeAmount
+					winnersRewarded++
+				}
+			}
+		}
+		winnerRows.Close()
+		contestsWithPrizes++
+	}
+	
+	prizeDistribution["total_amount"] = totalPrizesDistributed
+	prizeDistribution["contests_processed"] = contestsWithPrizes
+	prizeDistribution["winners_rewarded"] = winnersRewarded
+	prizeDistribution["distribution_timestamp"] = time.Now()
+	
+	return prizeDistribution, nil
+}
+
+// updateContestStatuses updates contest statuses after match completion
+func (h *AdminHandler) updateContestStatuses(tx *sql.Tx, matchID string) (int, error) {
+	// Update all contests for this match to completed status
+	result, err := tx.Exec(`
+		UPDATE contests 
+		SET status = 'completed', updated_at = NOW()
+		WHERE match_id = $1 AND status != 'completed'`, matchID)
+	
+	if err != nil {
+		return 0, err
+	}
+	
+	rowsAffected, _ := result.RowsAffected()
+	return int(rowsAffected), nil
+}
+
+// sendMatchCompletionNotifications sends notifications about match completion
+func (h *AdminHandler) sendMatchCompletionNotifications(tx *sql.Tx, matchID string, winnerTeamID int64) (int, error) {
+	// Get all users who participated in contests for this match
+	rows, err := tx.Query(`
+		SELECT DISTINCT cp.user_id, u.first_name, u.mobile
+		FROM contest_participants cp
+		JOIN contests c ON cp.contest_id = c.id
+		JOIN users u ON cp.user_id = u.id
+		WHERE c.match_id = $1`, matchID)
+	
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	
+	notificationsSent := 0
+	
+	for rows.Next() {
+		var userID int64
+		var firstName, mobile string
+		
+		if err := rows.Scan(&userID, &firstName, &mobile); err != nil {
+			continue
+		}
+		
+		// Create notification record
+		_, err = tx.Exec(`
+			INSERT INTO notifications (user_id, title, message, type, created_at)
+			VALUES ($1, $2, $3, 'match_completed', NOW())`,
+			userID, 
+			"Match Completed!",
+			fmt.Sprintf("The match has been completed. Check your contest results!"))
+		
+		if err == nil {
+			notificationsSent++
+		}
+	}
+	
+	return notificationsSent, nil
+}
+
+// updateMatchStatistics updates player and team statistics after match completion
+func (h *AdminHandler) updateMatchStatistics(tx *sql.Tx, matchID string, winnerTeamID, mvpPlayerID int64) (bool, error) {
+	// Update team statistics
+	_, err := tx.Exec(`
+		UPDATE teams 
+		SET matches_played = matches_played + 1,
+		    matches_won = matches_won + CASE WHEN id = $1 THEN 1 ELSE 0 END,
+		    updated_at = NOW()
+		WHERE id IN (
+			SELECT team_id FROM match_participants WHERE match_id = $2
+		)`, winnerTeamID, matchID)
+	
+	if err != nil {
+		return false, err
+	}
+	
+	// Update player statistics
+	_, err = tx.Exec(`
+		UPDATE players 
+		SET matches_played = matches_played + 1,
+		    updated_at = NOW()
+		WHERE team_id IN (
+			SELECT team_id FROM match_participants WHERE match_id = $1
+		)`, matchID)
+	
+	if err != nil {
+		return false, err
+	}
+	
+	// Update MVP player if specified
+	if mvpPlayerID > 0 {
+		_, err = tx.Exec(`
+			UPDATE players 
+			SET mvp_awards = mvp_awards + 1,
+			    updated_at = NOW()
+			WHERE id = $1`, mvpPlayerID)
+		
+		if err != nil {
+			return false, err
+		}
+	}
+	
+	return true, nil
+}
+
+// broadcastMatchCompletion sends real-time updates about match completion
+func (h *AdminHandler) broadcastMatchCompletion(matchID string, winnerTeamID, mvpPlayerID int64) {
+	// TODO: Implement WebSocket broadcasting
+	// This would send real-time updates to:
+	// 1. All connected admin clients
+	// 2. Users watching this match
+	// 3. Contest participants
+	// 4. Leaderboard viewers
+}
+
 // Helper function
 func parseAdminInt64(s string) int64 {
 	val, _ := strconv.ParseInt(s, 10, 64)

@@ -29,6 +29,5 @@ func main() {
         log.Fatal("Failed to query database:", err)
     }
     
-    fmt.Printf("✅ Found %d tables in public schema
-", count)
+    fmt.Printf("✅ Found %d tables in public schema\n", count)
 }

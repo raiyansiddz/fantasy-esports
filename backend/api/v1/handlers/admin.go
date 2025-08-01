@@ -890,42 +890,41 @@ func (h *AdminHandler) createSampleFantasyTeamsIfNeeded(matchID string, playerID
                 return existingTeams, nil
         }
         
-        // Create sample fantasy teams with the player for testing
-        sampleTeams := []struct {
-                userID      int64
-                teamName    string
-                captainID   int64
-                viceCapID   int64
-        }{
-                {2, "Dream Team Alpha", 1, 2},    // ScreaM captain, Nivera vice
-                {2, "Pro Squad Beta", 2, 1},     // Nivera captain, ScreaM vice
-                {2, "Elite Gaming", 1, 3},       // ScreaM captain, Jamppi vice
-        }
-        
+        // Create 3 sample fantasy teams directly for testing
         teamsCreated := 0
-        for _, team := range sampleTeams {
+        teamNames := []string{"Dream Team Alpha", "Pro Squad Beta", "Elite Gaming"}
+        
+        for i, teamName := range teamNames {
                 // Create user team
                 var teamID int64
                 err := h.db.QueryRow(`
                         INSERT INTO user_teams (user_id, match_id, team_name, captain_player_id, vice_captain_player_id, total_credits_used)
-                        VALUES ($1, $2, $3, $4, $5, 85.5)
+                        VALUES (2, $1, $2, 1, 2, 85.5)
                         RETURNING id`,
-                        team.userID, matchID, team.teamName, team.captainID, team.viceCapID).Scan(&teamID)
+                        matchID, teamName).Scan(&teamID)
                 
                 if err != nil {
                         continue
                 }
                 
-                // Add the specific player to this team (all teams will have ScreaM)
-                _, err = h.db.Exec(`
-                        INSERT INTO team_players (team_id, player_id, real_team_id, is_captain, is_vice_captain)
-                        VALUES ($1, $2, 1, $3, $4)
-                        ON CONFLICT (team_id, player_id) DO NOTHING`,
-                        teamID, playerID, playerID == team.captainID, playerID == team.viceCapID)
-                
-                if err == nil {
-                        teamsCreated++
+                // Add players to this team (including the specific player)
+                playersToAdd := []int64{1, 2, 3, 4, 5} // ScreaM, Nivera, Jamppi, soulcas, Redgar
+                for j, pID := range playersToAdd {
+                        isCaptain := (pID == 1) // ScreaM is captain
+                        isViceCaptain := (pID == 2) // Nivera is vice-captain
+                        
+                        _, err = h.db.Exec(`
+                                INSERT INTO team_players (team_id, player_id, real_team_id, is_captain, is_vice_captain)
+                                VALUES ($1, $2, 1, $3, $4)
+                                ON CONFLICT (team_id, player_id) DO NOTHING`,
+                                teamID, pID, isCaptain, isViceCaptain)
+                        
+                        if err != nil && j == 0 { // If error adding first player, skip this team
+                                break
+                        }
                 }
+                
+                teamsCreated++
         }
         
         return teamsCreated, nil

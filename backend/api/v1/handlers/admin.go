@@ -898,9 +898,9 @@ func (h *AdminHandler) createSampleFantasyTeamsIfNeeded(matchID string, playerID
                 captainID   int64
                 viceCapID   int64
         }{
-                {1, "Dream Team Alpha", playerID, playerID + 1},
-                {1, "Pro Squad Beta", playerID + 2, playerID},
-                {1, "Elite Gaming", playerID, playerID + 3},
+                {2, "Dream Team Alpha", playerID, playerID + 1},
+                {2, "Pro Squad Beta", playerID + 2, playerID},
+                {2, "Elite Gaming", playerID, playerID + 3},
         }
         
         teamsCreated := 0

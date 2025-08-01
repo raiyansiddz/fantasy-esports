@@ -581,21 +581,152 @@ func (h *AdminHandler) RecalculatePoints(c *gin.Context) {
 func (h *AdminHandler) GetLiveDashboard(c *gin.Context) {
 	matchID := c.Param("id")
 
-	// In production, this would return comprehensive match data
+	// ⭐ REAL-TIME LIVE DASHBOARD IMPLEMENTATION ⭐
+	
+	// Step 1: Get match information
+	var matchInfo models.Match
+	err := h.db.QueryRow(`
+		SELECT m.id, m.name, m.scheduled_at, m.lock_time, m.status, m.match_type,
+		       m.map, m.best_of, m.winner_team_id, m.created_at, m.updated_at,
+		       t.name as tournament_name, g.name as game_name
+		FROM matches m
+		LEFT JOIN tournaments t ON m.tournament_id = t.id  
+		LEFT JOIN games g ON m.game_id = g.id
+		WHERE m.id = $1`, matchID).Scan(
+		&matchInfo.ID, &matchInfo.Name, &matchInfo.ScheduledAt, &matchInfo.LockTime,
+		&matchInfo.Status, &matchInfo.MatchType, &matchInfo.Map, &matchInfo.BestOf,
+		&matchInfo.WinnerTeamID, &matchInfo.CreatedAt, &matchInfo.UpdatedAt,
+		&matchInfo.TournamentName, &matchInfo.GameName)
+	
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   "Match not found",
+			Code:    "MATCH_NOT_FOUND",
+		})
+		return
+	}
+	
+	// Step 2: Get real team statistics
+	teamStats := make(map[string]models.TeamStats)
+	rows, err := h.db.Query(`
+		SELECT t.name, 
+		       COALESCE(SUM(CASE WHEN me.event_type = 'kill' THEN 1 ELSE 0 END), 0) as kills,
+		       COALESCE(SUM(CASE WHEN me.event_type = 'death' THEN 1 ELSE 0 END), 0) as deaths,
+		       COALESCE(SUM(CASE WHEN me.event_type = 'assist' THEN 1 ELSE 0 END), 0) as assists
+		FROM teams t
+		JOIN match_participants mp ON t.id = mp.team_id
+		LEFT JOIN players p ON p.team_id = t.id
+		LEFT JOIN match_events me ON p.id = me.player_id AND me.match_id = $1
+		WHERE mp.match_id = $1
+		GROUP BY t.id, t.name`, matchID)
+	
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var teamName string
+			var kills, deaths, assists int
+			
+			if err := rows.Scan(&teamName, &kills, &deaths, &assists); err != nil {
+				continue
+			}
+			
+			teamStats[teamName] = models.TeamStats{
+				Kills:   kills,
+				Deaths:  deaths,
+				Assists: assists,
+			}
+		}
+	}
+	
+	// Step 3: Get real player performance data
+	var playerStats []models.PlayerPerformance
+	playerRows, err := h.db.Query(`
+		SELECT p.id, p.name, t.name as team_name,
+		       COALESCE(SUM(CASE WHEN me.event_type = 'kill' THEN 1 ELSE 0 END), 0) as kills,
+		       COALESCE(SUM(CASE WHEN me.event_type = 'death' THEN 1 ELSE 0 END), 0) as deaths,
+		       COALESCE(SUM(CASE WHEN me.event_type = 'assist' THEN 1 ELSE 0 END), 0) as assists,
+		       COALESCE(SUM(CASE WHEN me.event_type = 'headshot' THEN 1 ELSE 0 END), 0) as headshots,
+		       COALESCE(SUM(CASE WHEN me.event_type = 'ace' THEN 1 ELSE 0 END), 0) as aces,
+		       COALESCE(SUM(me.points), 0) as fantasy_points
+		FROM players p
+		JOIN teams t ON p.team_id = t.id
+		JOIN match_participants mp ON t.id = mp.team_id
+		LEFT JOIN match_events me ON p.id = me.player_id AND me.match_id = $1
+		WHERE mp.match_id = $1
+		GROUP BY p.id, p.name, t.name
+		ORDER BY fantasy_points DESC`, matchID)
+	
+	if err == nil {
+		defer playerRows.Close()
+		for playerRows.Next() {
+			var performance models.PlayerPerformance
+			var stats models.PlayerGameStats
+			
+			if err := playerRows.Scan(&performance.PlayerID, &performance.Name, &performance.TeamName,
+				&stats.Kills, &stats.Deaths, &stats.Assists, &stats.Headshots, &stats.Aces,
+				&performance.FantasyPoints); err != nil {
+				continue
+			}
+			
+			performance.Stats = stats
+			playerStats = append(playerStats, performance)
+		}
+	}
+	
+	// Step 4: Get recent match events (last 10)
+	var recentEvents []models.MatchEvent
+	eventRows, err := h.db.Query(`
+		SELECT me.id, me.match_id, me.player_id, me.event_type, me.points,
+		       me.round_number, me.game_time, me.description, me.additional_data,
+		       me.created_at, me.created_by, p.name as player_name, t.name as team_name
+		FROM match_events me
+		JOIN players p ON me.player_id = p.id
+		JOIN teams t ON p.team_id = t.id
+		WHERE me.match_id = $1
+		ORDER BY me.created_at DESC
+		LIMIT 10`, matchID)
+	
+	if err == nil {
+		defer eventRows.Close()
+		for eventRows.Next() {
+			var event models.MatchEvent
+			
+			if err := eventRows.Scan(&event.ID, &event.MatchID, &event.PlayerID, &event.EventType,
+				&event.Points, &event.RoundNumber, &event.GameTime, &event.Description,
+				&event.AdditionalData, &event.CreatedAt, &event.CreatedBy,
+				&event.PlayerName, &event.TeamName); err != nil {
+				continue
+			}
+			
+			recentEvents = append(recentEvents, event)
+		}
+	}
+	
+	// Step 5: Calculate real fantasy impact
+	var affectedTeams, leaderboardChanges int
+	h.db.QueryRow(`
+		SELECT COUNT(DISTINCT ut.id)
+		FROM user_teams ut
+		JOIN team_players tp ON ut.id = tp.team_id
+		JOIN players p ON tp.player_id = p.id
+		JOIN match_participants mp ON p.team_id = mp.team_id
+		WHERE mp.match_id = $1`, matchID).Scan(&affectedTeams)
+	
+	h.db.QueryRow(`
+		SELECT COUNT(*)
+		FROM contests
+		WHERE match_id = $1`, matchID).Scan(&leaderboardChanges)
+	
+	// Step 6: Build dashboard response
 	dashboard := models.LiveScoringDashboard{
-		MatchInfo: models.Match{
-			ID:     parseAdminInt64(matchID),
-			Status: "live",
-		},
-		TeamStats: map[string]models.TeamStats{
-			"team1": {Kills: 45, Deaths: 38, Assists: 32},
-			"team2": {Kills: 38, Deaths: 45, Assists: 25},
-		},
-		PlayerStats: []models.PlayerPerformance{},
-		RecentEvents: []models.MatchEvent{},
+		MatchInfo:     matchInfo,
+		TeamStats:     teamStats,
+		PlayerStats:   playerStats,
+		RecentEvents:  recentEvents,
 		FantasyImpact: models.FantasyImpact{
-			AffectedTeams:      15000,
-			LeaderboardChanges: 850,
+			AffectedTeams:      affectedTeams,
+			LeaderboardChanges: leaderboardChanges,
 		},
 	}
 
@@ -603,6 +734,8 @@ func (h *AdminHandler) GetLiveDashboard(c *gin.Context) {
 		"success":   true,
 		"match_id":  matchID,
 		"dashboard": dashboard,
+		"timestamp": time.Now(),
+		"data_freshness": "real_time",
 	})
 }
 

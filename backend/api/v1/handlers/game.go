@@ -598,11 +598,75 @@ func (h *GameHandler) GetMatchPlayers(c *gin.Context) {
 // @Router /matches/{id}/player-performance [get]
 func (h *GameHandler) GetPlayerPerformance(c *gin.Context) {
 	matchID := c.Param("id")
+	playerIDParam := c.Query("player_id")
 	
+	query := `SELECT p.id, p.name, t.name as team_name, p.stats,
+	                 COALESCE(SUM(me.points), 0) as fantasy_points
+	          FROM players p
+	          JOIN teams t ON p.team_id = t.id
+	          JOIN match_participants mp ON t.id = mp.team_id
+	          LEFT JOIN match_events me ON p.id = me.player_id AND me.match_id = $1
+	          WHERE mp.match_id = $1`
+	args := []interface{}{matchID}
+	argCount := 2
+
+	if playerIDParam != "" {
+		query += " AND p.id = $" + strconv.Itoa(argCount)
+		args = append(args, playerIDParam)
+		argCount++
+	}
+
+	query += " GROUP BY p.id, p.name, t.name, p.stats ORDER BY fantasy_points DESC"
+
+	rows, err := h.db.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to fetch player performance",
+			Code:    "DB_ERROR",
+		})
+		return
+	}
+	defer rows.Close()
+
+	var performances []models.PlayerPerformance
+	for rows.Next() {
+		var perf models.PlayerPerformance
+		err := rows.Scan(
+			&perf.PlayerID, &perf.Name, &perf.TeamName, 
+			&perf.Stats, &perf.FantasyPoints,
+		)
+		if err != nil {
+			continue
+		}
+
+		// Get events for this player in this match
+		eventsRows, eventsErr := h.db.Query(`
+			SELECT id, event_type, points, round_number, game_time, 
+			       description, additional_data, created_at
+			FROM match_events 
+			WHERE match_id = $1 AND player_id = $2 
+			ORDER BY created_at`, matchID, perf.PlayerID)
+		
+		if eventsErr == nil {
+			defer eventsRows.Close()
+			var events []models.MatchEvent
+			for eventsRows.Next() {
+				var event models.MatchEvent
+				eventsRows.Scan(&event.ID, &event.EventType, &event.Points,
+					&event.RoundNumber, &event.GameTime, &event.Description,
+					&event.AdditionalData, &event.CreatedAt)
+				events = append(events, event)
+			}
+			perf.Events = events
+		}
+
+		performances = append(performances, perf)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"match_id": matchID,
-		"performance": []models.PlayerPerformance{},
-		"message": "Player performance endpoint implemented",
+		"success":     true,
+		"match_id":    matchID,
+		"performance": performances,
 	})
 }

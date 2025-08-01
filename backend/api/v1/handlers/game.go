@@ -389,7 +389,12 @@ func (h *GameHandler) GetMatches(c *gin.Context) {
 			&match.CreatedAt, &match.UpdatedAt, &tournamentName, &gameName,
 		)
 		if err != nil {
-			continue
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+				Success: false,
+				Error:   "Failed to scan match data: " + err.Error(),
+				Code:    "SCAN_ERROR",
+			})
+			return
 		}
 		match.TournamentName = tournamentName
 		match.GameName = gameName

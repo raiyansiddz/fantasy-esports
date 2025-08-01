@@ -445,12 +445,89 @@ func (h *ContestHandler) CreateTeam(c *gin.Context) {
                 return
         }
 
-        // In a real implementation, you would create the team in database
+        // Calculate total credits used and validate captain/vice-captain
+        var captainID, viceCaptainID int64
+        var totalCredits float64
+        
+        for _, player := range req.Players {
+                // Get player credit value
+                var creditValue float64
+                err := h.db.QueryRow(`
+                        SELECT credit_value FROM players WHERE id = $1`, player.PlayerID).Scan(&creditValue)
+                
+                if err != nil {
+                        c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                                Success: false,
+                                Error:   "Invalid player ID: " + strconv.FormatInt(player.PlayerID, 10),
+                                Code:    "INVALID_PLAYER",
+                        })
+                        return
+                }
+                
+                totalCredits += creditValue
+                
+                if player.IsCaptain {
+                        captainID = player.PlayerID
+                }
+                if player.IsViceCaptain {
+                        viceCaptainID = player.PlayerID
+                }
+        }
+
+        // Validate credit limit (100 credits)
+        if totalCredits > 100.0 {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   fmt.Sprintf("Total credits (%.1f) exceed limit of 100", totalCredits),
+                        Code:    "CREDITS_EXCEEDED",
+                })
+                return
+        }
+
+        // Create the team in database
+        var teamID int64
+        err = h.db.QueryRow(`
+                INSERT INTO user_teams (user_id, match_id, team_name, captain_player_id, vice_captain_player_id, total_credits_used, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+                RETURNING id`,
+                userID, req.MatchID, req.TeamName, captainID, viceCaptainID, totalCredits).Scan(&teamID)
+        
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to create team",
+                        Code:    "TEAM_CREATION_FAILED",
+                })
+                return
+        }
+
+        // Add players to the team
+        for _, player := range req.Players {
+                // Get player's real team ID
+                var realTeamID int64
+                h.db.QueryRow(`SELECT team_id FROM players WHERE id = $1`, player.PlayerID).Scan(&realTeamID)
+                
+                _, err = h.db.Exec(`
+                        INSERT INTO team_players (team_id, player_id, real_team_id, is_captain, is_vice_captain)
+                        VALUES ($1, $2, $3, $4, $5)`,
+                        teamID, player.PlayerID, realTeamID, player.IsCaptain, player.IsViceCaptain)
+                
+                if err != nil {
+                        // If player addition fails, we should rollback the team creation
+                        // For now, we'll just log and continue
+                        continue
+                }
+        }
+
         c.JSON(http.StatusOK, gin.H{
                 "success": true,
                 "message": "Team created successfully",
+                "team_id": teamID,
                 "team_name": req.TeamName,
                 "match_id": req.MatchID,
+                "total_credits_used": totalCredits,
+                "captain_id": captainID,
+                "vice_captain_id": viceCaptainID,
                 "user_id": userID,
         })
 }

@@ -158,11 +158,11 @@ backend:
 
   - task: "Fantasy Points Calculation Engine Core Logic"
     implemented: true
-    working: "NEEDS_TESTING"
+    working: true
     file: "/app/backend/api/v1/handlers/admin.go"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
           agent: "testing"
@@ -176,6 +176,9 @@ backend:
         - working: "COMPLETE_IMPLEMENTATION"
           agent: "main"
           comment: "✅ COMPLETE FANTASY POINTS ENGINE IMPLEMENTED: 1) RecalculateFantasyPointsForPlayer() - Full logic with captain (2x) and vice-captain (1.5x) multipliers, 2) RecalculateAllFantasyPoints() - Real database counts and comprehensive recalculation, 3) calculatePlayerBasePoints() - Game scoring rules integration, 4) recalculateTeamTotalPoints() - Team total recalculation, 5) updateAllContestLeaderboards() - Contest ranking updates. Real business logic replaces all TODO placeholders."
+        - working: true
+          agent: "testing"
+          comment: "✅ FANTASY POINTS ENGINE FULLY WORKING: Fixed supervisor configuration to run GoLang binary instead of Python server. Comprehensive testing shows: 1) Admin login working perfectly with JWT tokens, 2) Add Match Event working with real fantasy_teams_affected counts (3 teams, not hardcoded), 3) Recalculate Points working with real database counts (teams_affected=3, leaderboards_updated=34, not 1500/25), 4) All event types working (kill, ace, death, assist, headshot), 5) Parameter variations working correctly, 6) Multiple events processing successfully. The complete Fantasy Points Calculation Engine is operational with real database operations and proper multiplier calculations."
 
   - task: "Health Check Endpoint"
     implemented: true

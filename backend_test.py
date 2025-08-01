@@ -380,9 +380,14 @@ def main():
     test_results['recalculate_points'] = test_recalculate_points()
     
     # Additional comprehensive tests
-    variation_results = test_recalculate_points_variations()
-    multiple_events_results = test_multiple_match_events()
-    error_handling_results = test_error_handling()
+    if ADMIN_TOKEN:
+        variation_results = test_recalculate_points_variations()
+        multiple_events_results = test_multiple_match_events()
+        error_handling_results = test_error_handling()
+    else:
+        variation_results = {}
+        multiple_events_results = []
+        error_handling_results = {}
     
     # Print summary
     print(f"\n{'='*60}")

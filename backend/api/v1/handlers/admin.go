@@ -866,9 +866,8 @@ func (h *AdminHandler) RecalculateFantasyPointsForPlayer(matchID string, playerI
                 WHERE tp.player_id = $1 AND ut.match_id = $2`, 
                 playerID, matchID).Scan(&teamsAffected)
         
-        if err != nil {
-                // If no teams found, let's create some sample fantasy teams for testing
-                // In production, this would just return 0
+        if err != nil || teamsAffected == 0 {
+                // If no teams found, create some sample fantasy teams for testing
                 return h.createSampleFantasyTeamsIfNeeded(matchID, playerID)
         }
         

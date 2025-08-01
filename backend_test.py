@@ -10,8 +10,8 @@ import json
 import sys
 from datetime import datetime
 
-# Get backend URL from environment - using external URL for API access
-BACKEND_URL = "https://34c7802b-49b2-450e-b0b8-7302b0745f63.preview.emergentagent.com"
+# Get backend URL from environment - using localhost for GoLang backend
+BACKEND_URL = "http://localhost:8080"
 
 # Global admin token storage
 ADMIN_TOKEN = None

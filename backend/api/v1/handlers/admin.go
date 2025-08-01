@@ -250,19 +250,28 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 	}
 
 	// Insert match event using system user ID for admin operations
-	var systemUserID int64
+	var systemUserID int64 = 2 // Default to user ID 2 as system admin
+	
+	// Try to find the SYSTEM_ADMIN user
 	err = h.db.QueryRow("SELECT id FROM users WHERE mobile = 'SYSTEM_ADMIN' LIMIT 1").Scan(&systemUserID)
 	if err != nil {
-		// If system user doesn't exist, use admin ID as regular user
-		// First, try to get the admin user as a regular user
+		// If SYSTEM_ADMIN doesn't exist, try to find admin user as regular user
 		err = h.db.QueryRow("SELECT id FROM users WHERE mobile = 'admin' OR email = 'admin@fantasy-esports.com' LIMIT 1").Scan(&systemUserID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
-				Success: false,
-				Error:   "System user not found - please contact administrator",
-				Code:    "SYSTEM_USER_NOT_FOUND",
-			})
-			return
+			// As final fallback, try to create a system user entry
+			err = h.db.QueryRow(`
+				INSERT INTO users (mobile, email, first_name, last_name, is_verified, is_active, account_status, kyc_status, referral_code) 
+				VALUES ('SYSTEM_ADMIN', 'system@fantasy-esports.com', 'System', 'Administrator', true, true, 'active', 'verified', 'SYS_ADMIN')
+				ON CONFLICT (mobile) DO UPDATE SET email = EXCLUDED.email
+				RETURNING id`).Scan(&systemUserID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+					Success: false,
+					Error:   "Unable to create or find system user for event logging",
+					Code:    "SYSTEM_USER_ERROR",
+				})
+				return
+			}
 		}
 	}
 

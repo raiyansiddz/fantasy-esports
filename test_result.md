@@ -146,7 +146,7 @@ backend:
 
   - task: "Match Details API"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/game.go"
     stuck_count: 0
     priority: "high"
@@ -155,6 +155,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "Match details endpoint failing with 500 error and 'Database error' message. This suggests issues with the match details query or missing match data. Endpoint: /api/v1/matches/1"
+        - working: true
+          agent: "testing"
+          comment: "FIXED: Match details endpoint now working perfectly! Returns complete match data including match info, participating teams (Team Liquid vs Fnatic), tournament name, game name, and all match metadata. Teams data includes proper team details with names, regions, and logos. Endpoint: /api/v1/matches/1"
 
   - task: "Match Players API"
     implemented: true

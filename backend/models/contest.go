@@ -131,3 +131,12 @@ type LeaderboardEntry struct {
 	AvatarURL    *string `json:"avatar_url"`
 	PrizeWon     float64 `json:"prize_won,omitempty"`
 }
+
+type PlayerPerformance struct {
+	PlayerID     int64           `json:"player_id"`
+	Name         string          `json:"name"`
+	TeamName     string          `json:"team_name"`
+	Stats        json.RawMessage `json:"stats"`
+	FantasyPoints float64        `json:"fantasy_points"`
+	Events       []MatchEvent    `json:"events"`
+}

@@ -609,7 +609,71 @@ func (h *ContestHandler) GetMyTeams(c *gin.Context) {
 
 func (h *ContestHandler) GetTeamDetails(c *gin.Context) {
         teamID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "team_id": teamID, "team": models.UserTeam{}})
+        userID := c.GetInt64("user_id")
+
+        // Get team details with match info
+        var team models.UserTeam
+        err := h.db.QueryRow(`
+                SELECT ut.id, ut.user_id, ut.match_id, ut.team_name, ut.captain_player_id,
+                       ut.vice_captain_player_id, ut.total_credits_used, ut.total_points,
+                       ut.final_rank, ut.is_locked, ut.created_at, ut.updated_at,
+                       cp.name as captain_name, vcp.name as vice_captain_name
+                FROM user_teams ut
+                LEFT JOIN players cp ON ut.captain_player_id = cp.id
+                LEFT JOIN players vcp ON ut.vice_captain_player_id = vcp.id
+                WHERE ut.id = $1 AND ut.user_id = $2`, teamID, userID).Scan(
+                &team.ID, &team.UserID, &team.MatchID, &team.TeamName, &team.CaptainPlayerID,
+                &team.ViceCaptainPlayerID, &team.TotalCreditsUsed, &team.TotalPoints,
+                &team.FinalRank, &team.IsLocked, &team.CreatedAt, &team.UpdatedAt,
+                &team.CaptainName, &team.ViceCaptainName,
+        )
+
+        if err == sql.ErrNoRows {
+                c.JSON(http.StatusNotFound, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Team not found or you don't have access",
+                        Code:    "TEAM_NOT_FOUND",
+                })
+                return
+        } else if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Database error",
+                        Code:    "DB_ERROR",
+                })
+                return
+        }
+
+        // Get team players
+        playersRows, err := h.db.Query(`
+                SELECT tp.id, tp.player_id, tp.real_team_id, tp.is_captain, tp.is_vice_captain,
+                       tp.points_earned, p.name as player_name, t.name as real_team_name,
+                       p.role, p.credit_value
+                FROM team_players tp
+                JOIN players p ON tp.player_id = p.id
+                JOIN teams t ON tp.real_team_id = t.id
+                WHERE tp.team_id = $1
+                ORDER BY tp.is_captain DESC, tp.is_vice_captain DESC, p.name`, teamID)
+
+        var players []models.TeamPlayer
+        if err == nil {
+                defer playersRows.Close()
+                for playersRows.Next() {
+                        var player models.TeamPlayer
+                        playersRows.Scan(
+                                &player.ID, &player.PlayerID, &player.RealTeamID, &player.IsCaptain,
+                                &player.IsViceCaptain, &player.PointsEarned, &player.PlayerName,
+                                &player.RealTeamName, &player.Role, &player.CreditValue,
+                        )
+                        players = append(players, player)
+                }
+        }
+        team.Players = players
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "team":    team,
+        })
 }
 
 func (h *ContestHandler) DeleteTeam(c *gin.Context) {

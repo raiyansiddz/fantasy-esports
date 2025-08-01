@@ -441,10 +441,65 @@ func (h *GameHandler) GetMatches(c *gin.Context) {
 func (h *GameHandler) GetMatchDetails(c *gin.Context) {
 	matchID := c.Param("id")
 	
+	// Get match details
+	var match models.Match
+	err := h.db.QueryRow(`
+		SELECT m.id, m.tournament_id, m.game_id, m.name, m.scheduled_at, m.lock_time,
+		       m.status, m.match_type, m.map, m.best_of, m.result, m.winner_team_id,
+		       m.created_at, m.updated_at, t.name as tournament_name, g.name as game_name
+		FROM matches m
+		LEFT JOIN tournaments t ON m.tournament_id = t.id
+		JOIN games g ON m.game_id = g.id
+		WHERE m.id = $1`, matchID).Scan(
+		&match.ID, &match.TournamentID, &match.GameID, &match.Name,
+		&match.ScheduledAt, &match.LockTime, &match.Status, &match.MatchType,
+		&match.Map, &match.BestOf, &match.Result, &match.WinnerTeamID,
+		&match.CreatedAt, &match.UpdatedAt, &match.TournamentName, &match.GameName,
+	)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   "Match not found",
+			Code:    "MATCH_NOT_FOUND",
+		})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Database error",
+			Code:    "DB_ERROR",
+		})
+		return
+	}
+
+	// Get participating teams
+	teamsRows, err := h.db.Query(`
+		SELECT t.id, t.name, t.short_name, t.logo_url, t.region, t.is_active,
+		       mp.seed, mp.final_position, mp.team_score, mp.points_earned
+		FROM match_participants mp
+		JOIN teams t ON mp.team_id = t.id
+		WHERE mp.match_id = $1
+		ORDER BY mp.seed`, matchID)
+
+	if err == nil {
+		defer teamsRows.Close()
+		var teams []models.Team
+		for teamsRows.Next() {
+			var team models.Team
+			var seed, finalPosition *int
+			var teamScore int
+			var pointsEarned float64
+			teamsRows.Scan(&team.ID, &team.Name, &team.ShortName, &team.LogoURL, 
+				&team.Region, &team.IsActive, &seed, &finalPosition, &teamScore, &pointsEarned)
+			teams = append(teams, team)
+		}
+		match.Teams = teams
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"match_id": matchID,
-		"message": "Match details endpoint implemented",
+		"match":   match,
 	})
 }
 

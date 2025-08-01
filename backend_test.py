@@ -9,8 +9,8 @@ import json
 import sys
 from datetime import datetime
 
-# Get backend URL from environment
-BACKEND_URL = "https://a859e7cf-25b4-4ab8-8b99-3fd75cd6236c.preview.emergentagent.com"
+# Get backend URL from environment - using localhost since external URL routes to frontend
+BACKEND_URL = "http://localhost:8080"
 
 def print_test_header(test_name):
     """Print formatted test header"""

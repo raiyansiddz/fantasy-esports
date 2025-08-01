@@ -1208,6 +1208,180 @@ func (h *AdminHandler) SendRecalculationNotifications(matchID string, teamsAffec
         return nil
 }
 
+// ⭐ TRANSACTION-BASED HELPER FUNCTIONS FOR BULK OPERATIONS ⭐
+
+// recalculateFantasyPointsForPlayerTx recalculates fantasy points for all teams containing the specified player within a transaction
+func (h *AdminHandler) recalculateFantasyPointsForPlayerTx(tx *sql.Tx, matchID string, playerID int64) (int, error) {
+        // Find all fantasy teams that have this player in the specified match
+        var teamsAffected int
+        err := tx.QueryRow(`
+                SELECT COUNT(DISTINCT ut.id) 
+                FROM user_teams ut 
+                JOIN team_players tp ON ut.id = tp.team_id 
+                WHERE tp.player_id = $1 AND ut.match_id = $2`, 
+                playerID, matchID).Scan(&teamsAffected)
+        
+        if err != nil || teamsAffected == 0 {
+                return 0, nil // No teams to update
+        }
+        
+        // Calculate base points for this player
+        basePoints, err := h.calculatePlayerBasePointsTx(tx, matchID, playerID)
+        if err != nil {
+                return 0, err
+        }
+        
+        // Find all fantasy teams containing this player and update their points
+        rows, err := tx.Query(`
+                SELECT ut.id, tp.is_captain, tp.is_vice_captain
+                FROM user_teams ut 
+                JOIN team_players tp ON ut.id = tp.team_id 
+                WHERE tp.player_id = $1 AND ut.match_id = $2`, 
+                playerID, matchID)
+        
+        if err != nil {
+                return 0, err
+        }
+        defer rows.Close()
+        
+        teamsUpdated := 0
+        for rows.Next() {
+                var teamID int64
+                var isCaptain, isViceCaptain bool
+                
+                if err := rows.Scan(&teamID, &isCaptain, &isViceCaptain); err != nil {
+                        continue
+                }
+                
+                // Apply captain/vice-captain multipliers
+                finalPoints := basePoints
+                if isCaptain {
+                        finalPoints = basePoints * 2.0 // Captain gets 2x points
+                } else if isViceCaptain {
+                        finalPoints = basePoints * 1.5 // Vice-captain gets 1.5x points
+                }
+                
+                // Update team_players.points_earned for this player
+                _, err = tx.Exec(`
+                        UPDATE team_players 
+                        SET points_earned = $1 
+                        WHERE team_id = $2 AND player_id = $3`,
+                        finalPoints, teamID, playerID)
+                
+                if err != nil {
+                        continue
+                }
+                
+                // Recalculate total points for the team
+                err = h.recalculateTeamTotalPointsTx(tx, teamID)
+                if err != nil {
+                        continue
+                }
+                
+                teamsUpdated++
+        }
+        
+        return teamsUpdated, nil
+}
+
+// calculatePlayerBasePointsTx calculates base points for a player within a transaction
+func (h *AdminHandler) calculatePlayerBasePointsTx(tx *sql.Tx, matchID string, playerID int64) (float64, error) {
+        // Get all match events for this player
+        rows, err := tx.Query(`
+                SELECT event_type, points
+                FROM match_events
+                WHERE match_id = $1 AND player_id = $2
+                ORDER BY created_at`, matchID, playerID)
+        if err != nil {
+                return 0, err
+        }
+        defer rows.Close()
+        
+        // Calculate total base points
+        var totalPoints float64
+        for rows.Next() {
+                var eventType string
+                var points float64
+                
+                if err := rows.Scan(&eventType, &points); err != nil {
+                        continue
+                }
+                
+                // Add points from this event
+                totalPoints += points
+        }
+        
+        return totalPoints, nil
+}
+
+// recalculateTeamTotalPointsTx recalculates the total points for a fantasy team within a transaction
+func (h *AdminHandler) recalculateTeamTotalPointsTx(tx *sql.Tx, teamID int64) error {
+        // Sum all player points for this team
+        var totalPoints float64
+        err := tx.QueryRow(`
+                SELECT COALESCE(SUM(points_earned), 0)
+                FROM team_players
+                WHERE team_id = $1`, teamID).Scan(&totalPoints)
+        if err != nil {
+                return err
+        }
+        
+        // Update user_teams.total_points
+        _, err = tx.Exec(`
+                UPDATE user_teams
+                SET total_points = $1, updated_at = NOW()
+                WHERE id = $2`, totalPoints, teamID)
+        
+        return err
+}
+
+// updateAllContestLeaderboardsTx updates rankings for all contests of a match within a transaction
+func (h *AdminHandler) updateAllContestLeaderboardsTx(tx *sql.Tx, matchID string) (int, error) {
+        // Find all contests for this match
+        rows, err := tx.Query(`
+                SELECT id FROM contests WHERE match_id = $1`, matchID)
+        if err != nil {
+                return 0, err
+        }
+        defer rows.Close()
+        
+        leaderboardsUpdated := 0
+        
+        for rows.Next() {
+                var contestID int64
+                if err := rows.Scan(&contestID); err != nil {
+                        continue
+                }
+                
+                // Update rankings for this contest
+                err = h.updateContestLeaderboardTx(tx, contestID)
+                if err == nil {
+                        leaderboardsUpdated++
+                }
+        }
+        
+        return leaderboardsUpdated, nil
+}
+
+// updateContestLeaderboardTx updates rankings for a specific contest within a transaction
+func (h *AdminHandler) updateContestLeaderboardTx(tx *sql.Tx, contestID int64) error {
+        // Update ranks based on total_points (highest points get rank 1)
+        _, err := tx.Exec(`
+                UPDATE contest_participants cp
+                SET rank = ranked.new_rank
+                FROM (
+                        SELECT 
+                                cp2.id,
+                                ROW_NUMBER() OVER (ORDER BY ut.total_points DESC, cp2.joined_at ASC) as new_rank
+                        FROM contest_participants cp2
+                        JOIN user_teams ut ON cp2.team_id = ut.id
+                        WHERE cp2.contest_id = $1
+                ) ranked
+                WHERE cp.id = ranked.id`, contestID)
+        
+        return err
+}
+
 // Helper function
 func parseAdminInt64(s string) int64 {
 	val, _ := strconv.ParseInt(s, 10, 64)

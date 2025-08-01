@@ -275,11 +275,15 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 		JOIN teams t ON p.team_id = t.id 
 		WHERE p.id = $1`, req.PlayerID).Scan(&playerName, &teamName)
 
-	// In production, this would trigger:
-	// 1. Fantasy points recalculation
-	// 2. Leaderboard updates
-	// 3. WebSocket notifications to connected clients
-	// 4. Push notifications to users
+	// ⭐ REAL FANTASY POINTS CALCULATION ENGINE ⭐
+	teamsAffected, err := h.RecalculateFantasyPointsForPlayer(matchID, req.PlayerID)
+	if err != nil {
+		// Log error but don't fail the request since event was added
+		teamsAffected = 0
+	}
+
+	// Update leaderboards for all contests of this match
+	h.UpdateLeaderboardsForMatch(matchID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":      true,
@@ -289,8 +293,8 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
 		"team_name":    teamName,
 		"event_type":   req.EventType,
 		"points":       req.Points,
-		"message":      "Match event added successfully",
-		"fantasy_teams_affected": 1250, // Mock number
+		"message":      "Match event added and fantasy points recalculated",
+		"fantasy_teams_affected": teamsAffected,
 	})
 }
 

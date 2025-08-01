@@ -179,7 +179,7 @@ func (h *ContestHandler) JoinContest(c *gin.Context) {
 	}
 
 	// Validate contest and team ownership
-	errors := utils.ValidateContestEntry(userID, parseInt64(contestID), req.UserTeamID)
+	errors := utils.ValidateContestEntry(userID, parseIntToInt64(contestID), req.UserTeamID)
 	if len(errors) > 0 {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,

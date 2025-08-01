@@ -517,12 +517,73 @@ func (h *GameHandler) GetMatchDetails(c *gin.Context) {
 // @Router /matches/{id}/players [get]
 func (h *GameHandler) GetMatchPlayers(c *gin.Context) {
 	matchID := c.Param("id")
+	role := c.Query("role")
+	sortBy := c.DefaultQuery("sort_by", "credit_value")
+	sortOrder := c.DefaultQuery("sort_order", "desc")
 	
+	// Validate sort parameters
+	if sortBy != "credit_value" && sortBy != "form_score" && sortBy != "name" {
+		sortBy = "credit_value"
+	}
+	if sortOrder != "asc" && sortOrder != "desc" {
+		sortOrder = "desc"
+	}
+
+	query := `SELECT p.id, p.name, p.team_id, p.game_id, p.role, p.credit_value, 
+	                 p.is_playing, p.avatar_url, p.country, p.stats, p.form_score,
+	                 t.name as team_name, t.short_name, t.logo_url as team_logo
+	          FROM players p
+	          JOIN teams t ON p.team_id = t.id
+	          JOIN match_participants mp ON t.id = mp.team_id
+	          WHERE mp.match_id = $1 AND p.is_playing = true`
+	args := []interface{}{matchID}
+	argCount := 2
+
+	if role != "" {
+		query += " AND p.role = $" + strconv.Itoa(argCount)
+		args = append(args, role)
+		argCount++
+	}
+
+	query += " ORDER BY p." + sortBy + " " + strings.ToUpper(sortOrder)
+
+	rows, err := h.db.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to fetch match players",
+			Code:    "DB_ERROR",
+		})
+		return
+	}
+	defer rows.Close()
+
+	var players []models.Player
+	for rows.Next() {
+		var player models.Player
+		var teamName, shortName, teamLogo *string
+		err := rows.Scan(
+			&player.ID, &player.Name, &player.TeamID, &player.GameID,
+			&player.Role, &player.CreditValue, &player.IsPlaying,
+			&player.AvatarURL, &player.Country, &player.Stats, &player.FormScore,
+			&teamName, &shortName, &teamLogo,
+		)
+		if err != nil {
+			continue
+		}
+		player.TeamName = teamName
+		players = append(players, player)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"success":  true,
 		"match_id": matchID,
-		"players": []models.Player{},
-		"message": "Match players endpoint implemented",
+		"players":  players,
+		"filters": gin.H{
+			"role":       role,
+			"sort_by":    sortBy,
+			"sort_order": sortOrder,
+		},
 	})
 }
 

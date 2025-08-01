@@ -11,7 +11,6 @@ import (
 	"fantasy-esports-backend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthHandler struct {

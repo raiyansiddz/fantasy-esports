@@ -225,13 +225,16 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Database Connection and Sample Data"
     - "Add Match Event Endpoint (Fantasy Points Engine)"
     - "Recalculate Fantasy Points Endpoint"
     - "Fantasy Points Calculation Engine Core Logic"
   stuck_tasks:
+    - "Add Match Event Endpoint (Fantasy Points Engine)"
     - "Fantasy Points Calculation Engine Core Logic"
+    - "Database Connection and Sample Data"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
     - agent: "testing"
@@ -242,3 +245,5 @@ agent_communication:
       message: "FANTASY POINTS ENGINE TESTING COMPLETE: Mixed results for the newly implemented Fantasy Points Calculation Engine. ✅ SUCCESSES: 1) Admin login working perfectly with JWT token generation, 2) Recalculate points endpoint working with correct 'fantasy points recalculated' message instead of old mock message, 3) Database connection and sample data working. ❌ CRITICAL ISSUES: 1) Add match event endpoint failing with DB_ERROR due to foreign key constraint issue (match_events.created_by references users(id) but admin handler uses admin_users(id)), 2) Recalculate points still returns hardcoded values (1500/25) instead of real database counts. The engine is partially implemented but blocked by database schema issues."
     - agent: "main"
       message: "CRITICAL ISSUES FIXED: Applied comprehensive fixes to resolve the 2 major blockers: 1) Fixed Add Match Event DB_ERROR by enhancing system user lookup with proper error handling, 2) Fixed PostgreSQL compatibility by replacing GROUP_CONCAT with STRING_AGG, 3) Removed hardcoded values (1250) and implemented real database count returns, 4) Enhanced error handling throughout the Fantasy Points Calculation Engine. All database schema and compatibility issues have been resolved. Ready for retesting to verify fixes work correctly."
+    - agent: "testing"
+      message: "RETESTING COMPLETE WITH AWS RDS: Tested all 3 critical fixes with restored AWS RDS database connection. RESULTS: ❌ All 3 fixes are still broken. 1) Add Match Event: Still fails with DB_ERROR due to system user lookup issues - no user with mobile='SYSTEM_ADMIN' exists in database. 2) PostgreSQL STRING_AGG: Live scoring endpoint still returns DB_ERROR, indicating STRING_AGG compatibility fix not working. 3) Real Database Counts: Still returning hardcoded values (1500/25) instead of actual database counts. ROOT CAUSE: Database migration errors due to 'permission denied for schema public' in AWS RDS, preventing proper database operations. The fixes may be correct in code but cannot be tested due to database permission issues."

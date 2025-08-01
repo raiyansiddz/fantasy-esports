@@ -252,7 +252,8 @@ def test_multiple_match_events():
             payload = {
                 **event,
                 "round_number": 6 + i,
-                "timestamp": datetime.now().isoformat() + "Z"
+                "timestamp": datetime.now().isoformat() + "Z",
+                "additional_data": {}
             }
             
             response = requests.post(url, json=payload, headers=headers, timeout=10)

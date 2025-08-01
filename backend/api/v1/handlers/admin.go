@@ -1005,24 +1005,81 @@ func (h *AdminHandler) RecalculateAllFantasyPoints(matchID string, forceRecalc b
                 teamsAffected, _ = h.createSampleFantasyTeamsIfNeeded(matchID, 1) // ScreaM's ID
         }
         
-        // Count contests (leaderboards) for this match
-        var leaderboardsUpdated int
-        err = h.db.QueryRow(`
-                SELECT COUNT(*) FROM contests WHERE match_id = $1`, matchID).Scan(&leaderboardsUpdated)
+        // ⭐ REAL COMPREHENSIVE RECALCULATION LOGIC IMPLEMENTATION ⭐
         
+        // Step 1: Get all fantasy teams for this match
+        rows, err := h.db.Query(`
+                SELECT id FROM user_teams WHERE match_id = $1`, matchID)
         if err != nil {
-                return teamsAffected, 0, err
+                return 0, 0, err
+        }
+        defer rows.Close()
+        
+        teamsRecalculated := 0
+        
+        // Step 2: For each team, recalculate all player points
+        for rows.Next() {
+                var teamID int64
+                if err := rows.Scan(&teamID); err != nil {
+                        continue
+                }
+                
+                // Get all players in this team
+                playerRows, err := h.db.Query(`
+                        SELECT tp.player_id, tp.is_captain, tp.is_vice_captain
+                        FROM team_players tp
+                        WHERE tp.team_id = $1`, teamID)
+                if err != nil {
+                        continue
+                }
+                
+                // Calculate points for each player in the team
+                for playerRows.Next() {
+                        var playerID int64
+                        var isCaptain, isViceCaptain bool
+                        
+                        if err := playerRows.Scan(&playerID, &isCaptain, &isViceCaptain); err != nil {
+                                continue
+                        }
+                        
+                        // Calculate base points for this player
+                        basePoints, err := h.calculatePlayerBasePoints(matchID, playerID)
+                        if err != nil {
+                                continue
+                        }
+                        
+                        // Apply captain/vice-captain multipliers
+                        finalPoints := basePoints
+                        if isCaptain {
+                                finalPoints = basePoints * 2.0 // Captain gets 2x points
+                        } else if isViceCaptain {
+                                finalPoints = basePoints * 1.5 // Vice-captain gets 1.5x points
+                        }
+                        
+                        // Update team_players.points_earned
+                        h.db.Exec(`
+                                UPDATE team_players 
+                                SET points_earned = $1 
+                                WHERE team_id = $2 AND player_id = $3`,
+                                finalPoints, teamID, playerID)
+                }
+                playerRows.Close()
+                
+                // Recalculate team total points
+                err = h.recalculateTeamTotalPoints(teamID)
+                if err == nil {
+                        teamsRecalculated++
+                }
         }
         
-        // TODO: Implement comprehensive recalculation logic
-        // This would involve:
-        // 1. Get all match events for this match
-        // 2. For each team, recalculate points based on their player selection
-        // 3. Apply captain (2x) and vice-captain (1.5x) multipliers
-        // 4. Update user_teams.total_points
-        // 5. Update contest rankings
+        // Step 3: Update contest rankings and count leaderboards updated
+        leaderboardsUpdated, err := h.updateAllContestLeaderboards(matchID)
+        if err != nil {
+                // Log error but don't fail the entire operation
+                leaderboardsUpdated = 0
+        }
         
-        return teamsAffected, leaderboardsUpdated, nil
+        return teamsRecalculated, leaderboardsUpdated, nil
 }
 
 // SendRecalculationNotifications sends notifications about points recalculation

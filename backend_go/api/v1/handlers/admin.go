@@ -812,7 +812,7 @@ func (h *AdminHandler) UpdateSystemConfig(c *gin.Context) {
 }
 
 // Helper function
-func parseInt64(s string) int64 {
+func parseAdminInt64(s string) int64 {
 	val, _ := strconv.ParseInt(s, 10, 64)
 	return val
 }

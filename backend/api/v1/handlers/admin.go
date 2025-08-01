@@ -449,18 +449,29 @@ func (h *AdminHandler) RecalculatePoints(c *gin.Context) {
 		return
 	}
 
-	// In production, this would:
-	// 1. Recalculate all fantasy team points for the match
-	// 2. Update leaderboards
-	// 3. Send notifications if requested
-	// 4. Update contest rankings
+	// ⭐ REAL FANTASY POINTS RECALCULATION ⭐
+	teamsAffected, leaderboardsUpdated, err := h.RecalculateAllFantasyPoints(matchID, req.ForceRecalculate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to recalculate fantasy points",
+			Code:    "RECALCULATION_FAILED",
+		})
+		return
+	}
+
+	// Send notifications if requested
+	if req.NotifyUsers {
+		h.SendRecalculationNotifications(matchID, teamsAffected)
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":              true,
 		"match_id":             matchID,
 		"force_recalculate":    req.ForceRecalculate,
-		"teams_affected":       1500,
-		"leaderboards_updated": 25,
+		"teams_affected":       teamsAffected,
+		"leaderboards_updated": leaderboardsUpdated,
+		"notifications_sent":   req.NotifyUsers,
 		"message":              "Fantasy points recalculated successfully",
 	})
 }

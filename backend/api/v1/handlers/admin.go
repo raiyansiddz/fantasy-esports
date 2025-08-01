@@ -952,8 +952,8 @@ func (h *AdminHandler) RecalculateAllFantasyPoints(matchID string, forceRecalc b
                 SELECT COUNT(*) FROM user_teams WHERE match_id = $1`, matchID).Scan(&teamsAffected)
         
         if err != nil || teamsAffected == 0 {
-                // If no teams exist, create sample teams for testing
-                teamsAffected, _ = h.createSampleFantasyTeamsIfNeeded(matchID, 1) // Use player ID 1 (ScreaM)
+                // If no teams exist, create sample teams for testing with the player from current event
+                teamsAffected, _ = h.createSampleFantasyTeamsIfNeeded(matchID, 1) // ScreaM's ID
         }
         
         // Count contests (leaderboards) for this match

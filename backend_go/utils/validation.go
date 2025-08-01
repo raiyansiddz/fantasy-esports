@@ -26,7 +26,6 @@ func ValidateTeamComposition(players []models.PlayerSelection, gameRules models.
 	captainCount := 0
 	viceCaptainCount := 0
 	teamCount := make(map[int64]int)
-	totalCredits := 0.0
 	
 	for _, player := range players {
 		if player.IsCaptain {

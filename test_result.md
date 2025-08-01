@@ -101,3 +101,133 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the GoLang fantasy sports backend that's running on localhost:8080. Test key endpoints: Health Check, Games List, Matches List, Match Details, Match Players, Tournaments. Verify which endpoints are working properly, what data is being returned, any errors or issues with implementations, and whether sample data was inserted correctly."
+
+backend:
+  - task: "Health Check Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/server.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Health check endpoint working perfectly. Returns proper JSON response with status 'healthy' and service name 'fantasy-esports-backend'. Tested on localhost:8080/health."
+
+  - task: "Games List API"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/handlers/game.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Games list endpoint working perfectly. Returns 3 games (Valorant, BGMI, CS2) with complete data including scoring rules, player roles, team composition. All games have proper structure and sample data. Endpoint: /api/v1/games/"
+
+  - task: "Matches List API"
+    implemented: true
+    working: false
+    file: "/app/backend/api/v1/handlers/game.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "Matches list endpoint has issues. Returns 200 status but matches array is null despite total showing 5. This indicates a database query issue where matches exist but aren't being properly retrieved. Endpoint: /api/v1/matches/"
+
+  - task: "Match Details API"
+    implemented: true
+    working: false
+    file: "/app/backend/api/v1/handlers/game.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "Match details endpoint failing with 500 error and 'Database error' message. This suggests issues with the match details query or missing match data. Endpoint: /api/v1/matches/1"
+
+  - task: "Match Players API"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/handlers/game.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Match players endpoint working perfectly. Returns 10 players with complete data including stats, roles, team information. Players from Team Liquid and Fnatic with realistic Valorant player data. Endpoint: /api/v1/matches/1/players"
+
+  - task: "Tournaments List API"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/handlers/game.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Tournaments list endpoint working perfectly. Returns 4 tournaments (VCT Masters 2025, BGMI World Championship, CS2 Major Championship, VCT Regional Finals) with complete data including prize pools, dates, status. Endpoint: /api/v1/tournaments/"
+
+  - task: "Database Connection"
+    implemented: true
+    working: true
+    file: "/app/backend/db"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Database connection working. PostgreSQL database is connected and most queries work. Sample data exists for games, tournaments, and players. Some issues with match-related queries."
+
+  - task: "API Routing and CORS"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/server.go"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "API routing working correctly. All endpoints accessible via /api/v1/ prefix. CORS headers properly configured. Server running on port 8080 as expected."
+
+frontend:
+  - task: "Frontend Integration"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Frontend testing not performed as per instructions. External URL routes to frontend but backend APIs need to be accessed via localhost:8080."
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Match Details API"
+    - "Matches List API"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+      message: "Completed comprehensive testing of GoLang fantasy sports backend. Most endpoints working well with good sample data. Two critical issues found: 1) Matches list returns null array despite having data, 2) Match details endpoint returns database error. These appear to be query-related issues in the match handlers. Backend server is running properly on localhost:8080 with PostgreSQL database connected."

@@ -476,7 +476,7 @@ func (h *AdminHandler) GetLiveDashboard(c *gin.Context) {
 	// In production, this would return comprehensive match data
 	dashboard := models.LiveScoringDashboard{
 		MatchInfo: models.Match{
-			ID:     parseInt64(matchID),
+			ID:     parseAdminInt64(matchID),
 			Status: "live",
 		},
 		TeamStats: map[string]models.TeamStats{

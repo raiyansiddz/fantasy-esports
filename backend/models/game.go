@@ -92,10 +92,10 @@ type Match struct {
 	LockTime      time.Time       `json:"lock_time" db:"lock_time"`
 	Status        string          `json:"status" db:"status"`
 	MatchType     string          `json:"match_type" db:"match_type"`
-	Map           *string         `json:"map" db:"map"`
-	BestOf        int             `json:"best_of" db:"best_of"`
-	Result        json.RawMessage `json:"result" db:"result"`
-	WinnerTeamID  *int64          `json:"winner_team_id" db:"winner_team_id"`
+	Map           *string          `json:"map" db:"map"`
+	BestOf        int              `json:"best_of" db:"best_of"`
+	Result        *json.RawMessage `json:"result" db:"result"`
+	WinnerTeamID  *int64           `json:"winner_team_id" db:"winner_team_id"`
 	CreatedAt     time.Time       `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time       `json:"updated_at" db:"updated_at"`
 	

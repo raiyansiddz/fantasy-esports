@@ -58,6 +58,7 @@ type OTPVerifyRequest struct {
 	OTP         string      `json:"otp" validate:"required"`
 	DeviceInfo  DeviceInfo  `json:"device_info" validate:"required"`
 	ProfileData *ProfileData `json:"profile_data"`
+	ReferralCode *string     `json:"referral_code"`
 }
 
 type DeviceInfo struct {

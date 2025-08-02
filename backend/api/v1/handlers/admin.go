@@ -1916,9 +1916,9 @@ func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]
 	
 	// Get all contests for this match that have prizes
 	rows, err := tx.Query(`
-		SELECT id, prize_pool, winner_percentage, runner_up_percentage
+		SELECT id, total_prize_pool, prize_distribution
 		FROM contests 
-		WHERE match_id = $1 AND prize_pool > 0`, matchID)
+		WHERE match_id = $1 AND total_prize_pool > 0`, matchID)
 	if err != nil {
 		return nil, err
 	}

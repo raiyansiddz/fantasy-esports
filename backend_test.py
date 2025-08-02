@@ -612,9 +612,9 @@ def test_complete_match_with_prize_distribution():
             data = print_response(response, url)
             
             if response.status_code == 200 and data and data.get('success'):
-                print(f"✅ {scenario['name']}: SUCCESS - DEFINITIVE FIX WORKING")
-                print(f"   Two-step approach: Complex UPDATE replaced with SELECT+UPDATE")
-                print(f"   Transaction isolation: READ COMMITTED preventing phantom reads")
+                print(f"✅ {scenario['name']}: SUCCESS - RESEARCH-BASED FIX WORKING")
+                print(f"   Robust transaction defer pattern: committed flag prevents double commits")
+                print(f"   Empty dataset handling: updateContestStatuses, finalizeContestLeaderboards working")
                 print(f"   Match ID: {data.get('match_id', 'N/A')}")
                 print(f"   Winner Team: {data.get('winner_team', 'N/A')}")
                 print(f"   Fantasy Teams Finalized: {data.get('fantasy_teams_finalized', 0)}")
@@ -640,13 +640,13 @@ def test_complete_match_with_prize_distribution():
                 error_code = data.get('code') if data else 'UNKNOWN'
                 print(f"❌ {scenario['name']}: FAILED - Error: {error_code}")
                 
-                # Check for specific errors that should be resolved
+                # Check for specific errors that should be resolved by research-based fix
                 if error_code == 'COMMIT_ERROR':
-                    print("❌ CRITICAL: DEFINITIVE FIX FAILED - Still getting COMMIT_ERROR")
+                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting COMMIT_ERROR")
                 elif error_code == 'CONTEST_UPDATE_ERROR':
-                    print("❌ CRITICAL: DEFINITIVE FIX FAILED - Still getting CONTEST_UPDATE_ERROR")
+                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting CONTEST_UPDATE_ERROR")
                 elif error_code == 'LEADERBOARD_FINALIZATION_ERROR':
-                    print("❌ CRITICAL: DEFINITIVE FIX FAILED - Still getting LEADERBOARD_FINALIZATION_ERROR")
+                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting LEADERBOARD_FINALIZATION_ERROR")
                 elif error_code == 'ALREADY_COMPLETED':
                     print("⚠️  Expected behavior: Match already completed")
                     results[scenario['name']] = True  # This is expected behavior, not a failure

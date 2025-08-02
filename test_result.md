@@ -143,6 +143,9 @@ backend:
         - working: "schema_mismatch_fixed"
           agent: "main"
           comment: "DATABASE SCHEMA FIX: Resolved the critical database schema mismatch in distributePrizes function identified by testing agent. Fixed SQL queries to use correct database columns: 1) Changed from non-existent 'prize_pool, winner_percentage, runner_up_percentage' to actual 'total_prize_pool, prize_distribution' (JSONB), 2) Added proper JSON parsing for prize_distribution column with error handling and default percentages, 3) Fixed rows.Scan() to match actual SQL SELECT columns, 4) Added processPrizeDistributionForContest helper function. This resolves PRIZE_DISTRIBUTION_ERROR and COMMIT_ERROR that were preventing Crown Jewel transaction logic from executing."
+        - working: "transaction_pipeline_fixed"
+          agent: "main"
+          comment: "COMPLETE TRANSACTION PIPELINE FIX: Extended Crown Jewel fix to handle ALL functions in the match completion pipeline that were failing with empty contest_participants: 1) Fixed finalizeContestLeaderboards() - added participant count validation, only updates rankings when participants exist, marks contests as completed regardless, 2) Fixed sendMatchCompletionNotifications() - added participant check, returns 0 notifications for empty contests, 3) Updated updateContestLeaderboardTx() dependencies - now called conditionally based on participant existence. This resolves LEADERBOARD_FINALIZATION_ERROR and CONTEST_UPDATE_ERROR by ensuring entire transaction pipeline handles empty contest scenarios gracefully."
 
   - task: "Bulk Score Updates Transaction Logic"
     implemented: true

@@ -2,14 +2,20 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
-	"time"
+	"strconv"
 	"strings"
+	"time"
+
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/models"
 	"fantasy-esports-backend/services"
 	"fantasy-esports-backend/pkg/cdn"
 	"fantasy-esports-backend/utils"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

@@ -154,3 +154,32 @@ type WebSocketEventAdded struct {
 	Points               float64 `json:"points"`
 	FantasyTeamsAffected int    `json:"fantasy_teams_affected"`
 }
+
+// KYC Admin Management Models
+type KYCDocumentWithUser struct {
+	KYCDocument
+	UserMobile    string  `json:"user_mobile"`
+	UserName      string  `json:"user_name"`
+	UserEmail     *string `json:"user_email"`
+}
+
+type KYCApprovalRequest struct {
+	Status          string  `json:"status" validate:"required,oneof=verified rejected"`
+	RejectionReason *string `json:"rejection_reason"`
+	Notes           *string `json:"notes"`
+}
+
+type KYCListResponse struct {
+	Documents []KYCDocumentWithUser `json:"documents"`
+	Total     int                   `json:"total"`
+	Page      int                   `json:"page"`
+	Pages     int                   `json:"pages"`
+	Filters   KYCFilters            `json:"filters"`
+}
+
+type KYCFilters struct {
+	Status       string `json:"status"`
+	DocumentType string `json:"document_type"`
+	DateFrom     string `json:"date_from"`
+	DateTo       string `json:"date_to"`
+}

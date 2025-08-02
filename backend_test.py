@@ -381,14 +381,14 @@ def test_enhanced_match_state_management():
         url = f"{BACKEND_URL}/api/v1/admin/matches/1/score"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         
-        # Test Case 1: Valid state transition with correct request format
+        # Test Case 1: Valid state transition with correct request format for best-of-3 match
         payload = {
-            "team1_score": 16,
-            "team2_score": 14,
-            "current_round": 30,
+            "team1_score": 2,
+            "team2_score": 1,
+            "current_round": 3,
             "match_status": "completed",
             "winner_team_id": 1,
-            "final_score": "16-14",
+            "final_score": "2-1",
             "match_duration": "40:00"
         }
         

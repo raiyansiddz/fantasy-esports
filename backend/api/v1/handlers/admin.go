@@ -664,7 +664,7 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 }
 
 // @Summary Recalculate fantasy points
-// @Description Manually trigger fantasy points recalculation
+// @Description Manually trigger fantasy points recalculation using the leaderboard service
 // @Tags Admin Scoring
 // @Accept json
 // @Produce json
@@ -675,6 +675,7 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 // @Router /admin/matches/{id}/recalculate-points [post]
 func (h *AdminHandler) RecalculatePoints(c *gin.Context) {
         matchID := c.Param("id")
+        matchIDInt64, _ := strconv.ParseInt(matchID, 10, 64)
 
         var req models.RecalculatePointsRequest
         if err := c.ShouldBindJSON(&req); err != nil {
@@ -686,16 +687,24 @@ func (h *AdminHandler) RecalculatePoints(c *gin.Context) {
                 return
         }
 
-        // ⭐ REAL FANTASY POINTS RECALCULATION ⭐
-        teamsAffected, leaderboardsUpdated, err := h.RecalculateAllFantasyPoints(matchID, req.ForceRecalculate)
+        // ⭐ USE REAL LEADERBOARD SERVICE FOR FANTASY POINTS RECALCULATION ⭐
+        err := h.leaderboardService.RecalculateFantasyPoints(matchIDInt64)
         if err != nil {
                 c.JSON(http.StatusInternalServerError, models.ErrorResponse{
                         Success: false,
-                        Error:   "Failed to recalculate fantasy points",
+                        Error:   "Failed to recalculate fantasy points: " + err.Error(),
                         Code:    "RECALCULATION_FAILED",
                 })
                 return
         }
+
+        // Count affected teams
+        var teamsAffected int
+        h.db.QueryRow("SELECT COUNT(*) FROM user_teams WHERE match_id = $1", matchID).Scan(&teamsAffected)
+
+        // Count leaderboards updated
+        var leaderboardsUpdated int
+        h.db.QueryRow("SELECT COUNT(*) FROM contests WHERE match_id = $1", matchID).Scan(&leaderboardsUpdated)
 
         // Send notifications if requested
         if req.NotifyUsers {
@@ -709,7 +718,7 @@ func (h *AdminHandler) RecalculatePoints(c *gin.Context) {
                 "teams_affected":       teamsAffected,
                 "leaderboards_updated": leaderboardsUpdated,
                 "notifications_sent":   req.NotifyUsers,
-                "message":              "Fantasy points recalculated successfully",
+                "message":              "Fantasy points recalculated using leaderboard service",
         })
 }
 

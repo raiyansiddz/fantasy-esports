@@ -2348,6 +2348,20 @@ func (h *AdminHandler) updateUserWallet(tx *sql.Tx, teamID int64, amount float64
 
 // updateContestStatuses updates contest statuses after match completion
 func (h *AdminHandler) updateContestStatuses(tx *sql.Tx, matchID string) (int, error) {
+	// First, check if any contests exist for this match
+	var contestCount int
+	err := tx.QueryRow(`
+		SELECT COUNT(*) FROM contests WHERE match_id = $1`, matchID).Scan(&contestCount)
+	
+	if err != nil {
+		return 0, fmt.Errorf("failed to check contest count: %w", err)
+	}
+	
+	// Handle case where no contests exist - this is valid, return success with zero count
+	if contestCount == 0 {
+		return 0, nil // Success: no contests to update
+	}
+	
 	// Update all contests for this match to completed status
 	result, err := tx.Exec(`
 		UPDATE contests 
@@ -2355,10 +2369,16 @@ func (h *AdminHandler) updateContestStatuses(tx *sql.Tx, matchID string) (int, e
 		WHERE match_id = $1 AND status != 'completed'`, matchID)
 	
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to update contest statuses: %w", err)
 	}
 	
-	rowsAffected, _ := result.RowsAffected()
+	// Check rows affected - zero is valid if all contests were already completed
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// Don't fail for RowsAffected error - return what we know worked
+		return 0, nil
+	}
+	
 	return int(rowsAffected), nil
 }
 

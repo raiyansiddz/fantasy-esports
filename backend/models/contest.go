@@ -137,7 +137,7 @@ type TeamPerformance struct {
 	TeamName         string              `json:"team_name"`
 	TotalPoints      float64             `json:"total_points"`
 	FinalRank        int                 `json:"final_rank"`
-	PlayerBreakdown  []PlayerPerformance `json:"player_breakdown"`
+	PlayerBreakdown  []FantasyPlayerPerformance `json:"player_breakdown"`
 	PointProgression []PointUpdate       `json:"point_progression,omitempty"`
 }
 

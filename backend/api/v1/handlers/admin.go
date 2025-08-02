@@ -1655,6 +1655,16 @@ func (h *AdminHandler) ProcessKYC(c *gin.Context) {
                 return
         }
 
+        // Validate status field - only 'verified' and 'rejected' are allowed
+        if req.Status != "verified" && req.Status != "rejected" {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Status must be either 'verified' or 'rejected'",
+                        Code:    "INVALID_STATUS",
+                })
+                return
+        }
+
         // Validate rejection reason for rejected documents
         if req.Status == "rejected" && (req.RejectionReason == nil || *req.RejectionReason == "") {
                 c.JSON(http.StatusBadRequest, models.ErrorResponse{

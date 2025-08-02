@@ -1380,7 +1380,7 @@ func (h *AdminHandler) createSampleFantasyTeamsIfNeeded(matchID string, playerID
         teamsCreated := 0
         teamNames := []string{"Dream Team Alpha", "Pro Squad Beta", "Elite Gaming"}
         
-        for i, teamName := range teamNames {
+        for _, teamName := range teamNames {
                 // Create user team
                 var teamID int64
                 err := h.db.QueryRow(`

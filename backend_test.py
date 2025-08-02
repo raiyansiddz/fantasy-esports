@@ -370,30 +370,30 @@ def test_error_handling():
     return results
 
 def test_enhanced_match_state_management():
-    """Test Enhanced Match State Management with DEFINITIVE FIXES - Two-step approach and transaction isolation"""
-    print_test_header("Enhanced Match State Management - DEFINITIVE CROWN JEWEL FIX")
+    """Test Enhanced Match State Management with RESEARCH-BASED CROWN JEWEL FIX - Focus on empty dataset scenarios"""
+    print_test_header("Enhanced Match State Management - RESEARCH-BASED CROWN JEWEL FIX")
     
     if not ADMIN_TOKEN:
         print("❌ No admin token available - skipping test")
         return False, None
     
-    # Test multiple scenarios that previously failed systematically
+    # Test specific scenarios mentioned in review request
     test_scenarios = [
         {
-            "name": "Empty Contest Scenario (Match 3)",
-            "match_id": 3,
+            "name": "Match 1 (has contests but 0 participants)",
+            "match_id": 1,
             "payload": {
                 "team1_score": 2,
-                "team2_score": 0,
-                "current_round": 2,
+                "team2_score": 1,
+                "current_round": 3,
                 "match_status": "completed",
                 "winner_team_id": 1,
-                "final_score": "2-0",
-                "match_duration": "25:30"
+                "final_score": "2-1",
+                "match_duration": "38:45"
             }
         },
         {
-            "name": "No Contest Scenario (Match 6)",
+            "name": "Match 6 (previous PARTICIPANT_UPDATE_ERROR)",
             "match_id": 6,
             "payload": {
                 "team1_score": 1,
@@ -406,16 +406,16 @@ def test_enhanced_match_state_management():
             }
         },
         {
-            "name": "Mixed Scenario (Match 1)",
-            "match_id": 1,
+            "name": "Match 3 (completion status changes with empty contest)",
+            "match_id": 3,
             "payload": {
                 "team1_score": 2,
-                "team2_score": 1,
-                "current_round": 3,
+                "team2_score": 0,
+                "current_round": 2,
                 "match_status": "completed",
                 "winner_team_id": 1,
-                "final_score": "2-1",
-                "match_duration": "38:45"
+                "final_score": "2-0",
+                "match_duration": "25:30"
             }
         }
     ]

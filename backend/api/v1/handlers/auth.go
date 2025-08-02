@@ -193,6 +193,20 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 		_, err = h.db.Exec("INSERT INTO user_wallets (user_id) VALUES ($1)", user.ID)
 		if err != nil {
 			// Log error but continue - wallet can be created later
+			log.Printf("Failed to create wallet for user %d: %v", user.ID, err)
+		}
+
+		// Apply referral code if provided
+		if req.ReferralCode != "" {
+			err = h.referralService.ApplyReferralCode(user.ID, req.ReferralCode)
+			if err != nil {
+				log.Printf("Failed to apply referral code %s for user %d: %v", 
+					req.ReferralCode, user.ID, err)
+				// Don't fail registration if referral fails, just log it
+			} else {
+				log.Printf("Successfully applied referral code %s for user %d", 
+					req.ReferralCode, user.ID)
+			}
 		}
 
 	} else {

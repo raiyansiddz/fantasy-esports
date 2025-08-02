@@ -134,6 +134,9 @@ backend:
         - working: "compilation_fixed"
           agent: "main"
           comment: "FIXED: Resolved compilation errors by removing duplicate function declarations. Backend now compiles successfully and is ready for testing."
+        - working: "transaction_error_fixed"
+          agent: "main"
+          comment: "CRITICAL FIX: Fixed Crown Jewel Manual Scoring System transaction commit errors identified through root cause analysis. The distributePrizes function now properly handles empty contest_participants table: 1) Added upfront check for contest participants existence, 2) Returns success with zero distributions when no participants found, 3) Added contest-specific participant validation before prize distribution, 4) Prevents transaction rollbacks due to empty dataset handling failures. This resolves 'COMMIT_ERROR' and 'PRIZE_DISTRIBUTION_ERROR' issues in both UpdateMatchScore and CompleteMatch endpoints when contest_participants table is empty."
 
   - task: "Bulk Score Updates Transaction Logic"
     implemented: true

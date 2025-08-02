@@ -209,7 +209,7 @@ class FantasyEsportsKYCTester:
                 return None
                 
             user = data.get("user", {})
-            kyc_documents = data.get("kyc_documents", [])
+            kyc_documents = data.get("kyc_documents", []) or []
             self.log_test(f"Get User Details ({user_id})", True, 
                         f"User: {user.get('first_name', '')} {user.get('last_name', '')}, "
                         f"KYC Status: {user.get('kyc_status', 'N/A')}, "

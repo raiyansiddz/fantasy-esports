@@ -331,7 +331,7 @@ func (h *RealTimeLeaderboardHandler) sendCurrentLeaderboardStatus(conn *websocke
 // @Success 200 {object} map[string]interface{}
 // @Router /leaderboards/connections/{contest_id} [get]
 func (h *RealTimeLeaderboardHandler) GetActiveConnections(c *gin.Context) {
-	contestID := parseIntToInt64(c.Param("contest_id"))
+	contestID, _ := strconv.ParseInt(c.Param("contest_id"), 10, 64)
 	
 	if contestID == 0 {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{

@@ -3402,7 +3402,6 @@ func (h *AdminHandler) calculateUserKYCStatus(tx *sql.Tx, userID int64) (string,
         // Check verification status
         allVerified := true
         hasRejected := false
-        hasPending := false
         uploadedCount := 0
 
         for _, docType := range requiredDocs {

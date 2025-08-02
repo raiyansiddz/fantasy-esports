@@ -469,11 +469,11 @@ def test_enhanced_match_state_management():
     
     if passed_count == total_count:
         print(f"\n✅ Enhanced Match State Management: ALL {total_count} scenarios PASSED")
-        print("✅ DEFINITIVE CROWN JEWEL FIX: Two-step approach and transaction isolation WORKING")
+        print("✅ RESEARCH-BASED CROWN JEWEL FIX: Robust transaction defer pattern WORKING")
         return True, results
     else:
         print(f"\n❌ Enhanced Match State Management: {passed_count}/{total_count} scenarios passed")
-        print("❌ DEFINITIVE CROWN JEWEL FIX: Still has issues with transaction handling")
+        print("❌ RESEARCH-BASED CROWN JEWEL FIX: Still has issues with transaction handling")
         return False, results
 
 def test_complete_match_with_prize_distribution():

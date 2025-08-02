@@ -478,9 +478,9 @@ func (s *LeaderboardService) GetUserTeamPerformance(teamID int64, userID int64) 
 	}
 	defer rows.Close()
 
-	var playerBreakdown []models.PlayerPerformance
+	var playerBreakdown []models.FantasyPlayerPerformance
 	for rows.Next() {
-		var player models.PlayerPerformance
+		var player models.FantasyPlayerPerformance
 		var playerName, role, teamName string
 		var creditValue float64
 		

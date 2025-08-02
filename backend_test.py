@@ -698,8 +698,8 @@ def test_state_transition_validation():
     return results
 
 def main():
-    """Main test execution for Manual Scoring System (Crown Jewel) Features"""
-    print("🚀 Starting Manual Scoring System (Crown Jewel) Tests")
+    """Main test execution for Crown Jewel Manual Scoring System Transaction Fix"""
+    print("🚀 Starting Crown Jewel Manual Scoring System Transaction Fix Tests")
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Test started at: {datetime.now()}")
     
@@ -714,15 +714,21 @@ def main():
     if ADMIN_TOKEN:
         test_results['enhanced_match_state'] = test_enhanced_match_state_management()
         test_results['complete_match_prizes'] = test_complete_match_with_prize_distribution()
+        
+        # Run Crown Jewel specific empty contest scenarios
+        crown_jewel_results = test_crown_jewel_empty_contest_scenarios()
+        
+        # Run state validation tests
         state_validation_results = test_state_transition_validation()
     else:
         test_results['enhanced_match_state'] = (False, "No admin token")
         test_results['complete_match_prizes'] = (False, "No admin token")
+        crown_jewel_results = {}
         state_validation_results = {}
     
     # Print summary
     print(f"\n{'='*60}")
-    print("MANUAL SCORING SYSTEM (CROWN JEWEL) TEST SUMMARY")
+    print("CROWN JEWEL MANUAL SCORING SYSTEM TEST SUMMARY")
     print(f"{'='*60}")
     
     passed = 0
@@ -737,6 +743,20 @@ def main():
     
     print(f"\nCore Tests: {passed}/{total} passed")
     
+    # Crown Jewel specific tests summary
+    print(f"\n{'='*60}")
+    print("CROWN JEWEL EMPTY CONTEST SCENARIOS")
+    print(f"{'='*60}")
+    
+    crown_jewel_passed = sum(1 for result in crown_jewel_results.values() if result)
+    crown_jewel_total = len(crown_jewel_results)
+    
+    for test_name, success in crown_jewel_results.items():
+        status = "✅ PASSED" if success else "❌ FAILED"
+        print(f"{test_name.upper()}: {status}")
+    
+    print(f"Crown Jewel Tests: {crown_jewel_passed}/{crown_jewel_total} passed")
+    
     # State validation tests summary
     print(f"\n{'='*60}")
     print("STATE VALIDATION TESTS")
@@ -747,8 +767,8 @@ def main():
     print(f"State Validation Tests: {validation_passed}/{validation_total} passed")
     
     # Overall summary
-    overall_passed = passed + validation_passed
-    overall_total = total + validation_total
+    overall_passed = passed + crown_jewel_passed + validation_passed
+    overall_total = total + crown_jewel_total + validation_total
     
     print(f"\n{'='*60}")
     print("OVERALL SUMMARY")
@@ -759,21 +779,36 @@ def main():
     
     # Determine if critical functionality is working
     critical_failures = 0
+    critical_issues = []
+    
     if not test_results.get('admin_login', (False, None))[0]:
         critical_failures += 1
-        print("❌ CRITICAL: Admin login failed")
+        critical_issues.append("Admin login failed")
     if not test_results.get('enhanced_match_state', (False, None))[0]:
         critical_failures += 1
-        print("❌ CRITICAL: Enhanced Match State Management failed")
+        critical_issues.append("Enhanced Match State Management failed")
     if not test_results.get('complete_match_prizes', (False, None))[0]:
         critical_failures += 1
-        print("❌ CRITICAL: Complete Match with Prize Distribution failed")
+        critical_issues.append("Complete Match with Prize Distribution failed")
+    
+    # Check Crown Jewel specific failures
+    if not crown_jewel_results.get('complete_match_empty', True):
+        critical_failures += 1
+        critical_issues.append("Crown Jewel CompleteMatch with empty contest_participants FAILED")
+    if not crown_jewel_results.get('update_match_score_empty', True):
+        critical_failures += 1
+        critical_issues.append("Crown Jewel UpdateMatchScore with empty contest_participants FAILED")
     
     if critical_failures > 0:
-        print(f"\n❌ {critical_failures} critical test(s) failed - Manual Scoring System has issues")
+        print(f"\n❌ {critical_failures} critical test(s) failed:")
+        for issue in critical_issues:
+            print(f"   - {issue}")
+        print("\n❌ Crown Jewel Manual Scoring System transaction fix has issues")
         sys.exit(1)
     else:
-        print(f"\n✅ All critical tests passed - Manual Scoring System is working properly")
+        print(f"\n✅ All critical tests passed")
+        print("✅ Crown Jewel Manual Scoring System transaction fix is working properly")
+        print("✅ Empty contest_participants scenarios handled correctly without COMMIT_ERROR")
         sys.exit(0)
 
 if __name__ == "__main__":

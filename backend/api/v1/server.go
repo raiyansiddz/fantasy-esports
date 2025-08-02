@@ -180,6 +180,7 @@ func (s *Server) Start(addr string) error {
 			referrals.GET("/history", walletHandler.GetReferralHistory)
 			referrals.POST("/apply", walletHandler.ApplyReferralCode)
 			referrals.POST("/share", walletHandler.ShareReferral)
+			referrals.GET("/leaderboard", walletHandler.GetReferralLeaderboard)
 		}
 
 		// Admin routes

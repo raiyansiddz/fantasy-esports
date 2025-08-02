@@ -722,6 +722,9 @@ func (h *AdminHandler) RecalculatePoints(c *gin.Context) {
                 h.SendRecalculationNotifications(matchID, teamsAffected)
         }
 
+        // ⭐ TRIGGER REAL-TIME LEADERBOARD UPDATES ⭐
+        h.triggerRealTimeLeaderboardUpdates(matchID, 0, "points_recalculation")
+
         c.JSON(http.StatusOK, gin.H{
                 "success":              true,
                 "match_id":             matchID,

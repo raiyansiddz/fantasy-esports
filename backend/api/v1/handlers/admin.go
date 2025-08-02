@@ -1705,6 +1705,50 @@ func (h *AdminHandler) RecalculateAllFantasyPoints(matchID string, forceRecalc b
         return teamsRecalculated, leaderboardsUpdated, nil
 }
 
+// ================================
+// REAL-TIME LEADERBOARD INTEGRATION ⭐
+// ================================
+
+// triggerRealTimeLeaderboardUpdates triggers real-time updates for all contests in a match
+func (h *AdminHandler) triggerRealTimeLeaderboardUpdates(matchID string, eventID int64, triggerSource string) {
+        // Get all contests for this match
+        rows, err := h.db.Query(`
+                SELECT id FROM contests WHERE match_id = $1 AND status IN ('upcoming', 'live')`, matchID)
+        if err != nil {
+                logger.Error(fmt.Sprintf("Failed to get contests for real-time update: %v", err))
+                return
+        }
+        defer rows.Close()
+
+        contestsUpdated := 0
+        for rows.Next() {
+                var contestID int64
+                if err := rows.Scan(&contestID); err != nil {
+                        continue
+                }
+
+                // Trigger real-time update for this contest
+                err := h.leaderboardService.TriggerRealTimeUpdate(contestID, triggerSource, &eventID)
+                if err != nil {
+                        logger.Error(fmt.Sprintf("Failed to trigger real-time update for contest %d: %v", contestID, err))
+                        continue
+                }
+                contestsUpdated++
+        }
+
+        logger.Info(fmt.Sprintf("Triggered real-time leaderboard updates for %d contests in match %s", contestsUpdated, matchID))
+}
+
+// triggerRealTimeLeaderboardUpdateForContest triggers real-time update for a specific contest
+func (h *AdminHandler) triggerRealTimeLeaderboardUpdateForContest(contestID int64, triggerSource string, eventID *int64) {
+        err := h.leaderboardService.TriggerRealTimeUpdate(contestID, triggerSource, eventID)
+        if err != nil {
+                logger.Error(fmt.Sprintf("Failed to trigger real-time update for contest %d: %v", contestID, err))
+        } else {
+                logger.Info(fmt.Sprintf("Triggered real-time leaderboard update for contest %d from source: %s", contestID, triggerSource))
+        }
+}
+
 // SendRecalculationNotifications sends notifications about points recalculation
 func (h *AdminHandler) SendRecalculationNotifications(matchID string, teamsAffected int) error {
         // TODO: Implement notification system

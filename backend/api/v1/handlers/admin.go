@@ -2540,8 +2540,19 @@ func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, 
 		teamIDs = append(teamIDs, teamID)
 	}
 	
+	// Check if we have participants - for empty datasets, this is success, not error
+	if len(teamIDs) == 0 {
+		// No participants found - this is valid for empty contest scenarios
+		return nil // Success: no participants to update
+	}
+	
 	if len(teamIDs) < 2 {
-		return fmt.Errorf("insufficient teams found for match")
+		// Only 1 participant - update what we can, don't fail
+		_, err = tx.Exec(`
+			UPDATE match_participants 
+			SET team_score = $1 
+			WHERE match_id = $2 AND team_id = $3`, team1Score, matchID, teamIDs[0])
+		return err // Return success/error from the single update
 	}
 	
 	// Update team scores

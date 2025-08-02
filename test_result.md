@@ -262,10 +262,8 @@ metadata:
 test_plan:
   current_focus:
     - "Enhanced Match State Management"
-    - "Complete Match with Prize Distribution"
   stuck_tasks:
     - "Enhanced Match State Management"
-    - "Complete Match with Prize Distribution"
   test_all: false
   test_priority: "high_first"
 

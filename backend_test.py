@@ -381,15 +381,15 @@ def test_enhanced_match_state_management():
         url = f"{BACKEND_URL}/api/v1/admin/matches/1/score"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         
-        # Test Case 1: Valid state transition from live to completed
+        # Test Case 1: Valid state transition with correct request format
         payload = {
-            "match_status": "completed",
-            "final_score": "16-14",
             "team1_score": 16,
             "team2_score": 14,
             "current_round": 30,
+            "match_status": "completed",
             "winner_team_id": 1,
-            "match_duration": 2400
+            "final_score": "16-14",
+            "match_duration": "40:00"
         }
         
         response = requests.put(url, json=payload, headers=headers, timeout=15)
@@ -431,14 +431,16 @@ def test_complete_match_with_prize_distribution():
     try:
         url = f"{BACKEND_URL}/api/v1/admin/matches/2/complete"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
+        
+        # Use correct request format based on CompleteMatchRequest model
         payload = {
-            "final_results": {
+            "final_result": {
                 "winner_team_id": 2,
                 "final_score": "2-1",
+                "mvp_player_id": 3,
                 "match_duration": 3600
             },
             "distribute_prizes": True,
-            "finalize_leaderboards": True,
             "send_notifications": True
         }
         
@@ -448,17 +450,20 @@ def test_complete_match_with_prize_distribution():
         if response.status_code == 200 and data and data.get('success'):
             print(f"✅ Complete Match with Prize Distribution PASSED")
             print(f"   Match ID: {data.get('match_id')}")
-            print(f"   Winner Team: {data.get('winner_team_id')}")
+            print(f"   Winner Team: {data.get('winner_team')}")
+            print(f"   MVP Player: {data.get('mvp_player')}")
             print(f"   Fantasy Teams Finalized: {data.get('fantasy_teams_finalized', 0)}")
             print(f"   Leaderboards Finalized: {data.get('leaderboards_finalized', 0)}")
-            print(f"   Prizes Distributed: ${data.get('total_prizes_distributed', 0)}")
-            print(f"   Winners Rewarded: {data.get('winners_rewarded', 0)}")
+            print(f"   Contests Updated: {data.get('contests_updated', 0)}")
             print(f"   Notifications Sent: {data.get('notifications_sent', 0)}")
+            print(f"   Statistics Updated: {data.get('statistics_updated', False)}")
             
             # Check for real prize distribution features
             prize_data = data.get('prize_distribution', {})
-            if prize_data.get('total_amount', 0) > 0:
+            if prize_data and prize_data.get('total_amount', 0) > 0:
                 print(f"✅ Real prize distribution working: ${prize_data.get('total_amount')}")
+                print(f"   Winners Rewarded: {prize_data.get('winners_rewarded', 0)}")
+                print(f"   Contests Processed: {prize_data.get('contests_processed', 0)}")
             if data.get('fantasy_teams_finalized', 0) > 0:
                 print("✅ Fantasy team score finalization working")
             if data.get('leaderboards_finalized', 0) > 0:
@@ -485,19 +490,40 @@ def test_state_transition_validation():
         {
             "name": "Invalid transition: completed to live",
             "match_id": "1",
-            "payload": {"match_status": "live", "final_score": "0-0"},
+            "payload": {
+                "match_status": "live", 
+                "team1_score": 0, 
+                "team2_score": 0,
+                "current_round": 1,
+                "final_score": "0-0",
+                "match_duration": "00:00"
+            },
             "should_fail": True
         },
         {
             "name": "Valid transition: upcoming to live",
             "match_id": "3",
-            "payload": {"match_status": "live", "current_round": 1},
+            "payload": {
+                "match_status": "live", 
+                "team1_score": 0, 
+                "team2_score": 0,
+                "current_round": 1,
+                "final_score": "0-0",
+                "match_duration": "00:00"
+            },
             "should_fail": False
         },
         {
             "name": "Invalid score format",
             "match_id": "4",
-            "payload": {"match_status": "completed", "team1_score": -1, "team2_score": 5},
+            "payload": {
+                "match_status": "completed", 
+                "team1_score": -1, 
+                "team2_score": 5,
+                "current_round": 10,
+                "final_score": "-1-5",
+                "match_duration": "20:00"
+            },
             "should_fail": True
         }
     ]

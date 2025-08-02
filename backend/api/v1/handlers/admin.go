@@ -668,6 +668,9 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
                 response["completion_data"] = completionData
         }
 
+        // ⭐ TRIGGER REAL-TIME LEADERBOARD UPDATES ⭐
+        h.triggerRealTimeLeaderboardUpdates(matchID, 0, "score_update")
+
         c.JSON(http.StatusOK, response)
 }
 

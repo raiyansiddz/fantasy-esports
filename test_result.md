@@ -128,6 +128,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ CRITICAL: Crown Jewel fix FAILED - Enhanced Match State Management still failing with COMMIT_ERROR. Testing PUT /api/admin/matches/1/score with completion status returned 500 error with 'Failed to commit match updates' and code 'COMMIT_ERROR'. The transaction pipeline fix is NOT working properly. Empty contest_participants scenarios are still causing transaction rollbacks during match completion logic."
+        - working: false
+          agent: "testing"
+          comment: "❌ DEFINITIVE FAILURE CONFIRMED: Crown Jewel Manual Scoring System transaction fix has FAILED comprehensive testing. ROOT CAUSE IDENTIFIED: Match 1 has 365 contests with $450K prize pools each but 0 contest_participants. The main agent's claimed fixes for distributePrizes, finalizeContestLeaderboards, and updateContestLeaderboardTx are NOT working. The transaction pipeline still fails when: 1) Contests exist but have no participants (LEADERBOARD_FINALIZATION_ERROR), 2) No contests exist at all (CONTEST_UPDATE_ERROR), 3) Complex UPDATE with JOIN operations in updateContestLeaderboardTx function cause transaction rollbacks. The Crown Jewel fix is fundamentally broken and needs complete rework."
 
   - task: "Complete Match with Prize Distribution"
     implemented: true

@@ -2637,7 +2637,7 @@ func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, 
 	log.Printf("🔄 DEBUG: Updating team1 score for match %s, team %d, score %d", matchID, teamIDs[0], team1Score)
 	result1, err := tx.Exec(`
 		UPDATE match_participants 
-		SET team_score = $1, updated_at = NOW()
+		SET team_score = $1
 		WHERE match_id = $2 AND team_id = $3`, team1Score, matchID, teamIDs[0])
 	
 	if err != nil {
@@ -2658,7 +2658,7 @@ func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, 
 		log.Printf("🔄 DEBUG: Updating team2 score for match %s, team %d, score %d", matchID, teamIDs[1], team2Score)
 		result2, err := tx.Exec(`
 			UPDATE match_participants 
-			SET team_score = $1, updated_at = NOW()
+			SET team_score = $1
 			WHERE match_id = $2 AND team_id = $3`, team2Score, matchID, teamIDs[1])
 		
 		if err != nil {

@@ -3372,3 +3372,71 @@ func (h *AdminHandler) recalculateAllFantasyPointsTx(tx *sql.Tx, matchID string,
         return teamsRecalculated, leaderboardsUpdated, nil
 }
 
+// ================================
+// KYC HELPER FUNCTIONS
+// ================================
+
+// calculateUserKYCStatus calculates the overall KYC status for a user based on their documents
+func (h *AdminHandler) calculateUserKYCStatus(tx *sql.Tx, userID int64) (string, error) {
+        // Get all KYC documents for this user
+        rows, err := tx.Query(`
+                SELECT document_type, status
+                FROM kyc_documents
+                WHERE user_id = $1`, userID)
+        if err != nil {
+                return "pending", err
+        }
+        defer rows.Close()
+
+        docStatuses := make(map[string]string)
+        for rows.Next() {
+                var docType, status string
+                if err := rows.Scan(&docType, &status); err != nil {
+                        continue
+                }
+                docStatuses[docType] = status
+        }
+
+        // Required documents for full verification
+        requiredDocs := []string{"pan_card", "aadhaar", "bank_statement"}
+        
+        // Check verification status
+        allVerified := true
+        hasRejected := false
+        hasPending := false
+        uploadedCount := 0
+
+        for _, docType := range requiredDocs {
+                status, exists := docStatuses[docType]
+                if !exists {
+                        allVerified = false
+                        hasPending = true
+                } else {
+                        uploadedCount++
+                        switch status {
+                        case "verified":
+                                // Keep checking other docs
+                        case "rejected":
+                                allVerified = false
+                                hasRejected = true
+                        case "pending":
+                                allVerified = false
+                                hasPending = true
+                        default:
+                                allVerified = false
+                        }
+                }
+        }
+
+        // Determine overall KYC status
+        if allVerified && uploadedCount == len(requiredDocs) {
+                return "verified", nil
+        } else if hasRejected {
+                return "rejected", nil
+        } else if uploadedCount > 0 {
+                return "partial", nil
+        } else {
+                return "pending", nil
+        }
+}
+

@@ -546,7 +546,11 @@ class FantasyEsportsKYCTester:
             self.log_test("KYC Document Processing", True, 
                         "No pending documents available - endpoint structure validated")
         
-        # Test 7: Edge Cases
+        # Test 7: Comprehensive KYC Status Validation Fix
+        print("\n🎯 Testing KYC Status Validation Fix...")
+        self.test_kyc_status_validation_comprehensive()
+        
+        # Test 8: Edge Cases
         self.test_kyc_edge_cases()
         
         # Test Summary

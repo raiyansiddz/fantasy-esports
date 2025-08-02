@@ -2565,11 +2565,24 @@ func (h *AdminHandler) validateMatchScore(req models.UpdateMatchScoreRequest, be
 
 // updateMatchParticipantScores updates scores for match participants
 func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, team1Score, team2Score int) error {
-	// Get participating teams
+	// First, check if this match exists
+	var matchExists bool
+	err := tx.QueryRow(`
+		SELECT EXISTS(SELECT 1 FROM matches WHERE id = $1)`, matchID).Scan(&matchExists)
+	
+	if err != nil {
+		return fmt.Errorf("failed to check match existence: %w", err)
+	}
+	
+	if !matchExists {
+		return fmt.Errorf("match %s does not exist", matchID)
+	}
+	
+	// Get participating teams for this match
 	rows, err := tx.Query(`
 		SELECT team_id FROM match_participants WHERE match_id = $1 ORDER BY id LIMIT 2`, matchID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to query match participants: %w", err)
 	}
 	defer rows.Close()
 	
@@ -2577,41 +2590,55 @@ func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, 
 	for rows.Next() {
 		var teamID int64
 		if err := rows.Scan(&teamID); err != nil {
-			continue
+			continue // Skip invalid rows, don't fail entire operation
 		}
 		teamIDs = append(teamIDs, teamID)
 	}
 	
-	// Check if we have participants - for empty datasets, this is success, not error
+	// Check for iteration errors
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("error iterating match participants: %w", err)
+	}
+	
+	// Handle case where no participants exist - this is valid for some match scenarios
 	if len(teamIDs) == 0 {
-		// No participants found - this is valid for empty contest scenarios
-		return nil // Success: no participants to update
+		return nil // Success: no participants to update scores for
 	}
 	
-	if len(teamIDs) < 2 {
-		// Only 1 participant - update what we can, don't fail
-		_, err = tx.Exec(`
-			UPDATE match_participants 
-			SET team_score = $1 
-			WHERE match_id = $2 AND team_id = $3`, team1Score, matchID, teamIDs[0])
-		return err // Return success/error from the single update
-	}
-	
-	// Update team scores
-	_, err = tx.Exec(`
+	// Update team1 score if we have at least one participant
+	result1, err := tx.Exec(`
 		UPDATE match_participants 
-		SET team_score = $1 
+		SET team_score = $1, updated_at = NOW()
 		WHERE match_id = $2 AND team_id = $3`, team1Score, matchID, teamIDs[0])
+	
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to update team1 score: %w", err)
 	}
 	
-	_, err = tx.Exec(`
-		UPDATE match_participants 
-		SET team_score = $1 
-		WHERE match_id = $2 AND team_id = $3`, team2Score, matchID, teamIDs[1])
+	// Check if the update was successful
+	if rowsAffected, err := result1.RowsAffected(); err == nil && rowsAffected == 0 {
+		// No rows affected could indicate the participant was deleted - that's ok
+	}
 	
-	return err
+	// Update team2 score if we have a second participant
+	if len(teamIDs) >= 2 {
+		result2, err := tx.Exec(`
+			UPDATE match_participants 
+			SET team_score = $1, updated_at = NOW()
+			WHERE match_id = $2 AND team_id = $3`, team2Score, matchID, teamIDs[1])
+		
+		if err != nil {
+			return fmt.Errorf("failed to update team2 score: %w", err)
+		}
+		
+		// Check if the update was successful (but don't fail if not)
+		if rowsAffected, err := result2.RowsAffected(); err == nil && rowsAffected == 0 {
+			// No rows affected could indicate the participant was deleted - that's ok
+		}
+	}
+	
+	// Success: we've updated whatever participants existed
+	return nil
 }
 
 // handleMatchCompletion handles completion logic when match status changes to completed

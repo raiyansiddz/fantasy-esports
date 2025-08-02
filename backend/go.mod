@@ -1,6 +1,6 @@
 module fantasy-esports-backend
 
-go 1.21
+go 1.19
 
 require (
 	github.com/cloudinary/cloudinary-go/v2 v2.7.0

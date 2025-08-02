@@ -1047,11 +1047,14 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 		statsUpdated = false
 	}
 	
-	// Step 10: Check for commit errors from defer pattern
+	// Step 10: Check for commit errors from defer pattern with detailed error logging
 	if txErr != nil {
+		// Log the detailed error for debugging
+		fmt.Printf("CompleteMatch transaction error for match %s: %v\n", matchID, txErr)
+		
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
-			Error:   "Failed to commit match completion",
+			Error:   fmt.Sprintf("Failed to commit match completion: %v", txErr),
 			Code:    "COMMIT_ERROR",
 		})
 		return

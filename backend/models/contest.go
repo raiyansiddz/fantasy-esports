@@ -141,7 +141,7 @@ type TeamPerformance struct {
 	PointProgression []PointUpdate       `json:"point_progression,omitempty"`
 }
 
-type PlayerPerformance struct {
+type FantasyPlayerPerformance struct {
 	PlayerID          int64   `json:"player_id"`
 	PlayerName        string  `json:"player_name"`
 	Role              string  `json:"role"`

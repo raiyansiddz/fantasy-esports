@@ -1852,6 +1852,34 @@ func (h *AdminHandler) finalizeFantasyTeamScores(tx *sql.Tx, matchID string) (in
 
 // finalizeContestLeaderboards finalizes and freezes contest leaderboards
 func (h *AdminHandler) finalizeContestLeaderboards(tx *sql.Tx, matchID string) (int, error) {
+	// First, check if there are any contest participants for this match
+	var participantCount int
+	err := tx.QueryRow(`
+		SELECT COUNT(*)
+		FROM contest_participants cp
+		JOIN contests c ON cp.contest_id = c.id
+		WHERE c.match_id = $1`, matchID).Scan(&participantCount)
+	
+	if err != nil {
+		return 0, err
+	}
+	
+	// Handle the case where no participants exist - return success with zero finalized
+	if participantCount == 0 {
+		// Still mark contests as completed even without participants
+		contestCount, err := tx.Exec(`
+			UPDATE contests 
+			SET status = 'completed', is_finalized = true, finalized_at = NOW()
+			WHERE match_id = $1 AND status != 'completed'`, matchID)
+		
+		if err != nil {
+			return 0, err
+		}
+		
+		rowsAffected, _ := contestCount.RowsAffected()
+		return int(rowsAffected), nil
+	}
+	
 	// Get all contests for this match
 	rows, err := tx.Query(`
 		SELECT id FROM contests WHERE match_id = $1`, matchID)
@@ -1868,13 +1896,20 @@ func (h *AdminHandler) finalizeContestLeaderboards(tx *sql.Tx, matchID string) (
 			continue
 		}
 		
-		// Update final rankings one last time
-		err = h.updateContestLeaderboardTx(tx, contestID)
-		if err != nil {
-			continue
+		// Check if this specific contest has participants before updating leaderboard
+		var contestParticipants int
+		err = tx.QueryRow(`
+			SELECT COUNT(*) FROM contest_participants WHERE contest_id = $1`, contestID).Scan(&contestParticipants)
+		
+		if err == nil && contestParticipants > 0 {
+			// Update final rankings only if there are participants
+			err = h.updateContestLeaderboardTx(tx, contestID)
+			if err != nil {
+				continue
+			}
 		}
 		
-		// Mark contest as finalized
+		// Mark contest as finalized regardless of participants
 		_, err = tx.Exec(`
 			UPDATE contests 
 			SET status = 'completed', is_finalized = true, finalized_at = NOW()

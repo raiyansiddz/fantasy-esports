@@ -429,7 +429,7 @@ def test_complete_match_with_prize_distribution():
         return False, None
     
     try:
-        url = f"{BACKEND_URL}/api/v1/admin/matches/2/complete"
+        url = f"{BACKEND_URL}/api/v1/admin/matches/3/complete"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         
         # Use correct request format based on CompleteMatchRequest model

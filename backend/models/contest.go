@@ -131,3 +131,34 @@ type LeaderboardEntry struct {
 	AvatarURL    *string `json:"avatar_url"`
 	PrizeWon     float64 `json:"prize_won,omitempty"`
 }
+
+type TeamPerformance struct {
+	TeamID           int64               `json:"team_id"`
+	TeamName         string              `json:"team_name"`
+	TotalPoints      float64             `json:"total_points"`
+	FinalRank        int                 `json:"final_rank"`
+	PlayerBreakdown  []PlayerPerformance `json:"player_breakdown"`
+	PointProgression []PointUpdate       `json:"point_progression,omitempty"`
+}
+
+type PlayerPerformance struct {
+	PlayerID          int64   `json:"player_id"`
+	PlayerName        string  `json:"player_name"`
+	Role              string  `json:"role"`
+	TeamName          string  `json:"team_name"`
+	CreditValue       float64 `json:"credit_value"`
+	BasePoints        float64 `json:"base_points"`
+	CaptainBonus      float64 `json:"captain_bonus"`
+	ViceCaptainBonus  float64 `json:"vice_captain_bonus"`
+	TotalPoints       float64 `json:"total_points"`
+	IsCaptain         bool    `json:"is_captain"`
+	IsViceCaptain     bool    `json:"is_vice_captain"`
+}
+
+type PointUpdate struct {
+	Timestamp   time.Time `json:"timestamp"`
+	EventType   string    `json:"event_type"`
+	PlayerName  string    `json:"player_name"`
+	Points      float64   `json:"points"`
+	TotalPoints float64   `json:"total_points"`
+}

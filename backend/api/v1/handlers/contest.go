@@ -945,8 +945,33 @@ func (h *ContestHandler) ValidateTeam(c *gin.Context) {
 }
 
 func (h *ContestHandler) GetTeamPerformance(c *gin.Context) {
-        teamID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "team_id": teamID, "performance": map[string]interface{}{}})
+        teamID := parseIntToInt64(c.Param("id"))
+        userID := c.GetInt64("user_id")
+        
+        if teamID == 0 {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid team ID",
+                        Code:    "INVALID_TEAM_ID",
+                })
+                return
+        }
+
+        performance, err := h.leaderboardService.GetUserTeamPerformance(teamID, userID)
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to get team performance: " + err.Error(),
+                        Code:    "PERFORMANCE_ERROR",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success":     true,
+                "team_id":     teamID,
+                "performance": performance,
+        })
 }
 
 // Leaderboard methods

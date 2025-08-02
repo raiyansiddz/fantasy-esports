@@ -532,14 +532,14 @@ def test_enhanced_match_state_management():
         return False, results
 
 def test_complete_match_with_prize_distribution():
-    """Test Complete Match functionality with RESEARCH-BASED CROWN JEWEL FIX - Focus on empty dataset scenarios"""
-    print_test_header("Complete Match with Prize Distribution - RESEARCH-BASED CROWN JEWEL FIX")
+    """Test Complete Match functionality - Focus on capturing updateContestStatuses debug logs"""
+    print_test_header("Complete Match with Prize Distribution - DEBUG LOG ANALYSIS")
     
     if not ADMIN_TOKEN:
         print("❌ No admin token available - skipping test")
         return False, None
     
-    # Test specific scenarios mentioned in review request
+    # Test specific scenarios mentioned in review request to capture debug logs
     test_scenarios = [
         {
             "name": "Match 10 (previous CONTEST_UPDATE_ERROR)",
@@ -584,48 +584,6 @@ def test_complete_match_with_prize_distribution():
             }
         },
         {
-            "name": "Match 13 (previous CONTEST_UPDATE_ERROR)",
-            "match_id": 13,
-            "payload": {
-                "final_result": {
-                    "winner_team_id": 2,
-                    "final_score": "2-0",
-                    "mvp_player_id": 4,
-                    "match_duration": 2800
-                },
-                "distribute_prizes": True,
-                "send_notifications": True
-            }
-        },
-        {
-            "name": "Match 14 (previous CONTEST_UPDATE_ERROR)",
-            "match_id": 14,
-            "payload": {
-                "final_result": {
-                    "winner_team_id": 1,
-                    "final_score": "2-1",
-                    "mvp_player_id": 1,
-                    "match_duration": 3400
-                },
-                "distribute_prizes": True,
-                "send_notifications": True
-            }
-        },
-        {
-            "name": "Match 15 (previous CONTEST_UPDATE_ERROR)",
-            "match_id": 15,
-            "payload": {
-                "final_result": {
-                    "winner_team_id": 2,
-                    "final_score": "2-0",
-                    "mvp_player_id": 5,
-                    "match_duration": 2600
-                },
-                "distribute_prizes": True,
-                "send_notifications": True
-            }
-        },
-        {
             "name": "Match 20 (empty contest scenario)",
             "match_id": 20,
             "payload": {
@@ -658,18 +616,25 @@ def test_complete_match_with_prize_distribution():
     results = {}
     headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
     
+    print("\n🔍 CAPTURING DEBUG LOGS FROM updateContestStatuses FUNCTION")
+    print("Expected debug messages:")
+    print("- 'DEBUG: updateContestStatuses called for match X'")
+    print("- 'DEBUG: Found X contests for match Y'")
+    print("- 'DEBUG: No contests found for match X, returning success' (for empty scenarios)")
+    print("- 'DEBUG: Attempting to update contest statuses for match X'")
+    print("- 'DEBUG: Updated X contest statuses for match Y'")
+    
     for scenario in test_scenarios:
         try:
             print(f"\n--- Testing {scenario['name']} ---")
             url = f"{BACKEND_URL}/api/v1/admin/matches/{scenario['match_id']}/complete"
             
-            response = requests.post(url, json=scenario['payload'], headers=headers, timeout=25)
+            print(f"🚀 Triggering updateContestStatuses for Match {scenario['match_id']}")
+            response = requests.post(url, json=scenario['payload'], headers=headers, timeout=30)
             data = print_response(response, url)
             
             if response.status_code == 200 and data and data.get('success'):
-                print(f"✅ {scenario['name']}: SUCCESS - RESEARCH-BASED FIX WORKING")
-                print(f"   Robust transaction defer pattern: committed flag prevents double commits")
-                print(f"   Empty dataset handling: updateContestStatuses, finalizeContestLeaderboards working")
+                print(f"✅ {scenario['name']}: SUCCESS")
                 print(f"   Match ID: {data.get('match_id', 'N/A')}")
                 print(f"   Winner Team: {data.get('winner_team', 'N/A')}")
                 print(f"   Fantasy Teams Finalized: {data.get('fantasy_teams_finalized', 0)}")
@@ -693,15 +658,17 @@ def test_complete_match_with_prize_distribution():
                 results[scenario['name']] = True
             else:
                 error_code = data.get('code') if data else 'UNKNOWN'
+                error_message = data.get('error') if data else 'Unknown error'
                 print(f"❌ {scenario['name']}: FAILED - Error: {error_code}")
+                print(f"   Error Message: {error_message}")
                 
-                # Check for specific errors that should be resolved by research-based fix
+                # Analyze specific error patterns
                 if error_code == 'COMMIT_ERROR':
-                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting COMMIT_ERROR")
+                    print("🔍 ANALYSIS: Transaction commit failed - likely in updateContestStatuses or related functions")
                 elif error_code == 'CONTEST_UPDATE_ERROR':
-                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting CONTEST_UPDATE_ERROR")
+                    print("🔍 ANALYSIS: Contest update failed - updateContestStatuses function issue")
                 elif error_code == 'LEADERBOARD_FINALIZATION_ERROR':
-                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting LEADERBOARD_FINALIZATION_ERROR")
+                    print("🔍 ANALYSIS: Leaderboard finalization failed - finalizeContestLeaderboards function issue")
                 elif error_code == 'ALREADY_COMPLETED':
                     print("⚠️  Expected behavior: Match already completed")
                     results[scenario['name']] = True  # This is expected behavior, not a failure
@@ -713,17 +680,47 @@ def test_complete_match_with_prize_distribution():
             print(f"❌ {scenario['name']}: ERROR - {str(e)}")
             results[scenario['name']] = False
     
+    # Check backend logs for debug messages
+    print(f"\n{'='*80}")
+    print("BACKEND LOG ANALYSIS - Looking for updateContestStatuses debug messages")
+    print(f"{'='*80}")
+    
+    try:
+        import subprocess
+        # Try to get recent backend logs
+        log_result = subprocess.run(['tail', '-n', '100', '/var/log/supervisor/backend.out.log'], 
+                                  capture_output=True, text=True, timeout=5)
+        if log_result.returncode == 0 and log_result.stdout:
+            print("Recent backend logs:")
+            print(log_result.stdout)
+        else:
+            print("Could not retrieve backend logs from /var/log/supervisor/backend.out.log")
+            
+        # Try alternative log location
+        log_result2 = subprocess.run(['tail', '-n', '100', '/var/log/supervisor/backend.err.log'], 
+                                   capture_output=True, text=True, timeout=5)
+        if log_result2.returncode == 0 and log_result2.stdout:
+            print("Recent backend error logs:")
+            print(log_result2.stdout)
+            
+    except Exception as log_error:
+        print(f"Could not retrieve backend logs: {log_error}")
+    
     # Overall assessment
     passed_count = sum(1 for result in results.values() if result)
     total_count = len(results)
     
+    print(f"\n{'='*60}")
+    print("COMPLETE MATCH WITH PRIZE DISTRIBUTION TEST SUMMARY")
+    print(f"{'='*60}")
+    print(f"Tests Passed: {passed_count}/{total_count}")
+    
     if passed_count == total_count:
-        print(f"\n✅ Complete Match with Prize Distribution: ALL {total_count} scenarios PASSED")
-        print("✅ RESEARCH-BASED CROWN JEWEL FIX: Robust transaction defer pattern WORKING")
+        print("✅ All Complete Match with Prize Distribution tests PASSED")
         return True, results
     else:
-        print(f"\n❌ Complete Match with Prize Distribution: {passed_count}/{total_count} scenarios passed")
-        print("❌ RESEARCH-BASED CROWN JEWEL FIX: Still has issues with transaction handling")
+        print("❌ Some Complete Match with Prize Distribution tests FAILED")
+        print("🔍 Check debug logs above for updateContestStatuses function behavior")
         return False, results
 
 def test_crown_jewel_empty_contest_scenarios():

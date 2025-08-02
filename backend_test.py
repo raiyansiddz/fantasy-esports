@@ -370,18 +370,19 @@ def test_error_handling():
     return results
 
 def test_enhanced_match_state_management():
-    """Test Enhanced Match State Management with complex state validation"""
-    print_test_header("Enhanced Match State Management")
+    """Test Enhanced Match State Management with complex state validation - Crown Jewel Fix"""
+    print_test_header("Enhanced Match State Management - Crown Jewel Transaction Fix")
     
     if not ADMIN_TOKEN:
         print("❌ No admin token available - skipping test")
         return False, None
     
     try:
-        url = f"{BACKEND_URL}/api/v1/admin/matches/1/score"
+        # Test with match ID that likely has empty contest_participants table
+        url = f"{BACKEND_URL}/api/v1/admin/matches/11/score"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         
-        # Test Case 1: Valid state transition with correct request format for best-of-3 match
+        # Test Case: Valid state transition with correct request format for best-of-3 match
         payload = {
             "team1_score": 2,
             "team2_score": 1,
@@ -396,7 +397,7 @@ def test_enhanced_match_state_management():
         data = print_response(response, url)
         
         if response.status_code == 200 and data and data.get('success'):
-            print(f"✅ Enhanced Match State Management PASSED")
+            print(f"✅ Enhanced Match State Management PASSED - NO COMMIT_ERROR")
             print(f"   Match Status: {data.get('status')}")
             print(f"   Final Score: {data.get('final_score')}")
             print(f"   Winner Team: {data.get('winner_team')}")
@@ -409,11 +410,17 @@ def test_enhanced_match_state_management():
             if data.get('score_validation'):
                 print("✅ Score validation working")
             if data.get('completion_data'):
-                print("✅ Match completion logic working")
+                print("✅ Match completion logic working - Crown Jewel fix handles empty contest_participants")
                 
             return True, data
         else:
-            print("❌ Enhanced Match State Management FAILED")
+            error_code = data.get('code') if data else 'UNKNOWN'
+            if error_code == 'COMMIT_ERROR':
+                print("❌ CRITICAL: Crown Jewel fix FAILED - Still getting COMMIT_ERROR in UpdateMatchScore")
+            elif error_code == 'PRIZE_DISTRIBUTION_ERROR':
+                print("❌ CRITICAL: Crown Jewel fix FAILED - Still getting PRIZE_DISTRIBUTION_ERROR in UpdateMatchScore")
+            else:
+                print(f"❌ Enhanced Match State Management FAILED - Error: {error_code}")
             return False, data
             
     except Exception as e:

@@ -89,7 +89,7 @@ func (s *LeaderboardService) GetLiveLeaderboard(contestID int64, userID int64) (
 
 	// Get rankings around user
 	if userRank > 0 {
-		aroundMe, err := s.getRankingsAroundUser(contestID, userRank, 5)
+		aroundMe, err := s.GetRankingsAroundUser(contestID, userRank, 5)
 		if err != nil {
 			logger.Warn(fmt.Sprintf("Failed to get rankings around user: %v", err))
 		} else {

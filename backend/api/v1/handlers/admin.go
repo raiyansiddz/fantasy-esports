@@ -1888,7 +1888,7 @@ func (h *AdminHandler) finalizeContestLeaderboards(tx *sql.Tx, matchID string) (
 	return leaderboardsFinalized, nil
 }
 
-// distributePrizes distributes prizes to winners
+// distributePrizes distributes prizes to winners - FIXED VERSION
 func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]interface{}, error) {
 	prizeDistribution := make(map[string]interface{})
 	
@@ -1930,77 +1930,45 @@ func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]
 	
 	for rows.Next() {
 		var contestID int64
-		var prizePool, winnerPct, runnerUpPct float64
+		var prizePool float64
+		var prizeDistributionJSON string
 		
-		if err := rows.Scan(&contestID, &prizePool, &winnerPct, &runnerUpPct); err != nil {
+		if err := rows.Scan(&contestID, &prizePool, &prizeDistributionJSON); err != nil {
 			continue
 		}
 		
-		// Check if this specific contest has participants with ranks
-		var contestParticipantCount int
-		err = tx.QueryRow(`
-			SELECT COUNT(*)
-			FROM contest_participants
-			WHERE contest_id = $1 AND rank <= 3`, contestID).Scan(&contestParticipantCount)
-		
-		if err != nil || contestParticipantCount == 0 {
-			// No winners for this contest, skip to next
+		// Parse prize distribution JSON to get percentages
+		var prizeDistributionData map[string]interface{}
+		if err := json.Unmarshal([]byte(prizeDistributionJSON), &prizeDistributionData); err != nil {
+			// If JSON parsing fails, use default percentages
+			winnerPct := 50.0
+			runnerUpPct := 30.0
+			
+			// Process with defaults
+			h.processPrizeDistributionForContest(tx, contestID, prizePool, winnerPct, runnerUpPct, &totalPrizesDistributed, &winnersRewarded)
 			contestsWithPrizes++
 			continue
 		}
 		
-		// Get top 3 winners for this contest
-		winnerRows, err := tx.Query(`
-			SELECT cp.user_id, cp.rank, ut.total_points
-			FROM contest_participants cp
-			JOIN user_teams ut ON cp.team_id = ut.id
-			WHERE cp.contest_id = $1 AND cp.rank <= 3
-			ORDER BY cp.rank`, contestID)
+		// Extract winner and runner-up percentages (with defaults)
+		winnerPct := 50.0  // Default 50% for winner
+		runnerUpPct := 30.0 // Default 30% for runner-up
 		
-		if err != nil {
-			continue
-		}
-		
-		// Distribute prizes to winners
-		for winnerRows.Next() {
-			var userID int64
-			var rank int
-			var totalPoints float64
-			
-			if err := winnerRows.Scan(&userID, &rank, &totalPoints); err != nil {
-				continue
+		if positions, ok := prizeDistributionData["positions"].([]interface{}); ok && len(positions) >= 2 {
+			if pos1, ok := positions[0].(map[string]interface{}); ok {
+				if pct, ok := pos1["percentage"].(float64); ok {
+					winnerPct = pct
+				}
 			}
-			
-			var prizeAmount float64
-			switch rank {
-			case 1:
-				prizeAmount = prizePool * (winnerPct / 100.0)
-			case 2:
-				prizeAmount = prizePool * (runnerUpPct / 100.0)
-			case 3:
-				prizeAmount = prizePool * 0.1 // 10% for third place
-			}
-			
-			if prizeAmount > 0 {
-				// Add prize to user's wallet
-				_, err = tx.Exec(`
-					INSERT INTO wallet_transactions (user_id, transaction_type, amount, description, status, created_at)
-					VALUES ($1, 'prize_credit', $2, $3, 'completed', NOW())`,
-					userID, prizeAmount, fmt.Sprintf("Prize for contest %d (Rank %d)", contestID, rank))
-				
-				if err == nil {
-					// Update user's wallet balance
-					tx.Exec(`
-						UPDATE wallets 
-						SET balance = balance + $1, updated_at = NOW()
-						WHERE user_id = $2`, prizeAmount, userID)
-					
-					totalPrizesDistributed += prizeAmount
-					winnersRewarded++
+			if pos2, ok := positions[1].(map[string]interface{}); ok {
+				if pct, ok := pos2["percentage"].(float64); ok {
+					runnerUpPct = pct
 				}
 			}
 		}
-		winnerRows.Close()
+		
+		// Process prize distribution for this contest
+		h.processPrizeDistributionForContest(tx, contestID, prizePool, winnerPct, runnerUpPct, &totalPrizesDistributed, &winnersRewarded)
 		contestsWithPrizes++
 	}
 	

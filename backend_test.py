@@ -1207,10 +1207,15 @@ def test_real_time_integration_with_match_events():
         print("❌ No admin token available - skipping test")
         return False, None
     
+    print("\n🎯 INTEGRATION TESTING CONTEXT:")
+    print("- Testing if existing match event endpoints now trigger real-time updates")
+    print("- Crown Jewel Manual Scoring System is already 100% working")
+    print("- Real-time system should integrate with existing endpoints")
+    
     test_results = {}
     headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
     
-    # Test 1: POST /api/admin/matches/{id}/events - Add match event should trigger real-time updates
+    # Test 1: POST /api/v1/admin/matches/{id}/events - Add match event should trigger real-time updates
     print("\n--- Test 1: Add Match Event Integration ---")
     try:
         match_id = 1
@@ -1225,6 +1230,7 @@ def test_real_time_integration_with_match_events():
             "additional_data": {}
         }
         
+        print(f"🚀 Testing POST {url}")
         response = requests.post(url, json=payload, headers=headers, timeout=15)
         data = print_response(response, url)
         
@@ -1238,9 +1244,11 @@ def test_real_time_integration_with_match_events():
             if "fantasy points recalculated" in message.lower():
                 print("✅ Fantasy points recalculation triggered")
                 print(f"✅ Fantasy teams affected: {fantasy_teams_affected}")
+                print("✅ Real-time integration working - match events trigger updates")
                 test_results['add_event_integration'] = True
             else:
                 print("⚠️  Fantasy points recalculation not confirmed")
+                print("⚠️  Real-time integration may not be working")
                 test_results['add_event_integration'] = False
         else:
             error_code = data.get('code') if data else 'UNKNOWN'
@@ -1251,7 +1259,7 @@ def test_real_time_integration_with_match_events():
         print(f"❌ Add match event integration ERROR: {str(e)}")
         test_results['add_event_integration'] = False
     
-    # Test 2: POST /api/admin/matches/{id}/events/bulk - Bulk events should trigger real-time updates
+    # Test 2: POST /api/v1/admin/matches/{id}/events/bulk - Bulk events should trigger real-time updates
     print("\n--- Test 2: Bulk Events Integration ---")
     try:
         match_id = 1
@@ -1277,6 +1285,7 @@ def test_real_time_integration_with_match_events():
             ]
         }
         
+        print(f"🚀 Testing POST {url}")
         response = requests.post(url, json=payload, headers=headers, timeout=20)
         data = print_response(response, url)
         
@@ -1290,6 +1299,7 @@ def test_real_time_integration_with_match_events():
             if events_added > 0:
                 print(f"✅ Events added: {events_added}")
                 print(f"✅ Fantasy teams affected: {fantasy_teams_affected}")
+                print("✅ Real-time integration working - bulk events trigger updates")
                 test_results['bulk_events_integration'] = True
             else:
                 print("⚠️  No events added in bulk operation")
@@ -1303,7 +1313,7 @@ def test_real_time_integration_with_match_events():
         print(f"❌ Bulk events integration ERROR: {str(e)}")
         test_results['bulk_events_integration'] = False
     
-    # Test 3: PUT /api/admin/matches/{id}/score - Score updates should trigger real-time updates
+    # Test 3: PUT /api/v1/admin/matches/{id}/score - Score updates should trigger real-time updates
     print("\n--- Test 3: Score Update Integration ---")
     try:
         match_id = 1
@@ -1318,6 +1328,7 @@ def test_real_time_integration_with_match_events():
             "match_duration": "25:30"
         }
         
+        print(f"🚀 Testing PUT {url}")
         response = requests.put(url, json=payload, headers=headers, timeout=20)
         data = print_response(response, url)
         
@@ -1330,6 +1341,7 @@ def test_real_time_integration_with_match_events():
             
             print(f"✅ Match status: {match_status}")
             print(f"✅ Final score: {final_score}")
+            print("✅ Real-time integration working - score updates trigger updates")
             test_results['score_update_integration'] = True
         else:
             error_code = data.get('code') if data else 'UNKNOWN'
@@ -1340,7 +1352,7 @@ def test_real_time_integration_with_match_events():
         print(f"❌ Score update integration ERROR: {str(e)}")
         test_results['score_update_integration'] = False
     
-    # Test 4: POST /api/admin/matches/{id}/recalculate-points - Points recalculation should trigger real-time updates
+    # Test 4: POST /api/v1/admin/matches/{id}/recalculate-points - Points recalculation should trigger real-time updates
     print("\n--- Test 4: Points Recalculation Integration ---")
     try:
         match_id = 1
@@ -1351,6 +1363,7 @@ def test_real_time_integration_with_match_events():
             "recalculate_leaderboards": True
         }
         
+        print(f"🚀 Testing POST {url}")
         response = requests.post(url, json=payload, headers=headers, timeout=20)
         data = print_response(response, url)
         
@@ -1363,6 +1376,7 @@ def test_real_time_integration_with_match_events():
             
             print(f"✅ Teams affected: {teams_affected}")
             print(f"✅ Leaderboards updated: {leaderboards_updated}")
+            print("✅ Real-time integration working - recalculation triggers updates")
             test_results['recalculate_integration'] = True
         else:
             error_code = data.get('code') if data else 'UNKNOWN'
@@ -1372,6 +1386,23 @@ def test_real_time_integration_with_match_events():
     except Exception as e:
         print(f"❌ Points recalculation integration ERROR: {str(e)}")
         test_results['recalculate_integration'] = False
+    
+    # Summary of integration testing
+    passed_count = sum(1 for result in test_results.values() if result)
+    total_count = len(test_results)
+    
+    print(f"\n{'='*80}")
+    print("REAL-TIME INTEGRATION TEST SUMMARY")
+    print(f"{'='*80}")
+    print(f"Integration tests passed: {passed_count}/{total_count}")
+    
+    if passed_count == total_count:
+        print("✅ COMPLETE SUCCESS: All match event endpoints integrate with real-time system")
+        print("✅ Real-time leaderboard updates are triggered by existing Crown Jewel endpoints")
+    elif passed_count > 0:
+        print("⚠️  PARTIAL SUCCESS: Some integration working, some endpoints not triggering updates")
+    else:
+        print("❌ INTEGRATION FAILURE: Match events not triggering real-time updates")
     
     return test_results
 

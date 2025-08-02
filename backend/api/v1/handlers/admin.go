@@ -2581,23 +2581,30 @@ func (h *AdminHandler) validateMatchScore(req models.UpdateMatchScoreRequest, be
 
 // updateMatchParticipantScores updates scores for match participants
 func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, team1Score, team2Score int) error {
+	log.Printf("🔍 DEBUG: updateMatchParticipantScores called for match %s with scores %d-%d", matchID, team1Score, team2Score)
+	
 	// First, check if this match exists
 	var matchExists bool
 	err := tx.QueryRow(`
 		SELECT EXISTS(SELECT 1 FROM matches WHERE id = $1)`, matchID).Scan(&matchExists)
 	
 	if err != nil {
+		log.Printf("❌ DEBUG: Error checking match existence for match %s: %v", matchID, err)
 		return fmt.Errorf("failed to check match existence: %w", err)
 	}
 	
 	if !matchExists {
+		log.Printf("❌ DEBUG: Match %s does not exist", matchID)
 		return fmt.Errorf("match %s does not exist", matchID)
 	}
+	
+	log.Printf("✅ DEBUG: Match %s exists, checking participants", matchID)
 	
 	// Get participating teams for this match
 	rows, err := tx.Query(`
 		SELECT team_id FROM match_participants WHERE match_id = $1 ORDER BY id LIMIT 2`, matchID)
 	if err != nil {
+		log.Printf("❌ DEBUG: Error querying match participants for match %s: %v", matchID, err)
 		return fmt.Errorf("failed to query match participants: %w", err)
 	}
 	defer rows.Close()
@@ -2606,6 +2613,7 @@ func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, 
 	for rows.Next() {
 		var teamID int64
 		if err := rows.Scan(&teamID); err != nil {
+			log.Printf("⚠️ DEBUG: Error scanning team ID for match %s: %v", matchID, err)
 			continue // Skip invalid rows, don't fail entire operation
 		}
 		teamIDs = append(teamIDs, teamID)
@@ -2613,47 +2621,63 @@ func (h *AdminHandler) updateMatchParticipantScores(tx *sql.Tx, matchID string, 
 	
 	// Check for iteration errors
 	if err = rows.Err(); err != nil {
+		log.Printf("❌ DEBUG: Error iterating match participants for match %s: %v", matchID, err)
 		return fmt.Errorf("error iterating match participants: %w", err)
 	}
 	
+	log.Printf("📊 DEBUG: Found %d participants for match %s: %v", len(teamIDs), matchID, teamIDs)
+	
 	// Handle case where no participants exist - this is valid for some match scenarios
 	if len(teamIDs) == 0 {
+		log.Printf("✅ DEBUG: No participants found for match %s, returning success", matchID)
 		return nil // Success: no participants to update scores for
 	}
 	
 	// Update team1 score if we have at least one participant
+	log.Printf("🔄 DEBUG: Updating team1 score for match %s, team %d, score %d", matchID, teamIDs[0], team1Score)
 	result1, err := tx.Exec(`
 		UPDATE match_participants 
 		SET team_score = $1, updated_at = NOW()
 		WHERE match_id = $2 AND team_id = $3`, team1Score, matchID, teamIDs[0])
 	
 	if err != nil {
+		log.Printf("❌ DEBUG: Error updating team1 score for match %s: %v", matchID, err)
 		return fmt.Errorf("failed to update team1 score: %w", err)
 	}
 	
 	// Check if the update was successful
-	if rowsAffected, err := result1.RowsAffected(); err == nil && rowsAffected == 0 {
-		// No rows affected could indicate the participant was deleted - that's ok
+	if rowsAffected, err := result1.RowsAffected(); err == nil {
+		log.Printf("📈 DEBUG: Team1 update affected %d rows for match %s", rowsAffected, matchID)
+		if rowsAffected == 0 {
+			log.Printf("⚠️ DEBUG: No rows affected for team1 update - participant may have been deleted")
+		}
 	}
 	
 	// Update team2 score if we have a second participant
 	if len(teamIDs) >= 2 {
+		log.Printf("🔄 DEBUG: Updating team2 score for match %s, team %d, score %d", matchID, teamIDs[1], team2Score)
 		result2, err := tx.Exec(`
 			UPDATE match_participants 
 			SET team_score = $1, updated_at = NOW()
 			WHERE match_id = $2 AND team_id = $3`, team2Score, matchID, teamIDs[1])
 		
 		if err != nil {
+			log.Printf("❌ DEBUG: Error updating team2 score for match %s: %v", matchID, err)
 			return fmt.Errorf("failed to update team2 score: %w", err)
 		}
 		
 		// Check if the update was successful (but don't fail if not)
-		if rowsAffected, err := result2.RowsAffected(); err == nil && rowsAffected == 0 {
-			// No rows affected could indicate the participant was deleted - that's ok
+		if rowsAffected, err := result2.RowsAffected(); err == nil {
+			log.Printf("📈 DEBUG: Team2 update affected %d rows for match %s", rowsAffected, matchID)
+			if rowsAffected == 0 {
+				log.Printf("⚠️ DEBUG: No rows affected for team2 update - participant may have been deleted")
+			}
 		}
+	} else {
+		log.Printf("ℹ️ DEBUG: Only one participant found for match %s, skipping team2 update", matchID)
 	}
 	
-	// Success: we've updated whatever participants existed
+	log.Printf("✅ DEBUG: Successfully completed updateMatchParticipantScores for match %s", matchID)
 	return nil
 }
 

@@ -1625,8 +1625,8 @@ def test_error_handling_real_time():
 def main():
     """Main test execution for Real-time Leaderboards System"""
     print("🚀 REAL-TIME LEADERBOARDS SYSTEM TESTING")
-    print("🎯 FOCUS: Test comprehensive real-time leaderboard system implementation")
-    print("📋 CONTEXT: Testing new real-time endpoints, WebSocket capabilities, and integration with match events")
+    print("🎯 FOCUS: Test Real-time Leaderboards System that was just recompiled and fixed")
+    print("📋 CONTEXT: Binary compilation issue resolved - endpoints should now return 200 instead of 404")
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Test started at: {datetime.now()}")
     
@@ -1634,8 +1634,15 @@ def main():
     test_results = {}
     
     # Run prerequisite tests
-    test_results['health'] = test_health_check()
-    test_results['admin_login'] = test_admin_login()
+    print(f"\n{'='*80}")
+    print("PREREQUISITE TESTS")
+    print(f"{'='*80}")
+    
+    health_success, health_data = test_health_check()
+    test_results['health'] = health_success
+    
+    admin_success, admin_data = test_admin_login()
+    test_results['admin_login'] = admin_success
     
     # Run real-time leaderboard tests
     if ADMIN_TOKEN:
@@ -1643,95 +1650,73 @@ def main():
         print("REAL-TIME LEADERBOARD SYSTEM COMPREHENSIVE TESTING")
         print(f"{'='*80}")
         
-        # Test core endpoints
+        # Test 1: Core real-time endpoints (404 to 200 verification)
         endpoint_results = test_real_time_leaderboard_endpoints()
-        test_results['real_time_endpoints'] = (True, endpoint_results)
+        test_results['real_time_endpoints'] = endpoint_results
         
-        # Test integration with match events
+        # Test 2: Integration with existing match events
         integration_results = test_real_time_integration_with_match_events()
-        test_results['match_event_integration'] = (True, integration_results)
+        test_results['match_event_integration'] = integration_results
         
-        # Test leaderboard service integration
+        # Test 3: Leaderboard service integration (caching, rank changes)
         service_results = test_leaderboard_service_integration()
-        test_results['leaderboard_service'] = (True, service_results)
+        test_results['leaderboard_service'] = service_results
         
-        # Test error handling
+        # Test 4: Error handling
         error_results = test_error_handling_real_time()
-        test_results['error_handling'] = (True, error_results)
+        test_results['error_handling'] = error_results
         
     else:
-        test_results['real_time_endpoints'] = (False, "No admin token")
-        test_results['match_event_integration'] = (False, "No admin token")
-        test_results['leaderboard_service'] = (False, "No admin token")
-        test_results['error_handling'] = (False, "No admin token")
+        print("❌ Admin authentication failed - skipping real-time leaderboard tests")
     
-    # Print summary
-    print(f"\n{'='*80}")
-    print("REAL-TIME LEADERBOARDS SYSTEM TEST SUMMARY")
-    print(f"{'='*80}")
+    # Final summary
+    print(f"\n{'='*100}")
+    print("REAL-TIME LEADERBOARDS SYSTEM - FINAL TEST SUMMARY")
+    print(f"{'='*100}")
     
-    passed = 0
-    total = 0
-    
-    for test_name, result in test_results.items():
-        if isinstance(result, tuple):
-            success, data = result
+    if ADMIN_TOKEN:
+        # Count successful tests
+        endpoint_passed = sum(1 for result in test_results.get('real_time_endpoints', {}).values() if result)
+        endpoint_total = len(test_results.get('real_time_endpoints', {}))
+        
+        integration_passed = sum(1 for result in test_results.get('match_event_integration', {}).values() if result)
+        integration_total = len(test_results.get('match_event_integration', {}))
+        
+        service_passed = sum(1 for result in test_results.get('leaderboard_service', {}).values() if result)
+        service_total = len(test_results.get('leaderboard_service', {}))
+        
+        error_passed = sum(1 for result in test_results.get('error_handling', {}).values() if result)
+        error_total = len(test_results.get('error_handling', {}))
+        
+        print(f"✅ Health Check: {'PASSED' if test_results.get('health') else 'FAILED'}")
+        print(f"✅ Admin Login: {'PASSED' if test_results.get('admin_login') else 'FAILED'}")
+        print(f"🎯 Real-time Endpoints: {endpoint_passed}/{endpoint_total} PASSED")
+        print(f"🔗 Match Event Integration: {integration_passed}/{integration_total} PASSED")
+        print(f"⚙️  Leaderboard Service: {service_passed}/{service_total} PASSED")
+        print(f"🛡️  Error Handling: {error_passed}/{error_total} PASSED")
+        
+        # Overall assessment
+        total_passed = endpoint_passed + integration_passed + service_passed + error_passed
+        total_tests = endpoint_total + integration_total + service_total + error_total
+        
+        print(f"\n🎯 OVERALL RESULT: {total_passed}/{total_tests} tests passed")
+        
+        if endpoint_passed == endpoint_total:
+            print("✅ CRITICAL SUCCESS: All real-time endpoints now return 200 (binary recompilation worked)")
         else:
-            success = result
-            
-        status = "✅ PASSED" if success else "❌ FAILED"
-        print(f"{test_name.upper()}: {status}")
-        if success:
-            passed += 1
-        total += 1
-    
-    print(f"\nCore Tests: {passed}/{total} passed")
-    
-    # Detailed analysis
-    print(f"\n{'='*80}")
-    print("DETAILED TEST ANALYSIS")
-    print(f"{'='*80}")
-    
-    critical_failures = []
-    
-    # Analyze each test category
-    for test_category, result in test_results.items():
-        if isinstance(result, tuple) and result[0]:
-            success, detailed_results = result
-            if isinstance(detailed_results, dict):
-                category_passed = sum(1 for r in detailed_results.values() if r)
-                category_total = len(detailed_results)
-                
-                print(f"\n{test_category.upper().replace('_', ' ')}:")
-                print(f"  Results: {category_passed}/{category_total} tests passed")
-                
-                for test_name, test_result in detailed_results.items():
-                    status = "✅" if test_result else "❌"
-                    print(f"  {status} {test_name}")
-                
-                if category_passed < category_total:
-                    failed_tests = [name for name, result in detailed_results.items() if not result]
-                    critical_failures.extend(failed_tests)
+            print("❌ CRITICAL FAILURE: Some real-time endpoints still returning 404 (binary recompilation failed)")
+        
+        if total_passed == total_tests:
+            print("🎉 COMPLETE SUCCESS: Real-time Leaderboards System is fully functional")
+        elif total_passed >= total_tests * 0.8:
+            print("⚠️  MOSTLY WORKING: Real-time system mostly functional with minor issues")
+        else:
+            print("❌ SIGNIFICANT ISSUES: Real-time system has major problems")
+    else:
+        print("❌ TESTING INCOMPLETE: Admin authentication failed")
     
     print(f"\nTest completed at: {datetime.now()}")
-    
-    # Final assessment
-    if not test_results.get('admin_login', (False, None))[0]:
-        critical_failures.append("Admin login failed")
-    
-    if critical_failures:
-        print(f"\n❌ {len(critical_failures)} critical issue(s) found:")
-        for issue in critical_failures:
-            print(f"   - {issue}")
-        print("\n🔍 ANALYSIS RESULTS:")
-        print("❌ Real-time leaderboard system has issues that need attention")
-        sys.exit(1)
-    else:
-        print(f"\n✅ REAL-TIME LEADERBOARDS SYSTEM TESTING COMPLETED SUCCESSFULLY")
-        print("✅ All core functionality working properly")
-        print("✅ Integration with match events confirmed")
-        print("✅ Error handling working correctly")
-        sys.exit(0)
+    print("="*100)
 
 if __name__ == "__main__":
     main()

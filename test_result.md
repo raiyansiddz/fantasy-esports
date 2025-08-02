@@ -107,11 +107,11 @@ user_problem_statement: "Complete the Manual Scoring System (Crown Jewel) for th
 backend:
   - task: "Enhanced Match State Management"
     implemented: true
-    working: "testing_required"
+    working: false
     file: "/app/backend/api/v1/handlers/admin.go"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "implemented"
           agent: "main"
@@ -125,6 +125,9 @@ backend:
         - working: "transaction_pipeline_fixed"
           agent: "main"
           comment: "ENHANCED MATCH STATE PIPELINE FIX: Extended Crown Jewel fix to Enhanced Match State Management transaction pipeline. Fixed all functions called by handleMatchCompletion() that were failing with empty contest_participants: 1) distributePrizes() - already fixed with schema mismatch resolution, 2) finalizeContestLeaderboards() - now handles empty contests gracefully, 3) sendMatchCompletionNotifications() - added participant validation. This ensures UpdateMatchScore endpoint with completion logic handles empty contest scenarios without COMMIT_ERROR, LEADERBOARD_FINALIZATION_ERROR, or CONTEST_UPDATE_ERROR."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL: Crown Jewel fix FAILED - Enhanced Match State Management still failing with COMMIT_ERROR. Testing PUT /api/admin/matches/1/score with completion status returned 500 error with 'Failed to commit match updates' and code 'COMMIT_ERROR'. The transaction pipeline fix is NOT working properly. Empty contest_participants scenarios are still causing transaction rollbacks during match completion logic."
 
   - task: "Complete Match with Prize Distribution"
     implemented: true

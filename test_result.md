@@ -122,7 +122,7 @@ backend:
 
   - task: "Complete Match with Prize Distribution"
     implemented: true
-    working: "needs_testing"
+    working: "testing_required"
     file: "/app/backend/api/v1/handlers/admin.go"
     stuck_count: 0
     priority: "high"
@@ -137,6 +137,9 @@ backend:
         - working: "transaction_error_fixed"
           agent: "main"
           comment: "CRITICAL FIX: Fixed Crown Jewel Manual Scoring System transaction commit errors identified through root cause analysis. The distributePrizes function now properly handles empty contest_participants table: 1) Added upfront check for contest participants existence, 2) Returns success with zero distributions when no participants found, 3) Added contest-specific participant validation before prize distribution, 4) Prevents transaction rollbacks due to empty dataset handling failures. This resolves 'COMMIT_ERROR' and 'PRIZE_DISTRIBUTION_ERROR' issues in both UpdateMatchScore and CompleteMatch endpoints when contest_participants table is empty."
+        - working: "schema_mismatch_fixed"
+          agent: "main"
+          comment: "DATABASE SCHEMA FIX: Resolved the critical database schema mismatch in distributePrizes function identified by testing agent. Fixed SQL queries to use correct database columns: 1) Changed from non-existent 'prize_pool, winner_percentage, runner_up_percentage' to actual 'total_prize_pool, prize_distribution' (JSONB), 2) Added proper JSON parsing for prize_distribution column with error handling and default percentages, 3) Fixed rows.Scan() to match actual SQL SELECT columns, 4) Added processPrizeDistributionForContest helper function. This resolves PRIZE_DISTRIBUTION_ERROR and COMMIT_ERROR that were preventing Crown Jewel transaction logic from executing."
 
   - task: "Bulk Score Updates Transaction Logic"
     implemented: true

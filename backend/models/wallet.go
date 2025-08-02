@@ -118,3 +118,32 @@ type ReferralStats struct {
 	CurrentTier        string  `json:"current_tier"`
 	NextTierRequirement int    `json:"next_tier_requirement"`
 }
+
+type ApplyReferralCodeRequest struct {
+	ReferralCode string `json:"referral_code" validate:"required"`
+}
+
+type ShareReferralRequest struct {
+	Method   string   `json:"method" validate:"required"`
+	Contacts []string `json:"contacts,omitempty"`
+	Message  string   `json:"message,omitempty"`
+}
+
+type ReferralHistoryResponse struct {
+	Success    bool            `json:"success"`
+	Referrals  []Referral      `json:"referrals"`
+	Total      int             `json:"total"`
+	Page       int             `json:"page"`
+	Limit      int             `json:"limit"`
+}
+
+type ReferralLeaderboardEntry struct {
+	Rank               int     `json:"rank"`
+	UserID             int64   `json:"user_id"`
+	Name               string  `json:"name"`
+	ReferralCode       string  `json:"referral_code"`
+	TotalReferrals     int     `json:"total_referrals"`
+	SuccessfulReferrals int    `json:"successful_referrals"`
+	TotalEarnings      float64 `json:"total_earnings"`
+	CurrentTier        string  `json:"current_tier"`
+}

@@ -313,6 +313,13 @@ func (h *ContestHandler) JoinContest(c *gin.Context) {
                 // In production, you'd want to handle this in a transaction
         }
 
+        // Trigger referral completion check for first contest
+        err = h.referralService.CheckAndCompleteReferral(userID, "contest_join")
+        if err != nil {
+                // Log error but don't fail the join operation
+                fmt.Printf("Failed to check referral completion for user %d: %v\n", userID, err)
+        }
+
         c.JSON(http.StatusOK, gin.H{
                 "success": true,
                 "message": "Successfully joined contest",

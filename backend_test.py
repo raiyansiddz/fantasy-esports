@@ -436,8 +436,8 @@ def test_complete_match_with_prize_distribution():
         return False, None
     
     try:
-        # Test with match ID that likely has empty contest_participants table
-        url = f"{BACKEND_URL}/api/v1/admin/matches/10/complete"
+        # Test with match ID 2 which should have participants
+        url = f"{BACKEND_URL}/api/v1/admin/matches/2/complete"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         
         # Use correct request format based on CompleteMatchRequest model

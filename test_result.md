@@ -107,7 +107,7 @@ user_problem_statement: "Complete the Manual Scoring System (Crown Jewel) for th
 backend:
   - task: "Enhanced Match State Management"
     implemented: true
-    working: "needs_testing"
+    working: "testing_required"
     file: "/app/backend/api/v1/handlers/admin.go"
     stuck_count: 0
     priority: "high"
@@ -119,6 +119,9 @@ backend:
         - working: "compilation_fixed"
           agent: "main"
           comment: "FIXED: Resolved compilation errors by removing duplicate function declarations and unused variables. Backend now compiles successfully and is ready for testing."
+        - working: "schema_dependency_fixed"
+          agent: "main"
+          comment: "DEPENDENCY FIX: Fixed the Enhanced Match State Management's dependency on distributePrizes function which had database schema mismatch. The handleMatchCompletion function calls distributePrizes, so the schema fix for distributePrizes also resolves UpdateMatchScore transaction commit errors when completing matches."
 
   - task: "Complete Match with Prize Distribution"
     implemented: true

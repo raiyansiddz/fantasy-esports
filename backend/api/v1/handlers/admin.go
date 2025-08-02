@@ -1892,6 +1892,28 @@ func (h *AdminHandler) finalizeContestLeaderboards(tx *sql.Tx, matchID string) (
 func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]interface{}, error) {
 	prizeDistribution := make(map[string]interface{})
 	
+	// First, check if there are any contest participants for this match
+	var participantCount int
+	err := tx.QueryRow(`
+		SELECT COUNT(*)
+		FROM contest_participants cp
+		JOIN contests c ON cp.contest_id = c.id
+		WHERE c.match_id = $1`, matchID).Scan(&participantCount)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	// Handle the case where no participants exist - return success with zero distributions
+	if participantCount == 0 {
+		prizeDistribution["total_amount"] = 0.0
+		prizeDistribution["contests_processed"] = 0
+		prizeDistribution["winners_rewarded"] = 0
+		prizeDistribution["distribution_timestamp"] = time.Now()
+		prizeDistribution["message"] = "No contest participants found - prize distribution completed with zero distributions"
+		return prizeDistribution, nil
+	}
+	
 	// Get all contests for this match that have prizes
 	rows, err := tx.Query(`
 		SELECT id, prize_pool, winner_percentage, runner_up_percentage
@@ -1911,6 +1933,19 @@ func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]
 		var prizePool, winnerPct, runnerUpPct float64
 		
 		if err := rows.Scan(&contestID, &prizePool, &winnerPct, &runnerUpPct); err != nil {
+			continue
+		}
+		
+		// Check if this specific contest has participants with ranks
+		var contestParticipantCount int
+		err = tx.QueryRow(`
+			SELECT COUNT(*)
+			FROM contest_participants
+			WHERE contest_id = $1 AND rank <= 3`, contestID).Scan(&contestParticipantCount)
+		
+		if err != nil || contestParticipantCount == 0 {
+			// No winners for this contest, skip to next
+			contestsWithPrizes++
 			continue
 		}
 		

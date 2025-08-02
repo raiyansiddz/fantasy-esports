@@ -3,21 +3,25 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/models"
+	"fantasy-esports-backend/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type WalletHandler struct {
-	db     *sql.DB
-	config *config.Config
+	db              *sql.DB
+	config          *config.Config
+	referralService *services.ReferralService
 }
 
 func NewWalletHandler(db *sql.DB, cfg *config.Config) *WalletHandler {
 	return &WalletHandler{
-		db:     db,
-		config: cfg,
+		db:              db,
+		config:          cfg,
+		referralService: services.NewReferralService(db),
 	}
 }
 

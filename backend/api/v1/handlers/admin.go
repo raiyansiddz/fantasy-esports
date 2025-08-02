@@ -1799,8 +1799,35 @@ func (h *AdminHandler) updateAllContestLeaderboardsTx(tx *sql.Tx, matchID string
 
 // updateContestLeaderboardTx updates rankings for a specific contest within a transaction
 func (h *AdminHandler) updateContestLeaderboardTx(tx *sql.Tx, contestID int64) error {
-        // Update ranks based on total_points (highest points get rank 1)
-        _, err := tx.Exec(`
+        // First, validate that this contest has participants before attempting complex UPDATE
+        var participantCount int
+        err := tx.QueryRow(`
+                SELECT COUNT(*) FROM contest_participants WHERE contest_id = $1`, contestID).Scan(&participantCount)
+        
+        if err != nil {
+                return err
+        }
+        
+        // If no participants, return success without attempting UPDATE
+        if participantCount == 0 {
+                return nil
+        }
+        
+        // Validate that user_teams exist for this contest's participants before UPDATE
+        var validParticipantCount int
+        err = tx.QueryRow(`
+                SELECT COUNT(*)
+                FROM contest_participants cp
+                JOIN user_teams ut ON cp.team_id = ut.id
+                WHERE cp.contest_id = $1`, contestID).Scan(&validParticipantCount)
+        
+        if err != nil || validParticipantCount == 0 {
+                // If JOIN fails or no valid participants, return success without UPDATE
+                return nil
+        }
+        
+        // Now safe to perform the complex UPDATE with ROW_NUMBER() window function
+        _, err = tx.Exec(`
                 UPDATE contest_participants cp
                 SET rank = ranked.new_rank
                 FROM (

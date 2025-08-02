@@ -55,7 +55,7 @@ func NewRealTimeLeaderboardHandler(db *sql.DB, cfg *config.Config, leaderboardSe
 // @Failure 500 {object} models.ErrorResponse
 // @Router /leaderboards/real-time/{id} [get]
 func (h *RealTimeLeaderboardHandler) GetRealTimeLeaderboard(c *gin.Context) {
-	contestID := parseIntToInt64(c.Param("id"))
+	contestID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
 	userID := c.GetInt64("user_id")
 	
 	if contestID == 0 {

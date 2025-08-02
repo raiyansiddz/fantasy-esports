@@ -370,14 +370,14 @@ def test_error_handling():
     return results
 
 def test_enhanced_match_state_management():
-    """Test Enhanced Match State Management with RESEARCH-BASED CROWN JEWEL FIX - Focus on empty dataset scenarios"""
-    print_test_header("Enhanced Match State Management - RESEARCH-BASED CROWN JEWEL FIX")
+    """Test Enhanced Match State Management - Focus on capturing updateContestStatuses debug logs"""
+    print_test_header("Enhanced Match State Management - DEBUG LOG ANALYSIS")
     
     if not ADMIN_TOKEN:
         print("❌ No admin token available - skipping test")
         return False, None
     
-    # Test specific scenarios mentioned in review request
+    # Test specific scenarios mentioned in review request to capture debug logs
     test_scenarios = [
         {
             "name": "Match 1 (has contests but 0 participants)",
@@ -406,8 +406,8 @@ def test_enhanced_match_state_management():
             }
         },
         {
-            "name": "Match 3 (completion status changes with empty contest)",
-            "match_id": 3,
+            "name": "Match 10 (empty contest scenario)",
+            "match_id": 10,
             "payload": {
                 "team1_score": 2,
                 "team2_score": 0,
@@ -417,45 +417,70 @@ def test_enhanced_match_state_management():
                 "final_score": "2-0",
                 "match_duration": "25:30"
             }
+        },
+        {
+            "name": "Match 15 (empty contest scenario)",
+            "match_id": 15,
+            "payload": {
+                "team1_score": 1,
+                "team2_score": 2,
+                "current_round": 3,
+                "match_status": "completed",
+                "winner_team_id": 2,
+                "final_score": "1-2",
+                "match_duration": "35:00"
+            }
         }
     ]
     
     results = {}
     headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
     
+    print("\n🔍 CAPTURING DEBUG LOGS FROM updateContestStatuses FUNCTION")
+    print("Expected debug messages:")
+    print("- 'DEBUG: updateContestStatuses called for match X'")
+    print("- 'DEBUG: Found X contests for match Y'")
+    print("- 'DEBUG: No contests found for match X, returning success' (for empty scenarios)")
+    print("- 'DEBUG: Attempting to update contest statuses for match X'")
+    print("- 'DEBUG: Updated X contest statuses for match Y'")
+    
     for scenario in test_scenarios:
         try:
             print(f"\n--- Testing {scenario['name']} ---")
             url = f"{BACKEND_URL}/api/v1/admin/matches/{scenario['match_id']}/score"
             
-            response = requests.put(url, json=scenario['payload'], headers=headers, timeout=20)
+            print(f"🚀 Triggering updateContestStatuses for Match {scenario['match_id']}")
+            response = requests.put(url, json=scenario['payload'], headers=headers, timeout=25)
             data = print_response(response, url)
             
             if response.status_code == 200 and data and data.get('success'):
-                print(f"✅ {scenario['name']}: SUCCESS - RESEARCH-BASED FIX WORKING")
-                print(f"   Robust transaction defer pattern: committed flag prevents double commits")
-                print(f"   Empty dataset handling: Zero rows as success pattern implemented")
+                print(f"✅ {scenario['name']}: SUCCESS")
                 print(f"   Match Status: {data.get('status', 'N/A')}")
                 print(f"   Final Score: {data.get('final_score', 'N/A')}")
                 
                 # Check for completion data handling
                 if data.get('completion_data'):
-                    print("✅ Match completion logic working with research-based fix")
+                    completion_data = data.get('completion_data')
+                    print(f"✅ Match completion logic executed:")
+                    print(f"   - Contests Updated: {completion_data.get('contests_updated', 'N/A')}")
+                    print(f"   - Leaderboards Finalized: {completion_data.get('leaderboards_finalized', 'N/A')}")
                 
                 results[scenario['name']] = True
             else:
                 error_code = data.get('code') if data else 'UNKNOWN'
+                error_message = data.get('error') if data else 'Unknown error'
                 print(f"❌ {scenario['name']}: FAILED - Error: {error_code}")
+                print(f"   Error Message: {error_message}")
                 
-                # Check for specific errors that should be resolved by research-based fix
+                # Analyze specific error patterns
                 if error_code == 'COMMIT_ERROR':
-                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting COMMIT_ERROR")
+                    print("🔍 ANALYSIS: Transaction commit failed - likely in updateContestStatuses or related functions")
                 elif error_code == 'CONTEST_UPDATE_ERROR':
-                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting CONTEST_UPDATE_ERROR")
-                elif error_code == 'LEADERBOARD_FINALIZATION_ERROR':
-                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting LEADERBOARD_FINALIZATION_ERROR")
+                    print("🔍 ANALYSIS: Contest update failed - updateContestStatuses function issue")
                 elif error_code == 'PARTICIPANT_UPDATE_ERROR':
-                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting PARTICIPANT_UPDATE_ERROR")
+                    print("🔍 ANALYSIS: Participant update failed - updateMatchParticipantScores function issue")
+                elif error_code == 'LEADERBOARD_FINALIZATION_ERROR':
+                    print("🔍 ANALYSIS: Leaderboard finalization failed - finalizeContestLeaderboards function issue")
                 
                 results[scenario['name']] = False
                 
@@ -463,17 +488,47 @@ def test_enhanced_match_state_management():
             print(f"❌ {scenario['name']}: ERROR - {str(e)}")
             results[scenario['name']] = False
     
+    # Check backend logs for debug messages
+    print(f"\n{'='*80}")
+    print("BACKEND LOG ANALYSIS - Looking for updateContestStatuses debug messages")
+    print(f"{'='*80}")
+    
+    try:
+        import subprocess
+        # Try to get recent backend logs
+        log_result = subprocess.run(['tail', '-n', '50', '/var/log/supervisor/backend.out.log'], 
+                                  capture_output=True, text=True, timeout=5)
+        if log_result.returncode == 0 and log_result.stdout:
+            print("Recent backend logs:")
+            print(log_result.stdout)
+        else:
+            print("Could not retrieve backend logs from /var/log/supervisor/backend.out.log")
+            
+        # Try alternative log location
+        log_result2 = subprocess.run(['tail', '-n', '50', '/var/log/supervisor/backend.err.log'], 
+                                   capture_output=True, text=True, timeout=5)
+        if log_result2.returncode == 0 and log_result2.stdout:
+            print("Recent backend error logs:")
+            print(log_result2.stdout)
+            
+    except Exception as log_error:
+        print(f"Could not retrieve backend logs: {log_error}")
+    
     # Overall assessment
     passed_count = sum(1 for result in results.values() if result)
     total_count = len(results)
     
+    print(f"\n{'='*60}")
+    print("ENHANCED MATCH STATE MANAGEMENT TEST SUMMARY")
+    print(f"{'='*60}")
+    print(f"Tests Passed: {passed_count}/{total_count}")
+    
     if passed_count == total_count:
-        print(f"\n✅ Enhanced Match State Management: ALL {total_count} scenarios PASSED")
-        print("✅ RESEARCH-BASED CROWN JEWEL FIX: Robust transaction defer pattern WORKING")
+        print("✅ All Enhanced Match State Management tests PASSED")
         return True, results
     else:
-        print(f"\n❌ Enhanced Match State Management: {passed_count}/{total_count} scenarios passed")
-        print("❌ RESEARCH-BASED CROWN JEWEL FIX: Still has issues with transaction handling")
+        print("❌ Some Enhanced Match State Management tests FAILED")
+        print("🔍 Check debug logs above for updateContestStatuses function behavior")
         return False, results
 
 def test_complete_match_with_prize_distribution():

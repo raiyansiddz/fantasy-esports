@@ -1728,11 +1728,22 @@ func (h *AdminHandler) ProcessKYC(c *gin.Context) {
         }
 
         // Update KYC document status
+        // Convert notes to JSONB format for additional_data column
+        var additionalData interface{}
+        if req.Notes != nil && *req.Notes != "" {
+                additionalData = map[string]interface{}{
+                        "admin_notes": *req.Notes,
+                        "processed_at": time.Now().Format(time.RFC3339),
+                }
+        } else {
+                additionalData = nil
+        }
+        
         updateQuery := `
                 UPDATE kyc_documents 
                 SET status = $1, verified_by = $2, rejection_reason = $3, 
                     additional_data = $4`
-        args := []interface{}{req.Status, adminID, req.RejectionReason, req.Notes}
+        args := []interface{}{req.Status, adminID, req.RejectionReason, additionalData}
         
         if req.Status == "verified" {
                 updateQuery += `, verified_at = NOW()`

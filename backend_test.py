@@ -477,17 +477,101 @@ def test_enhanced_match_state_management():
         return False, results
 
 def test_complete_match_with_prize_distribution():
-    """Test Complete Match functionality with DEFINITIVE FIXES - Two-step approach and transaction isolation"""
-    print_test_header("Complete Match with Prize Distribution - DEFINITIVE CROWN JEWEL FIX")
+    """Test Complete Match functionality with RESEARCH-BASED CROWN JEWEL FIX - Focus on empty dataset scenarios"""
+    print_test_header("Complete Match with Prize Distribution - RESEARCH-BASED CROWN JEWEL FIX")
     
     if not ADMIN_TOKEN:
         print("❌ No admin token available - skipping test")
         return False, None
     
-    # Test multiple scenarios that previously failed systematically
+    # Test specific scenarios mentioned in review request
     test_scenarios = [
         {
-            "name": "Empty Contest Scenario (Match 20)",
+            "name": "Match 10 (previous CONTEST_UPDATE_ERROR)",
+            "match_id": 10,
+            "payload": {
+                "final_result": {
+                    "winner_team_id": 1,
+                    "final_score": "2-0",
+                    "mvp_player_id": 1,
+                    "match_duration": 2400
+                },
+                "distribute_prizes": True,
+                "send_notifications": True
+            }
+        },
+        {
+            "name": "Match 11 (previous CONTEST_UPDATE_ERROR)",
+            "match_id": 11,
+            "payload": {
+                "final_result": {
+                    "winner_team_id": 2,
+                    "final_score": "2-1",
+                    "mvp_player_id": 3,
+                    "match_duration": 3600
+                },
+                "distribute_prizes": True,
+                "send_notifications": True
+            }
+        },
+        {
+            "name": "Match 12 (previous CONTEST_UPDATE_ERROR)",
+            "match_id": 12,
+            "payload": {
+                "final_result": {
+                    "winner_team_id": 1,
+                    "final_score": "2-1",
+                    "mvp_player_id": 2,
+                    "match_duration": 3200
+                },
+                "distribute_prizes": True,
+                "send_notifications": True
+            }
+        },
+        {
+            "name": "Match 13 (previous CONTEST_UPDATE_ERROR)",
+            "match_id": 13,
+            "payload": {
+                "final_result": {
+                    "winner_team_id": 2,
+                    "final_score": "2-0",
+                    "mvp_player_id": 4,
+                    "match_duration": 2800
+                },
+                "distribute_prizes": True,
+                "send_notifications": True
+            }
+        },
+        {
+            "name": "Match 14 (previous CONTEST_UPDATE_ERROR)",
+            "match_id": 14,
+            "payload": {
+                "final_result": {
+                    "winner_team_id": 1,
+                    "final_score": "2-1",
+                    "mvp_player_id": 1,
+                    "match_duration": 3400
+                },
+                "distribute_prizes": True,
+                "send_notifications": True
+            }
+        },
+        {
+            "name": "Match 15 (previous CONTEST_UPDATE_ERROR)",
+            "match_id": 15,
+            "payload": {
+                "final_result": {
+                    "winner_team_id": 2,
+                    "final_score": "2-0",
+                    "mvp_player_id": 5,
+                    "match_duration": 2600
+                },
+                "distribute_prizes": True,
+                "send_notifications": True
+            }
+        },
+        {
+            "name": "Match 20 (empty contest scenario)",
             "match_id": 20,
             "payload": {
                 "final_result": {
@@ -501,7 +585,7 @@ def test_complete_match_with_prize_distribution():
             }
         },
         {
-            "name": "No Contest Scenario (Match 21)",
+            "name": "Match 21 (empty contest scenario)",
             "match_id": 21,
             "payload": {
                 "final_result": {
@@ -509,20 +593,6 @@ def test_complete_match_with_prize_distribution():
                     "final_score": "2-1",
                     "mvp_player_id": 3,
                     "match_duration": 3600
-                },
-                "distribute_prizes": True,
-                "send_notifications": True
-            }
-        },
-        {
-            "name": "Mixed Scenario (Match 3)",
-            "match_id": 3,
-            "payload": {
-                "final_result": {
-                    "winner_team_id": 1,
-                    "final_score": "2-1",
-                    "mvp_player_id": 2,
-                    "match_duration": 3200
                 },
                 "distribute_prizes": True,
                 "send_notifications": True

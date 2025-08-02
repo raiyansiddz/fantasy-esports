@@ -134,7 +134,7 @@ func (h *RealTimeLeaderboardHandler) GetRealTimeLeaderboard(c *gin.Context) {
 // @Param contest_id path int true "Contest ID"
 // @Router /leaderboards/ws/contest/{contest_id} [get]
 func (h *RealTimeLeaderboardHandler) HandleLeaderboardWebSocket(c *gin.Context) {
-	contestID := parseIntToInt64(c.Param("contest_id"))
+	contestID, _ := strconv.ParseInt(c.Param("contest_id"), 10, 64)
 	userID := c.GetInt64("user_id")
 
 	if contestID == 0 {

@@ -921,6 +921,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 	var currentStatus string
 	err = tx.QueryRow("SELECT status FROM matches WHERE id = $1", matchID).Scan(&currentStatus)
 	if err != nil {
+		txErr = err
 		c.JSON(http.StatusNotFound, models.ErrorResponse{
 			Success: false,
 			Error:   "Match not found",
@@ -930,6 +931,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 	}
 	
 	if currentStatus == "completed" {
+		txErr = fmt.Errorf("match already completed")
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
 			Error:   "Match is already completed",
@@ -946,6 +948,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 		req.FinalResult.WinnerTeamID, matchID)
 	
 	if err != nil {
+		txErr = err
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to complete match",
@@ -957,6 +960,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 	// Step 4: Finalize all fantasy team scores
 	finalizedTeams, err := h.finalizeFantasyTeamScores(tx, matchID)
 	if err != nil {
+		txErr = err
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to finalize fantasy scores",
@@ -968,6 +972,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 	// Step 5: Calculate and freeze final leaderboards
 	leaderboardsFinalized, err := h.finalizeContestLeaderboards(tx, matchID)
 	if err != nil {
+		txErr = err
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to finalize leaderboards",
@@ -981,6 +986,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 	if req.DistributePrizes {
 		prizeDistribution, err = h.distributePrizes(tx, matchID)
 		if err != nil {
+			txErr = err
 			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Success: false,
 				Error:   "Failed to distribute prizes",
@@ -993,6 +999,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 	// Step 7: Update contest statuses
 	contestsUpdated, err := h.updateContestStatuses(tx, matchID)
 	if err != nil {
+		txErr = err
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to update contest statuses",
@@ -1018,8 +1025,8 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 		statsUpdated = false
 	}
 	
-	// Step 10: Commit all changes
-	if err = tx.Commit(); err != nil {
+	// Step 10: Check for commit errors from defer pattern
+	if txErr != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to commit match completion",

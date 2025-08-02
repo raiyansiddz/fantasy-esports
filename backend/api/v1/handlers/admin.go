@@ -893,12 +893,25 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 
 	// ⭐ REAL MATCH COMPLETION AND PRIZE DISTRIBUTION IMPLEMENTATION ⭐
 	
-	// Step 1: Start transaction for all completion operations with proper defer pattern
+	// Step 1: Start transaction with READ COMMITTED isolation for Crown Jewel fix
+	// This prevents phantom reads during validation-to-execution gap
 	tx, err := h.db.Begin()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to start completion transaction",
+			Code:    "TRANSACTION_ERROR",
+		})
+		return
+	}
+	
+	// Set transaction isolation level to prevent read phenomena
+	_, err = tx.Exec("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to set transaction isolation level",
 			Code:    "TRANSACTION_ERROR",
 		})
 		return

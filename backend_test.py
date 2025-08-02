@@ -421,15 +421,16 @@ def test_enhanced_match_state_management():
         return False, None
 
 def test_complete_match_with_prize_distribution():
-    """Test Complete Match functionality with real prize distribution"""
-    print_test_header("Complete Match with Prize Distribution")
+    """Test Complete Match functionality with real prize distribution - Crown Jewel Fix"""
+    print_test_header("Complete Match with Prize Distribution - Crown Jewel Transaction Fix")
     
     if not ADMIN_TOKEN:
         print("❌ No admin token available - skipping test")
         return False, None
     
     try:
-        url = f"{BACKEND_URL}/api/v1/admin/matches/3/complete"
+        # Test with match ID that likely has empty contest_participants table
+        url = f"{BACKEND_URL}/api/v1/admin/matches/10/complete"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         
         # Use correct request format based on CompleteMatchRequest model
@@ -448,7 +449,7 @@ def test_complete_match_with_prize_distribution():
         data = print_response(response, url)
         
         if response.status_code == 200 and data and data.get('success'):
-            print(f"✅ Complete Match with Prize Distribution PASSED")
+            print(f"✅ Complete Match with Prize Distribution PASSED - NO COMMIT_ERROR")
             print(f"   Match ID: {data.get('match_id')}")
             print(f"   Winner Team: {data.get('winner_team')}")
             print(f"   MVP Player: {data.get('mvp_player')}")
@@ -458,20 +459,32 @@ def test_complete_match_with_prize_distribution():
             print(f"   Notifications Sent: {data.get('notifications_sent', 0)}")
             print(f"   Statistics Updated: {data.get('statistics_updated', False)}")
             
-            # Check for real prize distribution features
+            # Check for Crown Jewel fix - should handle empty contest_participants gracefully
             prize_data = data.get('prize_distribution', {})
-            if prize_data and prize_data.get('total_amount', 0) > 0:
-                print(f"✅ Real prize distribution working: ${prize_data.get('total_amount')}")
-                print(f"   Winners Rewarded: {prize_data.get('winners_rewarded', 0)}")
-                print(f"   Contests Processed: {prize_data.get('contests_processed', 0)}")
-            if data.get('fantasy_teams_finalized', 0) > 0:
-                print("✅ Fantasy team score finalization working")
-            if data.get('leaderboards_finalized', 0) > 0:
-                print("✅ Leaderboard finalization working")
+            if prize_data:
+                total_amount = prize_data.get('total_amount', 0)
+                winners_rewarded = prize_data.get('winners_rewarded', 0)
+                contests_processed = prize_data.get('contests_processed', 0)
                 
+                print(f"✅ Crown Jewel Fix Working: Prize distribution completed without transaction errors")
+                print(f"   Total Amount: ${total_amount}")
+                print(f"   Winners Rewarded: {winners_rewarded}")
+                print(f"   Contests Processed: {contests_processed}")
+                
+                if total_amount == 0 and winners_rewarded == 0:
+                    print("✅ Empty contest_participants handled correctly - zero distributions returned")
+                else:
+                    print("✅ Prize distribution working with populated data")
+            
             return True, data
         else:
-            print("❌ Complete Match with Prize Distribution FAILED")
+            error_code = data.get('code') if data else 'UNKNOWN'
+            if error_code == 'COMMIT_ERROR':
+                print("❌ CRITICAL: Crown Jewel fix FAILED - Still getting COMMIT_ERROR")
+            elif error_code == 'PRIZE_DISTRIBUTION_ERROR':
+                print("❌ CRITICAL: Crown Jewel fix FAILED - Still getting PRIZE_DISTRIBUTION_ERROR")
+            else:
+                print(f"❌ Complete Match with Prize Distribution FAILED - Error: {error_code}")
             return False, data
             
     except Exception as e:

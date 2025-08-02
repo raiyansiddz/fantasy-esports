@@ -316,6 +316,9 @@ func (h *AdminHandler) AddMatchEvent(c *gin.Context) {
         // Update leaderboards for all contests of this match
         h.UpdateLeaderboardsForMatch(matchID)
 
+        // ⭐ TRIGGER REAL-TIME LEADERBOARD UPDATES ⭐
+        h.triggerRealTimeLeaderboardUpdates(matchID, eventID, "match_event")
+
         c.JSON(http.StatusOK, gin.H{
                 "success":      true,
                 "event_id":     eventID,

@@ -1,77 +1,77 @@
 {
   "summary": {
     "total_tests": 11,
-    "passed": 9,
-    "failed": 2,
-    "success_rate": 81.81818181818183
+    "passed": 10,
+    "failed": 1,
+    "success_rate": 90.9090909090909
   },
   "test_results": [
     {
       "test": "Health Check",
       "success": true,
       "details": "Status: 200",
-      "timestamp": "2025-08-02T19:46:48.660191"
+      "timestamp": "2025-08-02T19:47:22.363675"
     },
     {
       "test": "Admin Login",
       "success": true,
       "details": "Admin logged in successfully",
-      "timestamp": "2025-08-02T19:46:49.587029"
+      "timestamp": "2025-08-02T19:47:23.290524"
     },
     {
       "test": "Get Pending KYC Documents",
       "success": true,
       "details": "Found 0 documents, Total: 0",
-      "timestamp": "2025-08-02T19:46:50.513042"
+      "timestamp": "2025-08-02T19:47:24.216653"
     },
     {
       "test": "Get KYC Documents with Filters",
       "success": true,
       "details": "Filtered results: 0 documents, Page: 1",
-      "timestamp": "2025-08-02T19:46:51.439112"
+      "timestamp": "2025-08-02T19:47:25.142862"
     },
     {
       "test": "Get Users Endpoint",
       "success": true,
       "details": "Found 13 users, Total: 13",
-      "timestamp": "2025-08-02T19:46:52.135423"
+      "timestamp": "2025-08-02T19:47:25.837987"
     },
     {
       "test": "Get User Details (405)",
-      "success": false,
-      "details": "Error: object of type 'NoneType' has no len()",
-      "timestamp": "2025-08-02T19:46:53.061400"
+      "success": true,
+      "details": "User: LeaderboardTest User, KYC Status: pending, Documents: 0",
+      "timestamp": "2025-08-02T19:47:26.763859"
     },
     {
       "test": "Update User Status (405)",
       "success": true,
       "details": "Status updated to: active",
-      "timestamp": "2025-08-02T19:46:53.525965"
+      "timestamp": "2025-08-02T19:47:27.228193"
     },
     {
       "test": "KYC Document Processing",
       "success": true,
       "details": "No pending documents available - endpoint structure validated",
-      "timestamp": "2025-08-02T19:46:53.525996"
+      "timestamp": "2025-08-02T19:47:27.228227"
     },
     {
       "test": "Edge Case - Invalid Document ID",
       "success": true,
       "details": "Expected 404, got 404",
-      "timestamp": "2025-08-02T19:46:54.451629"
+      "timestamp": "2025-08-02T19:47:28.154254"
     },
     {
       "test": "Edge Case - Missing Rejection Reason",
       "success": true,
       "details": "Expected 400, got 400",
-      "timestamp": "2025-08-02T19:46:54.453039"
+      "timestamp": "2025-08-02T19:47:28.155799"
     },
     {
       "test": "Edge Case - Invalid Status",
       "success": false,
       "details": "Expected 400/422, got 404",
-      "timestamp": "2025-08-02T19:46:55.378315"
+      "timestamp": "2025-08-02T19:47:29.081274"
     }
   ],
-  "timestamp": "2025-08-02T19:46:55.378527"
+  "timestamp": "2025-08-02T19:47:29.081632"
 }

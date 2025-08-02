@@ -1279,24 +1279,531 @@ func (h *AdminHandler) HandleLiveScoringWebSocket(c *gin.Context) {
 // ADMIN MANAGEMENT ENDPOINTS
 // ================================
 
-// User Management
+// ================================
+// USER & KYC MANAGEMENT
+// ================================
+
+// @Summary Get users with pagination and filters
+// @Description Get list of users with optional filtering
+// @Tags Admin User Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(20)
+// @Param kyc_status query string false "Filter by KYC status" Enums(pending,partial,verified,rejected)
+// @Param account_status query string false "Filter by account status" Enums(active,suspended,banned)
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/users [get]
 func (h *AdminHandler) GetUsers(c *gin.Context) {
-        c.JSON(http.StatusOK, gin.H{"success": true, "users": []models.User{}, "message": "Users endpoint"})
+        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+        kycStatus := c.Query("kyc_status")
+        accountStatus := c.Query("account_status")
+
+        offset := (page - 1) * limit
+
+        query := `SELECT id, mobile, email, first_name, last_name, is_verified, is_active,
+                         account_status, kyc_status, referral_code, created_at
+                  FROM users WHERE 1=1`
+        args := []interface{}{}
+        argCount := 1
+
+        if kycStatus != "" {
+                query += " AND kyc_status = $" + strconv.Itoa(argCount)
+                args = append(args, kycStatus)
+                argCount++
+        }
+
+        if accountStatus != "" {
+                query += " AND account_status = $" + strconv.Itoa(argCount)
+                args = append(args, accountStatus)
+                argCount++
+        }
+
+        query += " ORDER BY created_at DESC LIMIT $" + strconv.Itoa(argCount) + " OFFSET $" + strconv.Itoa(argCount+1)
+        args = append(args, limit, offset)
+
+        rows, err := h.db.Query(query, args...)
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to fetch users",
+                        Code:    "DB_ERROR",
+                })
+                return
+        }
+        defer rows.Close()
+
+        var users []models.User
+        for rows.Next() {
+                var user models.User
+                err := rows.Scan(
+                        &user.ID, &user.Mobile, &user.Email, &user.FirstName, &user.LastName,
+                        &user.IsVerified, &user.IsActive, &user.AccountStatus, &user.KYCStatus,
+                        &user.ReferralCode, &user.CreatedAt,
+                )
+                if err != nil {
+                        continue
+                }
+                users = append(users, user)
+        }
+
+        // Get total count
+        var total int
+        countQuery := "SELECT COUNT(*) FROM users WHERE 1=1"
+        countArgs := []interface{}{}
+        
+        if kycStatus != "" {
+                countQuery += " AND kyc_status = ?"
+                countArgs = append(countArgs, kycStatus)
+        }
+        if accountStatus != "" {
+                countQuery += " AND account_status = ?"
+                countArgs = append(countArgs, accountStatus)
+        }
+
+        h.db.QueryRow(countQuery, countArgs...).Scan(&total)
+        totalPages := (total + limit - 1) / limit
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "users":   users,
+                "total":   total,
+                "page":    page,
+                "pages":   totalPages,
+        })
 }
 
+// @Summary Get user details with KYC information
+// @Description Get detailed user information including KYC documents
+// @Tags Admin User Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "User ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/users/{id} [get]
 func (h *AdminHandler) GetUserDetails(c *gin.Context) {
         userID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID, "user": models.User{}})
+
+        // Get user details
+        var user models.User
+        err := h.db.QueryRow(`
+                SELECT id, mobile, email, first_name, last_name, date_of_birth, gender,
+                       avatar_url, is_verified, is_active, account_status, kyc_status,
+                       referral_code, referred_by_code, state, city, pincode,
+                       last_login_at, created_at, updated_at
+                FROM users WHERE id = $1`, userID).Scan(
+                &user.ID, &user.Mobile, &user.Email, &user.FirstName, &user.LastName,
+                &user.DateOfBirth, &user.Gender, &user.AvatarURL, &user.IsVerified,
+                &user.IsActive, &user.AccountStatus, &user.KYCStatus, &user.ReferralCode,
+                &user.ReferredByCode, &user.State, &user.City, &user.Pincode,
+                &user.LastLoginAt, &user.CreatedAt, &user.UpdatedAt,
+        )
+
+        if err != nil {
+                c.JSON(http.StatusNotFound, models.ErrorResponse{
+                        Success: false,
+                        Error:   "User not found",
+                        Code:    "USER_NOT_FOUND",
+                })
+                return
+        }
+
+        // Get KYC documents
+        kycRows, err := h.db.Query(`
+                SELECT id, document_type, document_front_url, document_back_url,
+                       document_number, status, verified_at, verified_by, rejection_reason, created_at
+                FROM kyc_documents WHERE user_id = $1 ORDER BY created_at DESC`, userID)
+
+        var kycDocuments []models.KYCDocument
+        if err == nil {
+                defer kycRows.Close()
+                for kycRows.Next() {
+                        var doc models.KYCDocument
+                        kycRows.Scan(&doc.ID, &doc.DocumentType, &doc.DocumentFrontURL,
+                                &doc.DocumentBackURL, &doc.DocumentNumber, &doc.Status,
+                                &doc.VerifiedAt, &doc.VerifiedBy, &doc.RejectionReason, &doc.CreatedAt)
+                        doc.UserID = user.ID
+                        kycDocuments = append(kycDocuments, doc)
+                }
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success":       true,
+                "user":          user,
+                "kyc_documents": kycDocuments,
+        })
 }
 
+// @Summary Update user account status
+// @Description Update user's account status (active/suspended/banned)
+// @Tags Admin User Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "User ID"
+// @Param request body map[string]string true "Status update data"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/users/{id}/status [put]
 func (h *AdminHandler) UpdateUserStatus(c *gin.Context) {
         userID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID, "message": "User status updated"})
+        adminID := c.GetInt64("admin_id")
+
+        var req map[string]string
+        if err := c.ShouldBindJSON(&req); err != nil {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid request format",
+                        Code:    "INVALID_REQUEST",
+                })
+                return
+        }
+
+        newStatus, ok := req["account_status"]
+        if !ok || (newStatus != "active" && newStatus != "suspended" && newStatus != "banned") {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Valid account_status required (active/suspended/banned)",
+                        Code:    "INVALID_STATUS",
+                })
+                return
+        }
+
+        reason := req["reason"] // Optional reason for status change
+
+        // Update user status
+        _, err := h.db.Exec(`
+                UPDATE users 
+                SET account_status = $1, is_active = $2, updated_at = NOW()
+                WHERE id = $3`,
+                newStatus, newStatus == "active", userID)
+
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to update user status",
+                        Code:    "DB_ERROR",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success":        true,
+                "user_id":        userID,
+                "new_status":     newStatus,
+                "updated_by":     adminID,
+                "reason":         reason,
+                "message":        "User status updated successfully",
+        })
 }
 
+// ================================
+// KYC APPROVAL WORKFLOW ⭐
+// ================================
+
+// @Summary Get pending KYC documents
+// @Description Get list of KYC documents pending admin review with filters
+// @Tags Admin KYC Management
+// @Accept json
+// @Produce json  
+// @Security BearerAuth
+// @Param status query string false "Filter by status" Enums(pending,verified,rejected)
+// @Param document_type query string false "Filter by document type" Enums(pan_card,aadhaar,bank_statement)
+// @Param date_from query string false "Filter from date (YYYY-MM-DD)"
+// @Param date_to query string false "Filter to date (YYYY-MM-DD)"
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(20)
+// @Success 200 {object} models.KYCListResponse
+// @Router /admin/kyc/pending [get]
+func (h *AdminHandler) GetPendingKYCDocuments(c *gin.Context) {
+        status := c.DefaultQuery("status", "pending")
+        documentType := c.Query("document_type")
+        dateFrom := c.Query("date_from")
+        dateTo := c.Query("date_to")
+        page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+        limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+
+        offset := (page - 1) * limit
+
+        query := `SELECT kd.id, kd.user_id, kd.document_type, kd.document_front_url,
+                         kd.document_back_url, kd.document_number, kd.additional_data,
+                         kd.status, kd.verified_at, kd.verified_by, kd.rejection_reason,
+                         kd.created_at, u.mobile, 
+                         COALESCE(u.first_name || ' ' || u.last_name, u.mobile) as user_name,
+                         u.email
+                  FROM kyc_documents kd
+                  JOIN users u ON kd.user_id = u.id
+                  WHERE 1=1`
+        args := []interface{}{}
+        argCount := 1
+
+        if status != "" {
+                query += " AND kd.status = $" + strconv.Itoa(argCount)
+                args = append(args, status)
+                argCount++
+        }
+
+        if documentType != "" {
+                query += " AND kd.document_type = $" + strconv.Itoa(argCount)
+                args = append(args, documentType)
+                argCount++
+        }
+
+        if dateFrom != "" {
+                query += " AND DATE(kd.created_at) >= $" + strconv.Itoa(argCount)
+                args = append(args, dateFrom)
+                argCount++
+        }
+
+        if dateTo != "" {
+                query += " AND DATE(kd.created_at) <= $" + strconv.Itoa(argCount)
+                args = append(args, dateTo)
+                argCount++
+        }
+
+        query += " ORDER BY kd.created_at ASC LIMIT $" + strconv.Itoa(argCount) + " OFFSET $" + strconv.Itoa(argCount+1)
+        args = append(args, limit, offset)
+
+        rows, err := h.db.Query(query, args...)
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to fetch KYC documents",
+                        Code:    "DB_ERROR",
+                })
+                return
+        }
+        defer rows.Close()
+
+        var documents []models.KYCDocumentWithUser
+        for rows.Next() {
+                var doc models.KYCDocumentWithUser
+                err := rows.Scan(
+                        &doc.ID, &doc.UserID, &doc.DocumentType, &doc.DocumentFrontURL,
+                        &doc.DocumentBackURL, &doc.DocumentNumber, &doc.AdditionalData,
+                        &doc.Status, &doc.VerifiedAt, &doc.VerifiedBy, &doc.RejectionReason,
+                        &doc.CreatedAt, &doc.UserMobile, &doc.UserName, &doc.UserEmail,
+                )
+                if err != nil {
+                        continue
+                }
+                documents = append(documents, doc)
+        }
+
+        // Get total count
+        var total int
+        countQuery := "SELECT COUNT(*) FROM kyc_documents kd JOIN users u ON kd.user_id = u.id WHERE 1=1"
+        countArgs := []interface{}{}
+        countArgCount := 1
+
+        if status != "" {
+                countQuery += " AND kd.status = $" + strconv.Itoa(countArgCount)
+                countArgs = append(countArgs, status)
+                countArgCount++
+        }
+        if documentType != "" {
+                countQuery += " AND kd.document_type = $" + strconv.Itoa(countArgCount)
+                countArgs = append(countArgs, documentType)
+                countArgCount++
+        }
+
+        h.db.QueryRow(countQuery, countArgs...).Scan(&total)
+        totalPages := (total + limit - 1) / limit
+
+        response := models.KYCListResponse{
+                Documents: documents,
+                Total:     total,
+                Page:      page,
+                Pages:     totalPages,
+                Filters: models.KYCFilters{
+                        Status:       status,
+                        DocumentType: documentType,
+                        DateFrom:     dateFrom,
+                        DateTo:       dateTo,
+                },
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "data":    response,
+        })
+}
+
+// @Summary Process KYC document approval/rejection
+// @Description Approve or reject a KYC document with detailed workflow
+// @Tags Admin KYC Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param document_id path int true "KYC Document ID"
+// @Param request body models.KYCApprovalRequest true "KYC approval/rejection data"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/kyc/documents/{document_id}/process [put]
 func (h *AdminHandler) ProcessKYC(c *gin.Context) {
-        userID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID, "message": "KYC processed"})
+        documentID := c.Param("document_id")
+        adminID := c.GetInt64("admin_id")
+
+        var req models.KYCApprovalRequest
+        if err := c.ShouldBindJSON(&req); err != nil {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid request format",
+                        Code:    "INVALID_REQUEST",
+                })
+                return
+        }
+
+        // Validate rejection reason for rejected documents
+        if req.Status == "rejected" && (req.RejectionReason == nil || *req.RejectionReason == "") {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Rejection reason is required for rejected documents",
+                        Code:    "REJECTION_REASON_REQUIRED",
+                })
+                return
+        }
+
+        // Start transaction for KYC processing
+        tx, err := h.db.Begin()
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to start transaction",
+                        Code:    "TRANSACTION_ERROR",
+                })
+                return
+        }
+
+        var txErr error
+        committed := false
+        defer func() {
+                if p := recover(); p != nil {
+                        if !committed {
+                                tx.Rollback()
+                        }
+                        panic(p)
+                } else if txErr != nil {
+                        if !committed {
+                                tx.Rollback()
+                        }
+                } else {
+                        if !committed {
+                                txErr = tx.Commit()
+                                committed = true
+                        }
+                }
+        }()
+
+        // Get document and user information
+        var doc models.KYCDocument
+        var currentStatus string
+        err = tx.QueryRow(`
+                SELECT kd.id, kd.user_id, kd.document_type, kd.status, u.mobile
+                FROM kyc_documents kd 
+                JOIN users u ON kd.user_id = u.id
+                WHERE kd.id = $1`, documentID).Scan(
+                &doc.ID, &doc.UserID, &doc.DocumentType, &currentStatus, &doc.UserID) // Reusing UserID for mobile temp
+
+        if err != nil {
+                txErr = err
+                c.JSON(http.StatusNotFound, models.ErrorResponse{
+                        Success: false,
+                        Error:   "KYC document not found",
+                        Code:    "DOCUMENT_NOT_FOUND",
+                })
+                return
+        }
+
+        // Check if document can be processed
+        if currentStatus == req.Status {
+                txErr = fmt.Errorf("document already %s", req.Status)
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   fmt.Sprintf("Document is already %s", req.Status),
+                        Code:    "ALREADY_PROCESSED",
+                })
+                return
+        }
+
+        // Update KYC document status
+        var verifiedAt interface{}
+        if req.Status == "verified" {
+                verifiedAt = "NOW()"
+        } else {
+                verifiedAt = nil
+        }
+
+        _, err = tx.Exec(`
+                UPDATE kyc_documents 
+                SET status = $1, verified_at = `+fmt.Sprintf("%v", verifiedAt)+`, 
+                    verified_by = $2, rejection_reason = $3, 
+                    additional_data = $4
+                WHERE id = $5`,
+                req.Status, adminID, req.RejectionReason, req.Notes, documentID)
+
+        if err != nil {
+                txErr = err
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to update KYC document",
+                        Code:    "UPDATE_FAILED",
+                })
+                return
+        }
+
+        // Recalculate user's overall KYC status
+        newKYCStatus, err := h.calculateUserKYCStatus(tx, doc.UserID)
+        if err != nil {
+                txErr = err
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to calculate user KYC status",
+                        Code:    "KYC_CALCULATION_ERROR",
+                })
+                return
+        }
+
+        // Update user's KYC status
+        _, err = tx.Exec(`
+                UPDATE users 
+                SET kyc_status = $1, updated_at = NOW()
+                WHERE id = $2`,
+                newKYCStatus, doc.UserID)
+
+        if err != nil {
+                txErr = err
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to update user KYC status",
+                        Code:    "USER_UPDATE_FAILED",
+                })
+                return
+        }
+
+        // Check for commit errors
+        if txErr != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to commit KYC processing",
+                        Code:    "COMMIT_ERROR",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success":           true,
+                "document_id":       documentID,
+                "user_id":           doc.UserID,
+                "document_type":     doc.DocumentType,
+                "new_status":        req.Status,
+                "user_kyc_status":   newKYCStatus,
+                "processed_by":      adminID,
+                "rejection_reason":  req.RejectionReason,
+                "notes":            req.Notes,
+                "message":          fmt.Sprintf("KYC document %s successfully", req.Status),
+        })
 }
 
 // Game Management

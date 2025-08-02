@@ -282,7 +282,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All Manual Scoring System Features Complete"
+    - "Real-time Leaderboards System"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

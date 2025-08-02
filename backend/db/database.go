@@ -16,9 +16,10 @@ func Initialize(databaseURL string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Set connection pool settings
+	// Set connection pool settings with proper timeouts
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(time.Hour) // Prevent connection timeouts
 
 	return db, nil
 }

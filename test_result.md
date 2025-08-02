@@ -107,11 +107,11 @@ user_problem_statement: "Complete the Manual Scoring System (Crown Jewel) for th
 backend:
   - task: "Enhanced Match State Management"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/api/v1/handlers/admin.go"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "implemented"
           agent: "main"

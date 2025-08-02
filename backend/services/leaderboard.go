@@ -75,7 +75,7 @@ func (s *LeaderboardService) GetLiveLeaderboard(contestID int64, userID int64) (
 	}
 
 	// Get user's rank and points
-	userRank, userPoints, userTeamID, err := s.getUserRankInContest(contestID, userID)
+	userRank, userPoints, userTeamID, err := s.GetUserRankInContest(contestID, userID)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Failed to get user rank for user %d in contest %d: %v", userID, contestID, err))
 		userRank = 0

@@ -1731,10 +1731,23 @@ func (h *AdminHandler) ProcessKYC(c *gin.Context) {
         // Convert notes to JSONB format for additional_data column
         var additionalData interface{}
         if req.Notes != nil && *req.Notes != "" {
-                additionalData = map[string]interface{}{
+                // Create a proper JSON object for JSONB column
+                notesJSON := map[string]interface{}{
                         "admin_notes": *req.Notes,
                         "processed_at": time.Now().Format(time.RFC3339),
                 }
+                // Marshal to JSON bytes for PostgreSQL JSONB
+                jsonBytes, err := json.Marshal(notesJSON)
+                if err != nil {
+                        txErr = err
+                        c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                                Success: false,
+                                Error:   "Failed to marshal notes to JSON",
+                                Code:    "JSON_MARSHAL_ERROR",
+                        })
+                        return
+                }
+                additionalData = string(jsonBytes)
         } else {
                 additionalData = nil
         }

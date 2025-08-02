@@ -197,15 +197,15 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 		}
 
 		// Apply referral code if provided
-		if req.ReferralCode != "" {
-			err = h.referralService.ApplyReferralCode(user.ID, req.ReferralCode)
+		if req.ReferralCode != nil && *req.ReferralCode != "" {
+			err = h.referralService.ApplyReferralCode(user.ID, *req.ReferralCode)
 			if err != nil {
 				log.Printf("Failed to apply referral code %s for user %d: %v", 
-					req.ReferralCode, user.ID, err)
+					*req.ReferralCode, user.ID, err)
 				// Don't fail registration if referral fails, just log it
 			} else {
 				log.Printf("Successfully applied referral code %s for user %d", 
-					req.ReferralCode, user.ID)
+					*req.ReferralCode, user.ID)
 			}
 		}
 

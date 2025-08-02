@@ -2351,37 +2351,49 @@ func (h *AdminHandler) updateUserWallet(tx *sql.Tx, teamID int64, amount float64
 
 // updateContestStatuses updates contest statuses after match completion
 func (h *AdminHandler) updateContestStatuses(tx *sql.Tx, matchID string) (int, error) {
+	// Add detailed logging for debugging
+	fmt.Printf("DEBUG: updateContestStatuses called for match %s\n", matchID)
+	
 	// First, check if any contests exist for this match
 	var contestCount int
 	err := tx.QueryRow(`
 		SELECT COUNT(*) FROM contests WHERE match_id = $1`, matchID).Scan(&contestCount)
 	
 	if err != nil {
+		fmt.Printf("DEBUG: Error checking contest count for match %s: %v\n", matchID, err)
 		return 0, fmt.Errorf("failed to check contest count: %w", err)
 	}
 	
+	fmt.Printf("DEBUG: Found %d contests for match %s\n", contestCount, matchID)
+	
 	// Handle case where no contests exist - this is valid, return success with zero count
 	if contestCount == 0 {
+		fmt.Printf("DEBUG: No contests found for match %s, returning success\n", matchID)
 		return 0, nil // Success: no contests to update
 	}
 	
 	// Update all contests for this match to completed status
+	fmt.Printf("DEBUG: Attempting to update contest statuses for match %s\n", matchID)
+	
 	result, err := tx.Exec(`
 		UPDATE contests 
 		SET status = 'completed', updated_at = NOW()
 		WHERE match_id = $1 AND status != 'completed'`, matchID)
 	
 	if err != nil {
+		fmt.Printf("DEBUG: Error updating contest statuses for match %s: %v\n", matchID, err)
 		return 0, fmt.Errorf("failed to update contest statuses: %w", err)
 	}
 	
 	// Check rows affected - zero is valid if all contests were already completed
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
+		fmt.Printf("DEBUG: Error getting rows affected for match %s: %v\n", matchID, err)
 		// Don't fail for RowsAffected error - return what we know worked
 		return 0, nil
 	}
 	
+	fmt.Printf("DEBUG: Updated %d contest statuses for match %s\n", int(rowsAffected), matchID)
 	return int(rowsAffected), nil
 }
 

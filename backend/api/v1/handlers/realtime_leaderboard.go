@@ -401,10 +401,3 @@ func (h *RealTimeLeaderboardHandler) GetConnectionManager() *websocket.Connectio
 	return h.connectionManager
 }
 
-// Helper function
-func parseIntToInt64(s string) int64 {
-	if i, err := strconv.Atoi(s); err == nil {
-		return int64(i)
-	}
-	return 0
-}

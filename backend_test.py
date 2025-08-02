@@ -40,7 +40,10 @@ class FantasyEsportsAPITester:
         
     def generate_test_mobile(self) -> str:
         """Generate a unique test mobile number"""
-        return f"91{''.join(random.choices(string.digits, k=10))}"
+        # Generate Indian mobile number in format +91[6-9]XXXXXXXXX
+        first_digit = random.choice(['6', '7', '8', '9'])
+        remaining_digits = ''.join(random.choices(string.digits, k=9))
+        return f"+91{first_digit}{remaining_digits}"
         
     def generate_test_email(self) -> str:
         """Generate a unique test email"""

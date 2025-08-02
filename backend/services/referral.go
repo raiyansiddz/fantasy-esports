@@ -3,7 +3,6 @@ package services
 import (
 	"database/sql"
 	"fmt"
-	"time"
 	"fantasy-esports-backend/models"
 	"fantasy-esports-backend/pkg/logger"
 )

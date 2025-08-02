@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Testing for Fantasy Esports Referral System
-Tests all referral system functionality including:
-- User registration with referral codes
-- Referral code application and validation
-- Referral completion logic (deposit/contest triggers)
-- Tier-based reward system
-- Referral statistics and leaderboard
-- Edge cases and error handling
+Comprehensive Backend API Testing for Fantasy Esports KYC Approval Workflow
+Tests KYC system functionality including:
+- Admin authentication and login
+- Getting pending KYC documents with filters
+- Processing KYC documents (approve/reject)
+- User management integration
+- Real database operations with PostgreSQL
 """
 
 import requests

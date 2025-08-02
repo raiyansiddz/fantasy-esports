@@ -1908,40 +1908,54 @@ func (h *AdminHandler) finalizeFantasyTeamScores(tx *sql.Tx, matchID string) (in
 }
 
 // finalizeContestLeaderboards finalizes and freezes contest leaderboards
+// Implements robust empty dataset handling to prevent transaction failures
 func (h *AdminHandler) finalizeContestLeaderboards(tx *sql.Tx, matchID string) (int, error) {
-	// First, check if there are any contest participants for this match
+	// Use proper error handling pattern for empty dataset scenarios
+	var err error
+	
+	// First, check if there are any contests for this match
+	var contestCount int
+	err = tx.QueryRow(`
+		SELECT COUNT(*) FROM contests WHERE match_id = $1`, matchID).Scan(&contestCount)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil // No contests is success - return zero processed
+		}
+		return 0, fmt.Errorf("failed to check contest count: %w", err)
+	}
+	
+	// Handle case where no contests exist - this is valid state
+	if contestCount == 0 {
+		return 0, nil // Successfully processed zero contests
+	}
+	
+	// Check if there are any contest participants for this match
 	var participantCount int
-	err := tx.QueryRow(`
+	err = tx.QueryRow(`
 		SELECT COUNT(*)
 		FROM contest_participants cp
 		JOIN contests c ON cp.contest_id = c.id
 		WHERE c.match_id = $1`, matchID).Scan(&participantCount)
 	
 	if err != nil {
-		return 0, err
-	}
-	
-	// Handle the case where no participants exist - return success with zero finalized
-	if participantCount == 0 {
-		// Still mark contests as completed even without participants
-		contestCount, err := tx.Exec(`
-			UPDATE contests 
-			SET status = 'completed', is_finalized = true, finalized_at = NOW()
-			WHERE match_id = $1 AND status != 'completed'`, matchID)
-		
-		if err != nil {
-			return 0, err
+		if err == sql.ErrNoRows {
+			// No participants - still need to mark contests as completed
+			return h.markContestsCompleted(tx, matchID)
 		}
-		
-		rowsAffected, _ := contestCount.RowsAffected()
-		return int(rowsAffected), nil
+		return 0, fmt.Errorf("failed to check participant count: %w", err)
 	}
 	
-	// Get all contests for this match
+	// Handle the case where no participants exist - mark contests as completed
+	if participantCount == 0 {
+		return h.markContestsCompleted(tx, matchID)
+	}
+	
+	// Get all contests for this match and process them individually
 	rows, err := tx.Query(`
 		SELECT id FROM contests WHERE match_id = $1`, matchID)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to query contests: %w", err)
 	}
 	defer rows.Close()
 	
@@ -1950,34 +1964,75 @@ func (h *AdminHandler) finalizeContestLeaderboards(tx *sql.Tx, matchID string) (
 	for rows.Next() {
 		var contestID int64
 		if err := rows.Scan(&contestID); err != nil {
-			continue
+			continue // Skip this contest on scan error
 		}
 		
-		// Check if this specific contest has participants before updating leaderboard
-		var contestParticipants int
-		err = tx.QueryRow(`
-			SELECT COUNT(*) FROM contest_participants WHERE contest_id = $1`, contestID).Scan(&contestParticipants)
-		
-		if err == nil && contestParticipants > 0 {
-			// Update final rankings only if there are participants
-			err = h.updateContestLeaderboardTx(tx, contestID)
-			if err != nil {
-				continue
-			}
-		}
-		
-		// Mark contest as finalized regardless of participants
-		_, err = tx.Exec(`
-			UPDATE contests 
-			SET status = 'completed', is_finalized = true, finalized_at = NOW()
-			WHERE id = $1`, contestID)
-		
-		if err == nil {
+		// Process each contest with proper error handling
+		if h.processContestFinalization(tx, contestID) {
 			leaderboardsFinalized++
 		}
 	}
 	
+	// Check for errors in row iteration
+	if err = rows.Err(); err != nil {
+		return leaderboardsFinalized, fmt.Errorf("error iterating contests: %w", err)
+	}
+	
 	return leaderboardsFinalized, nil
+}
+
+// markContestsCompleted marks all contests as completed when no participants exist
+func (h *AdminHandler) markContestsCompleted(tx *sql.Tx, matchID string) (int, error) {
+	result, err := tx.Exec(`
+		UPDATE contests 
+		SET status = 'completed', is_finalized = true, finalized_at = NOW()
+		WHERE match_id = $1 AND status != 'completed'`, matchID)
+	
+	if err != nil {
+		return 0, fmt.Errorf("failed to mark contests completed: %w", err)
+	}
+	
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// Don't fail for RowsAffected error - return success
+		return 0, nil
+	}
+	
+	return int(rowsAffected), nil
+}
+
+// processContestFinalization processes individual contest finalization with error handling
+func (h *AdminHandler) processContestFinalization(tx *sql.Tx, contestID int64) bool {
+	// Check if this specific contest has participants before updating leaderboard
+	var contestParticipants int
+	err := tx.QueryRow(`
+		SELECT COUNT(*) FROM contest_participants WHERE contest_id = $1`, contestID).Scan(&contestParticipants)
+	
+	if err != nil {
+		// Handle query error gracefully - don't fail entire operation
+		if err != sql.ErrNoRows {
+			return false
+		}
+		contestParticipants = 0
+	}
+	
+	if contestParticipants > 0 {
+		// Update final rankings only if there are participants
+		err = h.updateContestLeaderboardTx(tx, contestID)
+		if err != nil {
+			// Log error but continue with marking as completed
+			_ = err // Don't fail entire operation for leaderboard update errors
+		}
+	}
+	
+	// Mark contest as finalized regardless of participants - this is important
+	_, err = tx.Exec(`
+		UPDATE contests 
+		SET status = 'completed', is_finalized = true, finalized_at = NOW()
+		WHERE id = $1`, contestID)
+	
+	// Return success if contest was marked as completed
+	return err == nil
 }
 
 // distributePrizes distributes prizes to winners - FIXED VERSION

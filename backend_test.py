@@ -10,8 +10,8 @@ import json
 import sys
 from datetime import datetime
 
-# Get backend URL from environment - using localhost for GoLang backend
-BACKEND_URL = "http://localhost:8001"
+# Get backend URL from environment - using 127.0.0.1 for GoLang backend
+BACKEND_URL = "http://127.0.0.1:8001"
 
 # Global admin token storage
 ADMIN_TOKEN = None

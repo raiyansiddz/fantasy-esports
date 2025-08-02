@@ -8,6 +8,7 @@ Focus: Fantasy Points Calculation Engine Testing
 import requests
 import json
 import sys
+import time
 from datetime import datetime
 
 # Get backend URL from environment - using 127.0.0.1 for GoLang backend

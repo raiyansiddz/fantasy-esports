@@ -355,10 +355,12 @@ class FantasyEsportsKYCTester:
         if users and len(users) > 0:
             # Test user details for first user
             first_user = users[0]
-            user_details = self.test_get_user_details(first_user.get("id"))
-            
-            # Test user status update
-            self.test_update_user_status(first_user.get("id"), "active")
+            user_id = first_user.get("id")
+            if user_id:
+                user_details = self.test_get_user_details(user_id)
+                
+                # Test user status update
+                self.test_update_user_status(user_id, "active")
         
         # Test 6: KYC Document Processing
         print("\n⚖️ Testing KYC Document Processing...")

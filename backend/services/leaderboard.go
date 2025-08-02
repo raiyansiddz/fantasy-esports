@@ -189,7 +189,7 @@ func (s *LeaderboardService) getTopPerformers(contestID int64, limit int) ([]mod
 }
 
 // getUserRankInContest gets user's current rank in a contest
-func (s *LeaderboardService) getUserRankInContest(contestID int64, userID int64) (int, float64, int64, error) {
+func (s *LeaderboardService) GetUserRankInContest(contestID int64, userID int64) (int, float64, int64, error) {
 	query := `
 		WITH ranked_teams AS (
 			SELECT 

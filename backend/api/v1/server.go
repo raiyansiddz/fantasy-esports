@@ -142,6 +142,15 @@ func (s *Server) Start(addr string) error {
 			leaderboards.GET("/contests/:id", contestHandler.GetContestLeaderboard)
 			leaderboards.GET("/live/:id", contestHandler.GetLiveLeaderboard)
 			leaderboards.GET("/contests/:id/my-rank", contestHandler.GetMyRank)
+			
+			// Real-time leaderboard routes ⭐
+			realtimeHandler := handlers.NewRealTimeLeaderboardHandler(s.db, s.config, contestHandler.GetLeaderboardService())
+			leaderboards.GET("/real-time/:id", realtimeHandler.GetRealTimeLeaderboard)
+			leaderboards.GET("/connections/:contest_id", realtimeHandler.GetActiveConnections)
+			leaderboards.POST("/trigger-update/:contest_id", realtimeHandler.TriggerManualUpdate)
+			
+			// WebSocket endpoint for real-time updates
+			leaderboards.GET("/ws/contest/:contest_id", realtimeHandler.HandleLeaderboardWebSocket)
 		}
 
 		// Wallet routes

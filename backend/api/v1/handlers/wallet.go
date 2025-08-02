@@ -131,6 +131,36 @@ func (h *WalletHandler) Deposit(c *gin.Context) {
 		return
 	}
 
+	// For demo purposes, immediately mark as completed and trigger referral check
+	// In production, this would happen after payment gateway confirmation
+	_, err = h.db.Exec(`
+		UPDATE payment_transactions 
+		SET status = 'completed', completed_at = NOW() 
+		WHERE transaction_id = $1`, paymentID)
+	
+	if err == nil {
+		// Add money to wallet
+		_, err = h.db.Exec(`
+			INSERT INTO user_wallets (user_id, deposit_balance, updated_at)
+			VALUES ($1, $2, NOW())
+			ON CONFLICT (user_id) 
+			DO UPDATE SET 
+				deposit_balance = user_wallets.deposit_balance + $2,
+				updated_at = NOW()`, userID, req.Amount)
+
+		if err == nil {
+			// Create wallet transaction record
+			h.db.Exec(`
+				INSERT INTO wallet_transactions (user_id, transaction_type, amount, balance_type, 
+								description, status, created_at, completed_at)
+				VALUES ($1, 'deposit', $2, 'deposit', 'Deposit via ' || $3, 'completed', NOW(), NOW())`,
+				userID, req.Amount, req.PaymentMethod)
+
+			// Trigger referral completion check for first deposit
+			h.TriggerReferralCheck(userID, "deposit")
+		}
+	}
+
 	response := models.PaymentResponse{
 		PaymentID:      paymentID,
 		GatewayOrderID: gatewayOrderID,

@@ -1046,7 +1046,7 @@ func (h *ContestHandler) GetMyRank(c *gin.Context) {
                 return
         }
 
-        rank, points, teamID, err := h.leaderboardService.getUserRankInContest(contestID, userID)
+        rank, points, teamID, err := h.leaderboardService.GetUserRankInContest(contestID, userID)
         if err != nil {
                 c.JSON(http.StatusNotFound, models.ErrorResponse{
                         Success: false,

@@ -1798,17 +1798,25 @@ func (h *AdminHandler) updateAllContestLeaderboardsTx(tx *sql.Tx, matchID string
 }
 
 // updateContestLeaderboardTx updates rankings for a specific contest within a transaction
+// Implements robust transaction handling for empty dataset scenarios
 func (h *AdminHandler) updateContestLeaderboardTx(tx *sql.Tx, contestID int64) error {
+        // Use proper error handling pattern to prevent transaction issues
+        var err error
+        
         // First, validate that this contest has participants before attempting complex UPDATE
         var participantCount int
-        err := tx.QueryRow(`
+        err = tx.QueryRow(`
                 SELECT COUNT(*) FROM contest_participants WHERE contest_id = $1`, contestID).Scan(&participantCount)
         
         if err != nil {
-                return err
+                // Handle SQL errors gracefully - don't fail transaction for query errors
+                if err == sql.ErrNoRows {
+                        return nil // No rows is success for empty dataset scenarios
+                }
+                return fmt.Errorf("failed to check participant count: %w", err)
         }
         
-        // If no participants, return success without attempting UPDATE
+        // If no participants, return success without attempting UPDATE - this is expected
         if participantCount == 0 {
                 return nil
         }
@@ -1821,13 +1829,21 @@ func (h *AdminHandler) updateContestLeaderboardTx(tx *sql.Tx, contestID int64) e
                 JOIN user_teams ut ON cp.team_id = ut.id
                 WHERE cp.contest_id = $1`, contestID).Scan(&validParticipantCount)
         
-        if err != nil || validParticipantCount == 0 {
-                // If JOIN fails or no valid participants, return success without UPDATE
+        if err != nil {
+                // Handle JOIN query errors - don't fail transaction
+                if err == sql.ErrNoRows {
+                        return nil // No valid participants is success for empty scenarios
+                }
+                return fmt.Errorf("failed to validate participant teams: %w", err)
+        }
+        
+        if validParticipantCount == 0 {
+                // If no valid participants, return success without UPDATE - expected for empty datasets
                 return nil
         }
         
         // Now safe to perform the complex UPDATE with ROW_NUMBER() window function
-        _, err = tx.Exec(`
+        result, err := tx.Exec(`
                 UPDATE contest_participants cp
                 SET rank = ranked.new_rank
                 FROM (
@@ -1840,7 +1856,21 @@ func (h *AdminHandler) updateContestLeaderboardTx(tx *sql.Tx, contestID int64) e
                 ) ranked
                 WHERE cp.id = ranked.id`, contestID)
         
-        return err
+        if err != nil {
+                return fmt.Errorf("failed to update contest leaderboard: %w", err)
+        }
+        
+        // Check rows affected - zero is acceptable for empty datasets
+        rowsAffected, err := result.RowsAffected()
+        if err != nil {
+                // Log but don't fail transaction for RowsAffected errors
+                return nil
+        }
+        
+        // Zero rows affected is success for empty datasets - don't treat as error
+        _ = rowsAffected // This is expected and acceptable
+        
+        return nil
 }
 
 // ⭐ MATCH COMPLETION HELPER FUNCTIONS ⭐

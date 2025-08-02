@@ -13,16 +13,18 @@ import (
 )
 
 type ContestHandler struct {
-        db                *sql.DB
-        config            *config.Config
+        db                 *sql.DB
+        config             *config.Config
         leaderboardService *services.LeaderboardService
+        referralService    *services.ReferralService
 }
 
 func NewContestHandler(db *sql.DB, cfg *config.Config) *ContestHandler {
         return &ContestHandler{
-                db:                db,
-                config:            cfg,
+                db:                 db,
+                config:             cfg,
                 leaderboardService: services.NewLeaderboardService(db),
+                referralService:    services.NewReferralService(db),
         }
 }
 

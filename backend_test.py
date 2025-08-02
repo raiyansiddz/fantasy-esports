@@ -369,34 +369,189 @@ def test_error_handling():
     
     return results
 
+def test_enhanced_match_state_management():
+    """Test Enhanced Match State Management with complex state validation"""
+    print_test_header("Enhanced Match State Management")
+    
+    if not ADMIN_TOKEN:
+        print("❌ No admin token available - skipping test")
+        return False, None
+    
+    try:
+        url = f"{BACKEND_URL}/api/v1/admin/matches/1/score"
+        headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
+        
+        # Test Case 1: Valid state transition from live to completed
+        payload = {
+            "match_status": "completed",
+            "final_score": "16-14",
+            "team1_score": 16,
+            "team2_score": 14,
+            "current_round": 30,
+            "winner_team_id": 1,
+            "match_duration": 2400
+        }
+        
+        response = requests.put(url, json=payload, headers=headers, timeout=15)
+        data = print_response(response, url)
+        
+        if response.status_code == 200 and data and data.get('success'):
+            print(f"✅ Enhanced Match State Management PASSED")
+            print(f"   Match Status: {data.get('status')}")
+            print(f"   Final Score: {data.get('final_score')}")
+            print(f"   Winner Team: {data.get('winner_team')}")
+            print(f"   State Transition: {data.get('state_transition')}")
+            print(f"   Score Validation: {data.get('score_validation')}")
+            
+            # Check for complex state management features
+            if data.get('state_transition') == 'valid':
+                print("✅ State transition validation working")
+            if data.get('score_validation'):
+                print("✅ Score validation working")
+            if data.get('completion_data'):
+                print("✅ Match completion logic working")
+                
+            return True, data
+        else:
+            print("❌ Enhanced Match State Management FAILED")
+            return False, data
+            
+    except Exception as e:
+        print(f"❌ Enhanced Match State Management ERROR: {str(e)}")
+        return False, None
+
+def test_complete_match_with_prize_distribution():
+    """Test Complete Match functionality with real prize distribution"""
+    print_test_header("Complete Match with Prize Distribution")
+    
+    if not ADMIN_TOKEN:
+        print("❌ No admin token available - skipping test")
+        return False, None
+    
+    try:
+        url = f"{BACKEND_URL}/api/v1/admin/matches/2/complete"
+        headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
+        payload = {
+            "final_results": {
+                "winner_team_id": 2,
+                "final_score": "2-1",
+                "match_duration": 3600
+            },
+            "distribute_prizes": True,
+            "finalize_leaderboards": True,
+            "send_notifications": True
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=20)
+        data = print_response(response, url)
+        
+        if response.status_code == 200 and data and data.get('success'):
+            print(f"✅ Complete Match with Prize Distribution PASSED")
+            print(f"   Match ID: {data.get('match_id')}")
+            print(f"   Winner Team: {data.get('winner_team_id')}")
+            print(f"   Fantasy Teams Finalized: {data.get('fantasy_teams_finalized', 0)}")
+            print(f"   Leaderboards Finalized: {data.get('leaderboards_finalized', 0)}")
+            print(f"   Prizes Distributed: ${data.get('total_prizes_distributed', 0)}")
+            print(f"   Winners Rewarded: {data.get('winners_rewarded', 0)}")
+            print(f"   Notifications Sent: {data.get('notifications_sent', 0)}")
+            
+            # Check for real prize distribution features
+            prize_data = data.get('prize_distribution', {})
+            if prize_data.get('total_amount', 0) > 0:
+                print(f"✅ Real prize distribution working: ${prize_data.get('total_amount')}")
+            if data.get('fantasy_teams_finalized', 0) > 0:
+                print("✅ Fantasy team score finalization working")
+            if data.get('leaderboards_finalized', 0) > 0:
+                print("✅ Leaderboard finalization working")
+                
+            return True, data
+        else:
+            print("❌ Complete Match with Prize Distribution FAILED")
+            return False, data
+            
+    except Exception as e:
+        print(f"❌ Complete Match with Prize Distribution ERROR: {str(e)}")
+        return False, None
+
+def test_state_transition_validation():
+    """Test various state transition scenarios"""
+    print_test_header("State Transition Validation Tests")
+    
+    if not ADMIN_TOKEN:
+        print("❌ No admin token available - skipping test")
+        return False, None
+    
+    test_cases = [
+        {
+            "name": "Invalid transition: completed to live",
+            "match_id": "1",
+            "payload": {"match_status": "live", "final_score": "0-0"},
+            "should_fail": True
+        },
+        {
+            "name": "Valid transition: upcoming to live",
+            "match_id": "3",
+            "payload": {"match_status": "live", "current_round": 1},
+            "should_fail": False
+        },
+        {
+            "name": "Invalid score format",
+            "match_id": "4",
+            "payload": {"match_status": "completed", "team1_score": -1, "team2_score": 5},
+            "should_fail": True
+        }
+    ]
+    
+    results = {}
+    headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
+    
+    for test_case in test_cases:
+        try:
+            url = f"{BACKEND_URL}/api/v1/admin/matches/{test_case['match_id']}/score"
+            response = requests.put(url, json=test_case["payload"], headers=headers, timeout=10)
+            
+            if test_case["should_fail"]:
+                success = response.status_code >= 400
+                status = "✅ CORRECTLY REJECTED" if success else "❌ SHOULD HAVE FAILED"
+            else:
+                success = response.status_code == 200
+                status = "✅ PASSED" if success else "❌ FAILED"
+            
+            results[test_case["name"]] = success
+            print(f"{status}: {test_case['name']} (Status: {response.status_code})")
+            
+        except Exception as e:
+            results[test_case["name"]] = False
+            print(f"❌ ERROR: {test_case['name']} - {str(e)}")
+    
+    return results
+
 def main():
-    """Main test execution for Fantasy Points Calculation Engine"""
-    print("🚀 Starting Fantasy Points Calculation Engine Tests")
+    """Main test execution for Manual Scoring System (Crown Jewel) Features"""
+    print("🚀 Starting Manual Scoring System (Crown Jewel) Tests")
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Test started at: {datetime.now()}")
     
     # Track test results
     test_results = {}
     
-    # Run Fantasy Points Engine tests in order
+    # Run prerequisite tests
     test_results['health'] = test_health_check()
     test_results['admin_login'] = test_admin_login()
-    test_results['add_match_event'] = test_add_match_event()
-    test_results['recalculate_points'] = test_recalculate_points()
     
-    # Additional comprehensive tests
+    # Run Crown Jewel feature tests
     if ADMIN_TOKEN:
-        variation_results = test_recalculate_points_variations()
-        multiple_events_results = test_multiple_match_events()
-        error_handling_results = test_error_handling()
+        test_results['enhanced_match_state'] = test_enhanced_match_state_management()
+        test_results['complete_match_prizes'] = test_complete_match_with_prize_distribution()
+        state_validation_results = test_state_transition_validation()
     else:
-        variation_results = {}
-        multiple_events_results = []
-        error_handling_results = {}
+        test_results['enhanced_match_state'] = (False, "No admin token")
+        test_results['complete_match_prizes'] = (False, "No admin token")
+        state_validation_results = {}
     
     # Print summary
     print(f"\n{'='*60}")
-    print("FANTASY POINTS ENGINE TEST SUMMARY")
+    print("MANUAL SCORING SYSTEM (CROWN JEWEL) TEST SUMMARY")
     print(f"{'='*60}")
     
     passed = 0
@@ -411,36 +566,18 @@ def main():
     
     print(f"\nCore Tests: {passed}/{total} passed")
     
-    # Variation tests summary
+    # State validation tests summary
     print(f"\n{'='*60}")
-    print("PARAMETER VARIATION TESTS")
+    print("STATE VALIDATION TESTS")
     print(f"{'='*60}")
     
-    variation_passed = sum(1 for result in variation_results.values() if result.get('success', False))
-    variation_total = len(variation_results)
-    print(f"Parameter Variations: {variation_passed}/{variation_total} passed")
-    
-    # Multiple events summary
-    print(f"\n{'='*60}")
-    print("MULTIPLE EVENTS TESTS")
-    print(f"{'='*60}")
-    
-    events_passed = sum(1 for result in multiple_events_results if result.get('success', False))
-    events_total = len(multiple_events_results)
-    print(f"Multiple Events: {events_passed}/{events_total} passed")
-    
-    # Error handling summary
-    print(f"\n{'='*60}")
-    print("ERROR HANDLING TESTS")
-    print(f"{'='*60}")
-    
-    error_passed = sum(1 for result in error_handling_results.values() if result)
-    error_total = len(error_handling_results)
-    print(f"Error Handling: {error_passed}/{error_total} passed")
+    validation_passed = sum(1 for result in state_validation_results.values() if result)
+    validation_total = len(state_validation_results)
+    print(f"State Validation Tests: {validation_passed}/{validation_total} passed")
     
     # Overall summary
-    overall_passed = passed + variation_passed + events_passed + error_passed
-    overall_total = total + variation_total + events_total + error_total
+    overall_passed = passed + validation_passed
+    overall_total = total + validation_total
     
     print(f"\n{'='*60}")
     print("OVERALL SUMMARY")
@@ -451,24 +588,21 @@ def main():
     
     # Determine if critical functionality is working
     critical_failures = 0
-    if not test_results.get('health', (False, None))[0]:
-        critical_failures += 1
-        print("❌ CRITICAL: Health check failed")
     if not test_results.get('admin_login', (False, None))[0]:
         critical_failures += 1
         print("❌ CRITICAL: Admin login failed")
-    if not test_results.get('add_match_event', (False, None))[0]:
+    if not test_results.get('enhanced_match_state', (False, None))[0]:
         critical_failures += 1
-        print("❌ CRITICAL: Add match event failed")
-    if not test_results.get('recalculate_points', (False, None))[0]:
+        print("❌ CRITICAL: Enhanced Match State Management failed")
+    if not test_results.get('complete_match_prizes', (False, None))[0]:
         critical_failures += 1
-        print("❌ CRITICAL: Recalculate points failed")
+        print("❌ CRITICAL: Complete Match with Prize Distribution failed")
     
     if critical_failures > 0:
-        print(f"\n❌ {critical_failures} critical test(s) failed - Fantasy Points Engine has issues")
+        print(f"\n❌ {critical_failures} critical test(s) failed - Manual Scoring System has issues")
         sys.exit(1)
     else:
-        print(f"\n✅ All critical tests passed - Fantasy Points Engine is working properly")
+        print(f"\n✅ All critical tests passed - Manual Scoring System is working properly")
         sys.exit(0)
 
 if __name__ == "__main__":

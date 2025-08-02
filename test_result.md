@@ -270,7 +270,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "All Manual Scoring System features completed"
+    - "All Manual Scoring System Features Complete"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

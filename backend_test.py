@@ -664,11 +664,11 @@ def test_complete_match_with_prize_distribution():
     
     if passed_count == total_count:
         print(f"\n✅ Complete Match with Prize Distribution: ALL {total_count} scenarios PASSED")
-        print("✅ DEFINITIVE CROWN JEWEL FIX: Two-step approach and transaction isolation WORKING")
+        print("✅ RESEARCH-BASED CROWN JEWEL FIX: Robust transaction defer pattern WORKING")
         return True, results
     else:
         print(f"\n❌ Complete Match with Prize Distribution: {passed_count}/{total_count} scenarios passed")
-        print("❌ DEFINITIVE CROWN JEWEL FIX: Still has issues with transaction handling")
+        print("❌ RESEARCH-BASED CROWN JEWEL FIX: Still has issues with transaction handling")
         return False, results
 
 def test_crown_jewel_empty_contest_scenarios():

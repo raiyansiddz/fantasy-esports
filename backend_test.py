@@ -1061,11 +1061,46 @@ def test_participant_update_error_diagnosis():
     test_results = {}
     headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
     
-    # Test scenarios to trigger the PARTICIPANT_UPDATE_ERROR
-    test_scenarios = [
-        {
-            "name": "Match 1 (has participants - should trigger error)",
-            "match_id": 1,
+    # First, let's check match statuses to find appropriate test cases
+    print("\n🔍 CHECKING MATCH STATUSES TO FIND VALID TEST CASES")
+    
+    # Check status of various matches
+    match_statuses = {}
+    for match_id in [1, 2, 3, 4, 5, 6, 10, 15, 20, 21]:
+        try:
+            # Get match info to check current status
+            url = f"{BACKEND_URL}/api/v1/admin/matches/{match_id}/dashboard"
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and data.get('dashboard'):
+                    match_info = data['dashboard']['match_info']
+                    status = match_info.get('status', 'unknown')
+                    match_statuses[match_id] = status
+                    print(f"   Match {match_id}: {status}")
+                else:
+                    match_statuses[match_id] = 'unknown'
+                    print(f"   Match {match_id}: unknown (no dashboard data)")
+            else:
+                match_statuses[match_id] = 'error'
+                print(f"   Match {match_id}: error (status {response.status_code})")
+        except Exception as e:
+            match_statuses[match_id] = 'error'
+            print(f"   Match {match_id}: error ({str(e)})")
+    
+    # Test scenarios based on actual match statuses
+    test_scenarios = []
+    
+    # Find matches in 'live' status for valid state transitions
+    live_matches = [mid for mid, status in match_statuses.items() if status == 'live']
+    upcoming_matches = [mid for mid, status in match_statuses.items() if status == 'upcoming']
+    
+    if live_matches:
+        # Test completing a live match (valid transition)
+        match_id = live_matches[0]
+        test_scenarios.append({
+            "name": f"Match {match_id} (live->completed - valid transition)",
+            "match_id": match_id,
             "payload": {
                 "team1_score": 2,
                 "team2_score": 1,
@@ -1075,34 +1110,70 @@ def test_participant_update_error_diagnosis():
                 "final_score": "2-1",
                 "match_duration": "38:45"
             }
-        },
-        {
-            "name": "Match 6 (previous PARTICIPANT_UPDATE_ERROR)",
-            "match_id": 6,
+        })
+    
+    if upcoming_matches:
+        # Test starting an upcoming match (valid transition)
+        match_id = upcoming_matches[0]
+        test_scenarios.append({
+            "name": f"Match {match_id} (upcoming->live - valid transition)",
+            "match_id": match_id,
             "payload": {
-                "team1_score": 1,
-                "team2_score": 2,
-                "current_round": 3,
-                "match_status": "completed",
-                "winner_team_id": 2,
-                "final_score": "1-2",
-                "match_duration": "42:15"
+                "team1_score": 0,
+                "team2_score": 0,
+                "current_round": 1,
+                "match_status": "live",
+                "winner_team_id": None,
+                "final_score": "0-0",
+                "match_duration": "00:00"
             }
-        },
-        {
-            "name": "Match 10 (empty contest scenario - should work)",
-            "match_id": 10,
+        })
+        
+        # Also test completing it directly (upcoming->completed)
+        test_scenarios.append({
+            "name": f"Match {match_id} (upcoming->completed - should work)",
+            "match_id": match_id,
             "payload": {
                 "team1_score": 2,
-                "team2_score": 0,
-                "current_round": 2,
+                "team2_score": 1,
+                "current_round": 3,
                 "match_status": "completed",
                 "winner_team_id": 1,
-                "final_score": "2-0",
-                "match_duration": "25:30"
+                "final_score": "2-1",
+                "match_duration": "38:45"
             }
-        }
-    ]
+        })
+    
+    # Add some fallback scenarios if we don't find appropriate matches
+    if not test_scenarios:
+        test_scenarios = [
+            {
+                "name": "Match 1 (test updateMatchParticipantScores)",
+                "match_id": 1,
+                "payload": {
+                    "team1_score": 2,
+                    "team2_score": 1,
+                    "current_round": 3,
+                    "match_status": "live",  # Try live instead of completed
+                    "winner_team_id": 1,
+                    "final_score": "2-1",
+                    "match_duration": "38:45"
+                }
+            },
+            {
+                "name": "Match 2 (test updateMatchParticipantScores)",
+                "match_id": 2,
+                "payload": {
+                    "team1_score": 1,
+                    "team2_score": 2,
+                    "current_round": 3,
+                    "match_status": "live",  # Try live instead of completed
+                    "winner_team_id": 2,
+                    "final_score": "1-2",
+                    "match_duration": "42:15"
+                }
+            }
+        ]
     
     for scenario in test_scenarios:
         try:

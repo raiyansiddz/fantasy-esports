@@ -542,12 +542,25 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 		return
 	}
 	
-	// Step 4: Start transaction for atomic updates with proper defer pattern
+	// Step 4: Start transaction with READ COMMITTED isolation for Crown Jewel fix
+	// This prevents phantom reads during validation-to-execution gap
 	tx, err := h.db.Begin()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to start transaction",
+			Code:    "TRANSACTION_ERROR",
+		})
+		return
+	}
+	
+	// Set transaction isolation level to prevent read phenomena
+	_, err = tx.Exec("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to set transaction isolation level",
 			Code:    "TRANSACTION_ERROR",
 		})
 		return

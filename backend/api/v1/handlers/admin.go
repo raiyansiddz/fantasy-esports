@@ -464,6 +464,11 @@ func (h *AdminHandler) BulkUpdateEvents(c *gin.Context) {
                 return
         }
 
+        // ⭐ TRIGGER REAL-TIME LEADERBOARD UPDATES ⭐
+        if req.AutoCalculateFantasyPoints && eventsAdded > 0 {
+                h.triggerRealTimeLeaderboardUpdates(matchID, 0, "bulk_events")
+        }
+
         c.JSON(http.StatusOK, gin.H{
                 "success":               true,
                 "match_id":              matchID,

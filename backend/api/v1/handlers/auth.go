@@ -21,18 +21,20 @@ import (
 )
 
 type AuthHandler struct {
-	db     *sql.DB
-	config *config.Config
-	cdn    *cdn.CloudinaryClient
-	otpSessions map[string]models.OTPSession // In-memory storage for demo
+	db              *sql.DB
+	config          *config.Config
+	cdn             *cdn.CloudinaryClient
+	referralService *services.ReferralService
+	otpSessions     map[string]models.OTPSession // In-memory storage for demo
 }
 
 func NewAuthHandler(db *sql.DB, cfg *config.Config, cdn *cdn.CloudinaryClient) *AuthHandler {
 	return &AuthHandler{
-		db:          db,
-		config:      cfg,
-		cdn:         cdn,
-		otpSessions: make(map[string]models.OTPSession),
+		db:              db,
+		config:          cfg,
+		cdn:             cdn,
+		referralService: services.NewReferralService(db),
+		otpSessions:     make(map[string]models.OTPSession),
 	}
 }
 

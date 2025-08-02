@@ -21,9 +21,17 @@ type LeaderboardService struct {
 }
 
 func NewLeaderboardService(db *sql.DB) *LeaderboardService {
-	return &LeaderboardService{
-		db: db,
+	service := &LeaderboardService{
+		db:             db,
+		cache:          make(map[string]*models.CachedLeaderboard),
+		snapshots:      make(map[int64]*models.RankingSnapshot),
+		updateChannel:  make(chan models.RealTimeLeaderboardUpdate, 100),
 	}
+	
+	// Start the real-time update processor
+	go service.processRealTimeUpdates()
+	
+	return service
 }
 
 // CalculateContestLeaderboard calculates real-time leaderboard for a contest

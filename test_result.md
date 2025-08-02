@@ -270,9 +270,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Enhanced Match State Management"
-  stuck_tasks:
-    - "Enhanced Match State Management"
+    - "All Manual Scoring System features completed"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 

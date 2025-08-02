@@ -144,7 +144,7 @@ backend:
     file: "/app/backend/api/v1/handlers/admin.go"
     stuck_count: 2
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "implemented"
           agent: "main"

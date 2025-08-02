@@ -8,18 +8,21 @@ import (
         "fantasy-esports-backend/config"
         "fantasy-esports-backend/models"
         "fantasy-esports-backend/utils"
+        "fantasy-esports-backend/services"
         "github.com/gin-gonic/gin"
 )
 
 type ContestHandler struct {
-        db     *sql.DB
-        config *config.Config
+        db                *sql.DB
+        config            *config.Config
+        leaderboardService *services.LeaderboardService
 }
 
 func NewContestHandler(db *sql.DB, cfg *config.Config) *ContestHandler {
         return &ContestHandler{
-                db:     db,
-                config: cfg,
+                db:                db,
+                config:            cfg,
+                leaderboardService: services.NewLeaderboardService(db),
         }
 }
 

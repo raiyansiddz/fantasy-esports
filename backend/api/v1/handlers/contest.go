@@ -951,19 +951,94 @@ func (h *ContestHandler) GetTeamPerformance(c *gin.Context) {
 
 // Leaderboard methods
 func (h *ContestHandler) GetContestLeaderboard(c *gin.Context) {
-        contestID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "contest_id": contestID, "leaderboard": models.Leaderboard{}})
+        contestID := parseIntToInt64(c.Param("id"))
+        if contestID == 0 {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid contest ID",
+                        Code:    "INVALID_CONTEST_ID",
+                })
+                return
+        }
+
+        leaderboard, err := h.leaderboardService.CalculateContestLeaderboard(contestID)
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to calculate leaderboard: " + err.Error(),
+                        Code:    "LEADERBOARD_ERROR",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success":     true,
+                "contest_id":  contestID,
+                "leaderboard": leaderboard,
+        })
 }
 
 func (h *ContestHandler) GetLiveLeaderboard(c *gin.Context) {
-        contestID := c.Param("id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "contest_id": contestID, "live_leaderboard": models.Leaderboard{}})
+        contestID := parseIntToInt64(c.Param("id"))
+        userID := c.GetInt64("user_id")
+        
+        if contestID == 0 {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid contest ID",
+                        Code:    "INVALID_CONTEST_ID",
+                })
+                return
+        }
+
+        leaderboard, err := h.leaderboardService.GetLiveLeaderboard(contestID, userID)
+        if err != nil {
+                c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Failed to get live leaderboard: " + err.Error(),
+                        Code:    "LEADERBOARD_ERROR",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success":          true,
+                "contest_id":       contestID,
+                "live_leaderboard": leaderboard,
+        })
 }
 
 func (h *ContestHandler) GetMyRank(c *gin.Context) {
-        contestID := c.Param("id")
+        contestID := parseIntToInt64(c.Param("id"))
         userID := c.GetInt64("user_id")
-        c.JSON(http.StatusOK, gin.H{"success": true, "contest_id": contestID, "user_id": userID, "rank": 1})
+        
+        if contestID == 0 {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid contest ID",
+                        Code:    "INVALID_CONTEST_ID",
+                })
+                return
+        }
+
+        rank, points, teamID, err := h.leaderboardService.getUserRankInContest(contestID, userID)
+        if err != nil {
+                c.JSON(http.StatusNotFound, models.ErrorResponse{
+                        Success: false,
+                        Error:   "User not found in contest or contest doesn't exist",
+                        Code:    "USER_NOT_IN_CONTEST",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success":    true,
+                "contest_id": contestID,
+                "user_id":    userID,
+                "rank":       rank,
+                "points":     points,
+                "team_id":    teamID,
+        })
 }
 
 // Helper function

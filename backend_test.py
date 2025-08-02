@@ -378,11 +378,11 @@ def test_enhanced_match_state_management():
         return False, None
     
     try:
-        # Test with match ID that likely has empty contest_participants table
-        url = f"{BACKEND_URL}/api/v1/admin/matches/11/score"
+        # Test with match ID 1 which is currently 'live' - valid transition to completed
+        url = f"{BACKEND_URL}/api/v1/admin/matches/1/score"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
         
-        # Test Case: Valid state transition with correct request format for best-of-3 match
+        # Test Case: Valid state transition from live to completed with correct request format for best-of-3 match
         payload = {
             "team1_score": 2,
             "team2_score": 1,

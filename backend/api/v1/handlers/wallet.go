@@ -340,9 +340,152 @@ func (h *WalletHandler) GetPaymentStatus(c *gin.Context) {
 	})
 }
 
-// Referral methods
+// @Summary Get referral statistics
+// @Description Get detailed referral statistics for the user
+// @Tags Referrals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} models.ReferralStats
+// @Failure 500 {object} models.ErrorResponse
+// @Router /referrals/my-stats [get]
 func (h *WalletHandler) GetReferralStats(c *gin.Context) {
 	userID := c.GetInt64("user_id")
+
+	stats, err := h.referralService.GetUserReferralStats(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to get referral statistics: " + err.Error(),
+			Code:    "REFERRAL_STATS_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":        true,
+		"referral_stats": stats,
+	})
+}
+
+// @Summary Get referral history
+// @Description Get paginated referral history for the user
+// @Tags Referrals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param status query string false "Filter by status" Enums(all, pending, completed, expired)
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(20)
+// @Success 200 {object} models.ReferralHistoryResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /referrals/history [get]
+func (h *WalletHandler) GetReferralHistory(c *gin.Context) {
+	userID := c.GetInt64("user_id")
+	status := c.DefaultQuery("status", "all")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+
+	// Validate page and limit
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	referrals, total, err := h.referralService.GetUserReferralHistory(userID, status, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to get referral history: " + err.Error(),
+			Code:    "REFERRAL_HISTORY_ERROR",
+		})
+		return
+	}
+
+	response := models.ReferralHistoryResponse{
+		Success:   true,
+		Referrals: referrals,
+		Total:     total,
+		Page:      page,
+		Limit:     limit,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// @Summary Apply referral code
+// @Description Apply a referral code (can only be done once per user)
+// @Tags Referrals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body models.ApplyReferralCodeRequest true "Referral code to apply"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Router /referrals/apply [post]
+func (h *WalletHandler) ApplyReferralCode(c *gin.Context) {
+	userID := c.GetInt64("user_id")
+
+	var req models.ApplyReferralCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid request format",
+			Code:    "INVALID_REQUEST",
+		})
+		return
+	}
+
+	if req.ReferralCode == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Referral code is required",
+			Code:    "REFERRAL_CODE_REQUIRED",
+		})
+		return
+	}
+
+	err := h.referralService.ApplyReferralCode(userID, req.ReferralCode)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   err.Error(),
+			Code:    "REFERRAL_APPLICATION_FAILED",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Referral code applied successfully",
+		"referral_code": req.ReferralCode,
+	})
+}
+
+// @Summary Share referral code
+// @Description Share referral code via different methods
+// @Tags Referrals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body models.ShareReferralRequest true "Sharing method and details"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Router /referrals/share [post]
+func (h *WalletHandler) ShareReferral(c *gin.Context) {
+	userID := c.GetInt64("user_id")
+
+	var req models.ShareReferralRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid request format",
+			Code:    "INVALID_REQUEST",
+		})
+		return
+	}
 
 	// Get user's referral code
 	var referralCode string
@@ -356,34 +499,88 @@ func (h *WalletHandler) GetReferralStats(c *gin.Context) {
 		return
 	}
 
-	stats := models.ReferralStats{
-		ReferralCode:        referralCode,
-		TotalReferrals:      0,
-		SuccessfulReferrals: 0,
-		TotalEarnings:       0.0,
-		PendingEarnings:     0.0,
-		LifetimeEarnings:    0.0,
-		CurrentTier:         "bronze",
-		NextTierRequirement: 10,
+	// Generate sharing URL
+	shareURL := "https://fantasy-esports.com/signup?ref=" + referralCode
+	
+	// Default sharing message
+	defaultMessage := "Join Fantasy Esports with my referral code " + referralCode + " and get bonus rewards! " + shareURL
+
+	message := req.Message
+	if message == "" {
+		message = defaultMessage
+	}
+
+	response := gin.H{
+		"success":      true,
+		"referral_code": referralCode,
+		"share_url":     shareURL,
+		"message":       message,
+		"method":        req.Method,
+	}
+
+	// Add method-specific data
+	switch req.Method {
+	case "whatsapp":
+		whatsappURL := "https://wa.me/?text=" + message
+		response["whatsapp_url"] = whatsappURL
+	case "sms":
+		response["sms_message"] = message
+		if len(req.Contacts) > 0 {
+			response["contacts"] = req.Contacts
+		}
+	case "email":
+		response["email_subject"] = "Join Fantasy Esports!"
+		response["email_body"] = message
+		if len(req.Contacts) > 0 {
+			response["contacts"] = req.Contacts
+		}
+	case "copy":
+		response["copy_text"] = message
+	default:
+		response["share_text"] = message
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// @Summary Get referral leaderboard
+// @Description Get top referrers leaderboard
+// @Tags Referrals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param limit query int false "Number of top referrers to return" default(50)
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} models.ErrorResponse
+// @Router /referrals/leaderboard [get]
+func (h *WalletHandler) GetReferralLeaderboard(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	if limit < 1 || limit > 100 {
+		limit = 50
+	}
+
+	leaderboard, err := h.referralService.GetReferralLeaderboard(limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Failed to get referral leaderboard: " + err.Error(),
+			Code:    "REFERRAL_LEADERBOARD_ERROR",
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":        true,
-		"referral_stats": stats,
+		"success":     true,
+		"leaderboard": leaderboard,
+		"limit":       limit,
 	})
 }
 
-func (h *WalletHandler) GetReferralHistory(c *gin.Context) {
-	userID := c.GetInt64("user_id")
-	c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID, "history": []models.Referral{}})
-}
-
-func (h *WalletHandler) ApplyReferralCode(c *gin.Context) {
-	userID := c.GetInt64("user_id")
-	c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID, "message": "Referral applied"})
-}
-
-func (h *WalletHandler) ShareReferral(c *gin.Context) {
-	userID := c.GetInt64("user_id")
-	c.JSON(http.StatusOK, gin.H{"success": true, "user_id": userID, "message": "Referral shared"})
+// Internal method to trigger referral completion checks
+func (h *WalletHandler) TriggerReferralCheck(userID int64, action string) {
+	err := h.referralService.CheckAndCompleteReferral(userID, action)
+	if err != nil {
+		// Log error but don't fail the main operation
+		// In production, you might want to queue this for retry
+	}
 }

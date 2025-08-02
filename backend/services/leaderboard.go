@@ -218,7 +218,7 @@ func (s *LeaderboardService) GetUserRankInContest(contestID int64, userID int64)
 }
 
 // getRankingsAroundUser gets rankings around a specific user
-func (s *LeaderboardService) getRankingsAroundUser(contestID int64, userRank int, radius int) ([]models.LeaderboardEntry, error) {
+func (s *LeaderboardService) GetRankingsAroundUser(contestID int64, userRank int, radius int) ([]models.LeaderboardEntry, error) {
 	startRank := userRank - radius
 	if startRank < 1 {
 		startRank = 1

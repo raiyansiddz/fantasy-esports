@@ -1698,13 +1698,13 @@ func (h *AdminHandler) ProcessKYC(c *gin.Context) {
 
         // Get document and user information
         var doc models.KYCDocument
-        var currentStatus string
+        var currentStatus, userMobile string
         err = tx.QueryRow(`
                 SELECT kd.id, kd.user_id, kd.document_type, kd.status, u.mobile
                 FROM kyc_documents kd 
                 JOIN users u ON kd.user_id = u.id
                 WHERE kd.id = $1`, documentID).Scan(
-                &doc.ID, &doc.UserID, &doc.DocumentType, &currentStatus, &doc.UserID) // Reusing UserID for mobile temp
+                &doc.ID, &doc.UserID, &doc.DocumentType, &currentStatus, &userMobile)
 
         if err != nil {
                 txErr = err

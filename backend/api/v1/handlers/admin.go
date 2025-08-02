@@ -904,8 +904,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 
 	// ⭐ REAL MATCH COMPLETION AND PRIZE DISTRIBUTION IMPLEMENTATION ⭐
 	
-	// Step 1: Start transaction with READ COMMITTED isolation for Crown Jewel fix
-	// This prevents phantom reads during validation-to-execution gap
+	// Step 1: Start transaction with proper error handling pattern
 	tx, err := h.db.Begin()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
@@ -916,28 +915,27 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 		return
 	}
 	
-	// Set transaction isolation level to prevent read phenomena
-	_, err = tx.Exec("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
-	if err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
-			Success: false,
-			Error:   "Failed to set transaction isolation level",
-			Code:    "TRANSACTION_ERROR",
-		})
-		return
-	}
-	
-	// Implement proper transaction defer pattern for Crown Jewel fix
+	// Implement robust transaction management pattern based on research
 	var txErr error
+	committed := false
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Re-throw panic after rollback
+			// Handle panic - rollback and re-panic
+			if !committed {
+				tx.Rollback()
+			}
+			panic(p)
 		} else if txErr != nil {
-			tx.Rollback() // Error occurred, rollback
+			// Error occurred - rollback
+			if !committed {
+				tx.Rollback()
+			}
 		} else {
-			txErr = tx.Commit() // No error, commit - any commit error will be handled
+			// Success - commit
+			if !committed {
+				txErr = tx.Commit()
+				committed = true
+			}
 		}
 	}()
 	

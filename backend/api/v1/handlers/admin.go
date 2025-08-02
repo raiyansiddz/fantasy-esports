@@ -1980,6 +1980,74 @@ func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]
 	return prizeDistribution, nil
 }
 
+// Helper function to process prize distribution for a single contest
+func (h *AdminHandler) processPrizeDistributionForContest(tx *sql.Tx, contestID int64, prizePool, winnerPct, runnerUpPct float64, totalPrizesDistributed *float64, winnersRewarded *int) {
+	// Check if this specific contest has participants with ranks
+	var contestParticipantCount int
+	err := tx.QueryRow(`
+		SELECT COUNT(*)
+		FROM contest_participants
+		WHERE contest_id = $1 AND rank <= 3`, contestID).Scan(&contestParticipantCount)
+	
+	if err != nil || contestParticipantCount == 0 {
+		// No winners for this contest, skip
+		return
+	}
+	
+	// Get top 3 winners for this contest
+	winnerRows, err := tx.Query(`
+		SELECT cp.user_id, cp.rank, ut.total_points
+		FROM contest_participants cp
+		JOIN user_teams ut ON cp.team_id = ut.id
+		WHERE cp.contest_id = $1 AND cp.rank <= 3
+		ORDER BY cp.rank`, contestID)
+	
+	if err != nil {
+		return
+	}
+	defer winnerRows.Close()
+	
+	// Distribute prizes to winners
+	for winnerRows.Next() {
+		var userID int64
+		var rank int
+		var totalPoints float64
+		
+		if err := winnerRows.Scan(&userID, &rank, &totalPoints); err != nil {
+			continue
+		}
+		
+		var prizeAmount float64
+		switch rank {
+		case 1:
+			prizeAmount = prizePool * (winnerPct / 100.0)
+		case 2:
+			prizeAmount = prizePool * (runnerUpPct / 100.0)
+		case 3:
+			prizeAmount = prizePool * 0.1 // 10% for third place
+		}
+		
+		if prizeAmount > 0 {
+			// Add prize to user's wallet
+			_, err = tx.Exec(`
+				INSERT INTO wallet_transactions (user_id, transaction_type, amount, description, status, created_at)
+				VALUES ($1, 'prize_credit', $2, $3, 'completed', NOW())`,
+				userID, prizeAmount, fmt.Sprintf("Prize for contest %d (Rank %d)", contestID, rank))
+			
+			if err == nil {
+				// Update user's wallet balance
+				tx.Exec(`
+					UPDATE wallets 
+					SET balance = balance + $1, updated_at = NOW()
+					WHERE user_id = $2`, prizeAmount, userID)
+				
+				*totalPrizesDistributed += prizeAmount
+				*winnersRewarded++
+			}
+		}
+	}
+}
+
 // updateContestStatuses updates contest statuses after match completion
 func (h *AdminHandler) updateContestStatuses(tx *sql.Tx, matchID string) (int, error) {
 	// Update all contests for this match to completed status

@@ -8,6 +8,7 @@ import (
 var (
 	InfoLogger  *log.Logger
 	ErrorLogger *log.Logger
+	WarnLogger  *log.Logger
 )
 
 func Init() {

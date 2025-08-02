@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL
-BACKEND_URL = "http://localhost:8080"
+BACKEND_URL = "http://localhost:8001"
 ADMIN_TOKEN = None
 
 def print_test_header(test_name):

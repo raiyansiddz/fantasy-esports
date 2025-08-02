@@ -131,11 +131,11 @@ backend:
 
   - task: "Complete Match with Prize Distribution"
     implemented: true
-    working: "testing_required"
+    working: false
     file: "/app/backend/api/v1/handlers/admin.go"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "implemented"
           agent: "main"
@@ -152,6 +152,9 @@ backend:
         - working: "transaction_pipeline_fixed"
           agent: "main"
           comment: "COMPLETE TRANSACTION PIPELINE FIX: Extended Crown Jewel fix to handle ALL functions in the match completion pipeline that were failing with empty contest_participants: 1) Fixed finalizeContestLeaderboards() - added participant count validation, only updates rankings when participants exist, marks contests as completed regardless, 2) Fixed sendMatchCompletionNotifications() - added participant check, returns 0 notifications for empty contests, 3) Updated updateContestLeaderboardTx() dependencies - now called conditionally based on participant existence. This resolves LEADERBOARD_FINALIZATION_ERROR and CONTEST_UPDATE_ERROR by ensuring entire transaction pipeline handles empty contest scenarios gracefully."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL: Crown Jewel fix FAILED - Complete Match with Prize Distribution still failing with multiple errors: 1) ALREADY_COMPLETED error for match 2, 2) CONTEST_UPDATE_ERROR for match 20 (empty contest scenario), 3) LEADERBOARD_FINALIZATION_ERROR for match 1 (mixed scenario). The transaction pipeline fix is NOT working properly. Empty contest_participants scenarios are still causing transaction failures in contest status updates and leaderboard finalization functions."
 
   - task: "Bulk Score Updates Transaction Logic"
     implemented: true

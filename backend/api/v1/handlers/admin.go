@@ -3408,7 +3408,6 @@ func (h *AdminHandler) calculateUserKYCStatus(tx *sql.Tx, userID int64) (string,
                 status, exists := docStatuses[docType]
                 if !exists {
                         allVerified = false
-                        hasPending = true
                 } else {
                         uploadedCount++
                         switch status {
@@ -3419,7 +3418,6 @@ func (h *AdminHandler) calculateUserKYCStatus(tx *sql.Tx, userID int64) (string,
                                 hasRejected = true
                         case "pending":
                                 allVerified = false
-                                hasPending = true
                         default:
                                 allVerified = false
                         }

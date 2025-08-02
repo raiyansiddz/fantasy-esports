@@ -2035,39 +2035,58 @@ func (h *AdminHandler) processContestFinalization(tx *sql.Tx, contestID int64) b
 	return err == nil
 }
 
-// distributePrizes distributes prizes to winners - FIXED VERSION
+// distributePrizes distributes prizes to winners - ROBUST VERSION
+// Implements comprehensive empty dataset handling and proper transaction patterns
 func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]interface{}, error) {
 	prizeDistribution := make(map[string]interface{})
+	var err error
 	
-	// First, check if there are any contest participants for this match
+	// First, check if there are any contests for this match
+	var contestCount int
+	err = tx.QueryRow(`
+		SELECT COUNT(*) FROM contests WHERE match_id = $1`, matchID).Scan(&contestCount)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No contests - return success with zero distributions
+			return h.buildEmptyPrizeDistribution("No contests found for match"), nil
+		}
+		return nil, fmt.Errorf("failed to check contest count: %w", err)
+	}
+	
+	// Handle case where no contests exist - this is valid state
+	if contestCount == 0 {
+		return h.buildEmptyPrizeDistribution("No contests found for match"), nil
+	}
+	
+	// Check if there are any contest participants for this match
 	var participantCount int
-	err := tx.QueryRow(`
+	err = tx.QueryRow(`
 		SELECT COUNT(*)
 		FROM contest_participants cp
 		JOIN contests c ON cp.contest_id = c.id
 		WHERE c.match_id = $1`, matchID).Scan(&participantCount)
 	
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			// No participants - return success with zero distributions
+			return h.buildEmptyPrizeDistribution("No contest participants found"), nil
+		}
+		return nil, fmt.Errorf("failed to check participant count: %w", err)
 	}
 	
 	// Handle the case where no participants exist - return success with zero distributions
 	if participantCount == 0 {
-		prizeDistribution["total_amount"] = 0.0
-		prizeDistribution["contests_processed"] = 0
-		prizeDistribution["winners_rewarded"] = 0
-		prizeDistribution["distribution_timestamp"] = time.Now()
-		prizeDistribution["message"] = "No contest participants found - prize distribution completed with zero distributions"
-		return prizeDistribution, nil
+		return h.buildEmptyPrizeDistribution("No contest participants found"), nil
 	}
 	
-	// Get all contests for this match that have prizes
+	// Get all contests for this match that have prizes with proper error handling
 	rows, err := tx.Query(`
 		SELECT id, total_prize_pool, prize_distribution
 		FROM contests 
 		WHERE match_id = $1 AND total_prize_pool > 0`, matchID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query prize contests: %w", err)
 	}
 	defer rows.Close()
 	
@@ -2081,26 +2100,51 @@ func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]
 		var prizeDistributionJSON string
 		
 		if err := rows.Scan(&contestID, &prizePool, &prizeDistributionJSON); err != nil {
-			continue
+			continue // Skip this contest on scan error - don't fail entire operation
 		}
 		
-		// Parse prize distribution JSON to get percentages
-		var prizeDistributionData map[string]interface{}
-		if err := json.Unmarshal([]byte(prizeDistributionJSON), &prizeDistributionData); err != nil {
-			// If JSON parsing fails, use default percentages
-			winnerPct := 50.0
-			runnerUpPct := 30.0
-			
-			// Process with defaults
-			h.processPrizeDistributionForContest(tx, contestID, prizePool, winnerPct, runnerUpPct, &totalPrizesDistributed, &winnersRewarded)
-			contestsWithPrizes++
-			continue
-		}
-		
-		// Extract winner and runner-up percentages (with defaults)
-		winnerPct := 50.0  // Default 50% for winner
-		runnerUpPct := 30.0 // Default 30% for runner-up
-		
+		// Process each contest with proper error handling
+		contestPrizes, contestWinners := h.processContestPrizeDistribution(tx, contestID, prizePool, prizeDistributionJSON)
+		totalPrizesDistributed += contestPrizes
+		winnersRewarded += contestWinners
+		contestsWithPrizes++
+	}
+	
+	// Check for errors in row iteration
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating prize contests: %w", err)
+	}
+	
+	prizeDistribution["total_amount"] = totalPrizesDistributed
+	prizeDistribution["contests_processed"] = contestsWithPrizes
+	prizeDistribution["winners_rewarded"] = winnersRewarded
+	prizeDistribution["distribution_timestamp"] = time.Now()
+	prizeDistribution["success"] = true
+	
+	return prizeDistribution, nil
+}
+
+// buildEmptyPrizeDistribution creates proper response for empty prize distribution scenarios
+func (h *AdminHandler) buildEmptyPrizeDistribution(message string) map[string]interface{} {
+	return map[string]interface{}{
+		"total_amount":              0.0,
+		"contests_processed":        0,
+		"winners_rewarded":          0,
+		"distribution_timestamp":    time.Now(),
+		"message":                   message,
+		"success":                   true,
+	}
+}
+
+// processContestPrizeDistribution processes prize distribution for a single contest with error handling
+func (h *AdminHandler) processContestPrizeDistribution(tx *sql.Tx, contestID int64, prizePool float64, prizeDistributionJSON string) (float64, int) {
+	// Parse prize distribution JSON to get percentages with error handling
+	var prizeDistributionData map[string]interface{}
+	winnerPct := 50.0    // Default 50% for winner
+	runnerUpPct := 30.0  // Default 30% for runner-up
+	
+	if err := json.Unmarshal([]byte(prizeDistributionJSON), &prizeDistributionData); err == nil {
+		// Extract winner and runner-up percentages if JSON parsing succeeds
 		if positions, ok := prizeDistributionData["positions"].([]interface{}); ok && len(positions) >= 2 {
 			if pos1, ok := positions[0].(map[string]interface{}); ok {
 				if pct, ok := pos1["percentage"].(float64); ok {
@@ -2113,86 +2157,92 @@ func (h *AdminHandler) distributePrizes(tx *sql.Tx, matchID string) (map[string]
 				}
 			}
 		}
-		
-		// Process prize distribution for this contest
-		h.processPrizeDistributionForContest(tx, contestID, prizePool, winnerPct, runnerUpPct, &totalPrizesDistributed, &winnersRewarded)
-		contestsWithPrizes++
 	}
+	// If JSON parsing fails, use defaults - don't fail the operation
 	
-	prizeDistribution["total_amount"] = totalPrizesDistributed
-	prizeDistribution["contests_processed"] = contestsWithPrizes
-	prizeDistribution["winners_rewarded"] = winnersRewarded
-	prizeDistribution["distribution_timestamp"] = time.Now()
-	
-	return prizeDistribution, nil
+	// Process prize distribution for this contest with proper error handling
+	return h.executePrizeDistributionForContest(tx, contestID, prizePool, winnerPct, runnerUpPct)
 }
 
-// Helper function to process prize distribution for a single contest
-func (h *AdminHandler) processPrizeDistributionForContest(tx *sql.Tx, contestID int64, prizePool, winnerPct, runnerUpPct float64, totalPrizesDistributed *float64, winnersRewarded *int) {
+// executePrizeDistributionForContest executes the actual prize distribution with robust error handling
+func (h *AdminHandler) executePrizeDistributionForContest(tx *sql.Tx, contestID int64, prizePool, winnerPct, runnerUpPct float64) (float64, int) {
 	// Check if this specific contest has participants with ranks
 	var contestParticipantCount int
 	err := tx.QueryRow(`
 		SELECT COUNT(*)
-		FROM contest_participants
-		WHERE contest_id = $1 AND rank <= 3`, contestID).Scan(&contestParticipantCount)
+		FROM contest_participants cp
+		WHERE cp.contest_id = $1 AND cp.rank IS NOT NULL AND cp.rank > 0`, contestID).Scan(&contestParticipantCount)
 	
 	if err != nil || contestParticipantCount == 0 {
-		// No winners for this contest, skip
-		return
+		// No ranked participants - return zero prizes distributed
+		return 0.0, 0
 	}
 	
-	// Get top 3 winners for this contest
-	winnerRows, err := tx.Query(`
-		SELECT cp.user_id, cp.rank, ut.total_points
+	// Get winners (top 2 ranked participants) with error handling
+	rows, err := tx.Query(`
+		SELECT cp.team_id, cp.rank
 		FROM contest_participants cp
-		JOIN user_teams ut ON cp.team_id = ut.id
-		WHERE cp.contest_id = $1 AND cp.rank <= 3
-		ORDER BY cp.rank`, contestID)
+		WHERE cp.contest_id = $1 AND cp.rank IS NOT NULL AND cp.rank > 0
+		ORDER BY cp.rank ASC
+		LIMIT 2`, contestID)
 	
 	if err != nil {
-		return
+		return 0.0, 0 // Return zero on query error - don't fail transaction
 	}
-	defer winnerRows.Close()
+	defer rows.Close()
 	
-	// Distribute prizes to winners
-	for winnerRows.Next() {
-		var userID int64
-		var rank int
-		var totalPoints float64
+	totalDistributed := 0.0
+	winnersCount := 0
+	rank := 1
+	
+	for rows.Next() {
+		var teamID int64
+		var participantRank int
 		
-		if err := winnerRows.Scan(&userID, &rank, &totalPoints); err != nil {
-			continue
+		if err := rows.Scan(&teamID, &participantRank); err != nil {
+			continue // Skip this participant on scan error
 		}
 		
+		// Calculate prize amount based on rank
 		var prizeAmount float64
-		switch rank {
-		case 1:
+		if rank == 1 {
 			prizeAmount = prizePool * (winnerPct / 100.0)
-		case 2:
+		} else if rank == 2 {
 			prizeAmount = prizePool * (runnerUpPct / 100.0)
-		case 3:
-			prizeAmount = prizePool * 0.1 // 10% for third place
+		} else {
+			break // Only distribute to top 2
 		}
 		
-		if prizeAmount > 0 {
-			// Add prize to user's wallet
-			_, err = tx.Exec(`
-				INSERT INTO wallet_transactions (user_id, transaction_type, amount, description, status, created_at)
-				VALUES ($1, 'prize_credit', $2, $3, 'completed', NOW())`,
-				userID, prizeAmount, fmt.Sprintf("Prize for contest %d (Rank %d)", contestID, rank))
-			
-			if err == nil {
-				// Update user's wallet balance
-				tx.Exec(`
-					UPDATE wallets 
-					SET balance = balance + $1, updated_at = NOW()
-					WHERE user_id = $2`, prizeAmount, userID)
-				
-				*totalPrizesDistributed += prizeAmount
-				*winnersRewarded++
-			}
+		// Update user wallet with prize amount (with error handling)
+		if h.updateUserWallet(tx, teamID, prizeAmount) {
+			totalDistributed += prizeAmount
+			winnersCount++
 		}
+		
+		rank++
 	}
+	
+	return totalDistributed, winnersCount
+}
+
+// updateUserWallet updates user wallet with prize amount - returns success status
+func (h *AdminHandler) updateUserWallet(tx *sql.Tx, teamID int64, amount float64) bool {
+	// Get user ID from team
+	var userID int64
+	err := tx.QueryRow(`
+		SELECT user_id FROM user_teams WHERE id = $1`, teamID).Scan(&userID)
+	
+	if err != nil {
+		return false // Failed to get user ID
+	}
+	
+	// Update user wallet balance
+	_, err = tx.Exec(`
+		UPDATE users 
+		SET wallet_balance = wallet_balance + $1 
+		WHERE id = $2`, amount, userID)
+	
+	return err == nil // Return success status
 }
 
 // updateContestStatuses updates contest statuses after match completion

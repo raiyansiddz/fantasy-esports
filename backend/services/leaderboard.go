@@ -12,7 +12,12 @@ import (
 )
 
 type LeaderboardService struct {
-	db *sql.DB
+	db             *sql.DB
+	cache          map[string]*models.CachedLeaderboard
+	cacheMutex     sync.RWMutex
+	snapshots      map[int64]*models.RankingSnapshot
+	snapshotMutex  sync.RWMutex
+	updateChannel  chan models.RealTimeLeaderboardUpdate
 }
 
 func NewLeaderboardService(db *sql.DB) *LeaderboardService {

@@ -893,7 +893,7 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 
 	// ⭐ REAL MATCH COMPLETION AND PRIZE DISTRIBUTION IMPLEMENTATION ⭐
 	
-	// Step 1: Start transaction for all completion operations
+	// Step 1: Start transaction for all completion operations with proper defer pattern
 	tx, err := h.db.Begin()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
@@ -903,7 +903,19 @@ func (h *AdminHandler) CompleteMatch(c *gin.Context) {
 		})
 		return
 	}
-	defer tx.Rollback()
+	
+	// Implement proper transaction defer pattern for Crown Jewel fix
+	var txErr error
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // Re-throw panic after rollback
+		} else if txErr != nil {
+			tx.Rollback() // Error occurred, rollback
+		} else {
+			txErr = tx.Commit() // No error, commit - any commit error will be handled
+		}
+	}()
 	
 	// Step 2: Validate match can be completed
 	var currentStatus string

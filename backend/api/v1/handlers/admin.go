@@ -1728,20 +1728,19 @@ func (h *AdminHandler) ProcessKYC(c *gin.Context) {
         }
 
         // Update KYC document status
-        var verifiedAt interface{}
-        if req.Status == "verified" {
-                verifiedAt = "NOW()"
-        } else {
-                verifiedAt = nil
-        }
-
-        _, err = tx.Exec(`
+        updateQuery := `
                 UPDATE kyc_documents 
-                SET status = $1, verified_at = `+fmt.Sprintf("%v", verifiedAt)+`, 
-                    verified_by = $2, rejection_reason = $3, 
-                    additional_data = $4
-                WHERE id = $5`,
-                req.Status, adminID, req.RejectionReason, req.Notes, documentID)
+                SET status = $1, verified_by = $2, rejection_reason = $3, 
+                    additional_data = $4`
+        args := []interface{}{req.Status, adminID, req.RejectionReason, req.Notes}
+        
+        if req.Status == "verified" {
+                updateQuery += `, verified_at = NOW()`
+        }
+        updateQuery += ` WHERE id = $5`
+        args = append(args, documentID)
+
+        _, err = tx.Exec(updateQuery, args...)
 
         if err != nil {
                 txErr = err

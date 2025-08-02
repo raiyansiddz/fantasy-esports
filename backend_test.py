@@ -11,7 +11,7 @@ import sys
 from datetime import datetime
 
 # Get backend URL from environment - using localhost for GoLang backend
-BACKEND_URL = "http://localhost:8080"
+BACKEND_URL = "http://localhost:8001"
 
 # Global admin token storage
 ADMIN_TOKEN = None

@@ -208,7 +208,10 @@ func (s *Server) Start(addr string) error {
 			admin.GET("/users", adminHandler.GetUsers)
 			admin.GET("/users/:id", adminHandler.GetUserDetails)
 			admin.PUT("/users/:id/status", adminHandler.UpdateUserStatus)
-			admin.PUT("/users/:id/kyc", adminHandler.ProcessKYC)
+			
+			// KYC Management
+			admin.GET("/kyc/pending", adminHandler.GetPendingKYCDocuments)
+			admin.PUT("/kyc/documents/:document_id/process", adminHandler.ProcessKYC)
 
 			// Game management
 			admin.POST("/games", adminHandler.CreateGame)

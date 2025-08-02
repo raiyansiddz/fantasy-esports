@@ -574,6 +574,7 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 		req.MatchStatus, req.WinnerTeamID, matchID)
 	
 	if err != nil {
+		txErr = err
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to update match score",
@@ -586,6 +587,7 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 	if req.Team1Score >= 0 && req.Team2Score >= 0 {
 		err = h.updateMatchParticipantScores(tx, matchID, req.Team1Score, req.Team2Score)
 		if err != nil {
+			txErr = err
 			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Success: false,
 				Error:   "Failed to update participant scores",
@@ -600,6 +602,7 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 	if req.MatchStatus == "completed" {
 		completionData, err = h.handleMatchCompletion(tx, matchID, req.WinnerTeamID)
 		if err != nil {
+			txErr = err
 			c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 				Success: false,
 				Error:   "Failed to complete match processing",
@@ -609,8 +612,8 @@ func (h *AdminHandler) UpdateMatchScore(c *gin.Context) {
 		}
 	}
 	
-	// Step 8: Commit transaction
-	if err = tx.Commit(); err != nil {
+	// Step 8: Check for commit errors from defer pattern
+	if txErr != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
 			Error:   "Failed to commit match updates",

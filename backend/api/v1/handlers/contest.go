@@ -1066,6 +1066,11 @@ func (h *ContestHandler) GetMyRank(c *gin.Context) {
         })
 }
 
+// GetLeaderboardService returns the leaderboard service instance
+func (h *ContestHandler) GetLeaderboardService() *services.LeaderboardService {
+        return h.leaderboardService
+}
+
 // Helper function
 func parseIntToInt64(s string) int64 {
         val, _ := strconv.ParseInt(s, 10, 64)

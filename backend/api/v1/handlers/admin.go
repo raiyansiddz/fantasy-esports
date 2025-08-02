@@ -2101,6 +2101,23 @@ func (h *AdminHandler) updateContestStatuses(tx *sql.Tx, matchID string) (int, e
 
 // sendMatchCompletionNotifications sends notifications about match completion
 func (h *AdminHandler) sendMatchCompletionNotifications(tx *sql.Tx, matchID string, winnerTeamID int64) (int, error) {
+	// First, check if there are any contest participants for this match
+	var participantCount int
+	err := tx.QueryRow(`
+		SELECT COUNT(*)
+		FROM contest_participants cp
+		JOIN contests c ON cp.contest_id = c.id
+		WHERE c.match_id = $1`, matchID).Scan(&participantCount)
+	
+	if err != nil {
+		return 0, err
+	}
+	
+	// Handle the case where no participants exist - return success with zero notifications
+	if participantCount == 0 {
+		return 0, nil
+	}
+	
 	// Get all users who participated in contests for this match
 	rows, err := tx.Query(`
 		SELECT DISTINCT cp.user_id, u.first_name, u.mobile

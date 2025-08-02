@@ -521,3 +521,305 @@ func (s *LeaderboardService) GetUserTeamPerformance(teamID int64, userID int64) 
 
 	return performance, nil
 }
+
+// ================================
+// REAL-TIME LEADERBOARD METHODS ⭐
+// ================================
+
+// processRealTimeUpdates processes real-time leaderboard updates in background
+func (s *LeaderboardService) processRealTimeUpdates() {
+	logger.Info("Started real-time leaderboard update processor")
+	
+	for update := range s.updateChannel {
+		s.handleRealTimeUpdate(update)
+	}
+}
+
+// TriggerRealTimeUpdate triggers a real-time leaderboard update
+func (s *LeaderboardService) TriggerRealTimeUpdate(contestID int64, triggerSource string, matchEventID *int64) error {
+	// Create snapshot of current state
+	snapshot, err := s.createRankingSnapshot(contestID)
+	if err != nil {
+		return fmt.Errorf("failed to create ranking snapshot: %w", err)
+	}
+	
+	// Recalculate leaderboard
+	newLeaderboard, err := s.CalculateContestLeaderboard(contestID)
+	if err != nil {
+		return fmt.Errorf("failed to recalculate leaderboard: %w", err)
+	}
+	
+	// Detect rank changes
+	rankChanges := s.detectRankChanges(contestID, snapshot, newLeaderboard)
+	
+	// Create update message
+	update := models.RealTimeLeaderboardUpdate{
+		ContestID:         contestID,
+		UpdateID:          s.generateUpdateID(contestID),
+		UpdateType:        s.determineUpdateType(rankChanges),
+		UpdateTimestamp:   time.Now(),
+		AffectedUserIDs:   s.extractAffectedUserIDs(rankChanges),
+		RankChanges:       rankChanges,
+		TopPerformers:     newLeaderboard.TopPerformers,
+		TotalParticipants: newLeaderboard.TotalParticipants,
+		MatchEventID:      matchEventID,
+		TriggerSource:     triggerSource,
+	}
+	
+	// Send to update channel
+	select {
+	case s.updateChannel <- update:
+		logger.Info(fmt.Sprintf("Triggered real-time update for contest %d", contestID))
+	default:
+		logger.Warn(fmt.Sprintf("Update channel full, dropped update for contest %d", contestID))
+	}
+	
+	return nil
+}
+
+// GetCachedLeaderboard gets leaderboard from cache or calculates fresh
+func (s *LeaderboardService) GetCachedLeaderboard(contestID int64, maxAge time.Duration) (*models.Leaderboard, error) {
+	cacheKey := s.generateCacheKey(contestID)
+	
+	s.cacheMutex.RLock()
+	cached, exists := s.cache[cacheKey]
+	s.cacheMutex.RUnlock()
+	
+	if exists && !cached.IsDirty && time.Since(cached.CachedAt) < maxAge {
+		logger.Info(fmt.Sprintf("Returning cached leaderboard for contest %d", contestID))
+		return cached.Leaderboard, nil
+	}
+	
+	// Calculate fresh leaderboard
+	leaderboard, err := s.CalculateContestLeaderboard(contestID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Cache the result
+	s.cacheLeaderboard(contestID, leaderboard)
+	
+	return leaderboard, nil
+}
+
+// InvalidateCache invalidates the cache for a contest
+func (s *LeaderboardService) InvalidateCache(contestID int64) {
+	cacheKey := s.generateCacheKey(contestID)
+	
+	s.cacheMutex.Lock()
+	defer s.cacheMutex.Unlock()
+	
+	if cached, exists := s.cache[cacheKey]; exists {
+		cached.IsDirty = true
+		logger.Info(fmt.Sprintf("Invalidated cache for contest %d", contestID))
+	}
+}
+
+// GetRankingSnapshot gets the current ranking snapshot for a contest
+func (s *LeaderboardService) GetRankingSnapshot(contestID int64) (*models.RankingSnapshot, error) {
+	s.snapshotMutex.RLock()
+	snapshot, exists := s.snapshots[contestID]
+	s.snapshotMutex.RUnlock()
+	
+	if !exists {
+		// Create initial snapshot
+		return s.createRankingSnapshot(contestID)
+	}
+	
+	return snapshot, nil
+}
+
+// handleRealTimeUpdate processes a single real-time update
+func (s *LeaderboardService) handleRealTimeUpdate(update models.RealTimeLeaderboardUpdate) {
+	logger.Info(fmt.Sprintf("Processing real-time update %s for contest %d", update.UpdateID, update.ContestID))
+	
+	// Update cache with fresh data
+	s.InvalidateCache(update.ContestID)
+	
+	// Store the snapshot for future comparisons
+	s.storeRankingSnapshot(update.ContestID, update.TopPerformers)
+	
+	// Here you would typically broadcast to WebSocket connections
+	// This will be handled by the connection manager
+	
+	logger.Info(fmt.Sprintf("Processed update affecting %d users", len(update.AffectedUserIDs)))
+}
+
+// createRankingSnapshot creates a snapshot of current rankings
+func (s *LeaderboardService) createRankingSnapshot(contestID int64) (*models.RankingSnapshot, error) {
+	leaderboard, err := s.CalculateContestLeaderboard(contestID)
+	if err != nil {
+		return nil, err
+	}
+	
+	snapshot := &models.RankingSnapshot{
+		ContestID:   contestID,
+		SnapshotID:  s.generateSnapshotID(contestID),
+		CreatedAt:   time.Now(),
+		Rankings:    make(map[int64]models.RankPosition),
+		TotalPoints: make(map[int64]float64),
+	}
+	
+	for _, entry := range leaderboard.TopPerformers {
+		snapshot.Rankings[entry.UserID] = models.RankPosition{
+			Rank:     entry.Rank,
+			Points:   entry.Points,
+			TeamID:   0, // Will be filled from team query if needed
+			Username: entry.Username,
+			TeamName: entry.TeamName,
+		}
+		snapshot.TotalPoints[entry.UserID] = entry.Points
+	}
+	
+	// Store snapshot
+	s.snapshotMutex.Lock()
+	s.snapshots[contestID] = snapshot
+	s.snapshotMutex.Unlock()
+	
+	return snapshot, nil
+}
+
+// detectRankChanges compares current leaderboard with previous snapshot
+func (s *LeaderboardService) detectRankChanges(contestID int64, previousSnapshot *models.RankingSnapshot, newLeaderboard *models.Leaderboard) []models.LeaderboardRankChange {
+	var changes []models.LeaderboardRankChange
+	
+	if previousSnapshot == nil {
+		return changes // No previous data to compare
+	}
+	
+	for _, entry := range newLeaderboard.TopPerformers {
+		if prevPos, existed := previousSnapshot.Rankings[entry.UserID]; existed {
+			// User existed in previous snapshot, check for changes
+			if prevPos.Rank != entry.Rank || prevPos.Points != entry.Points {
+				changes = append(changes, models.LeaderboardRankChange{
+					UserID:         entry.UserID,
+					TeamID:         0, // Will be filled if needed
+					Username:       entry.Username,
+					TeamName:       entry.TeamName,
+					PreviousRank:   prevPos.Rank,
+					NewRank:        entry.Rank,
+					RankChange:     prevPos.Rank - entry.Rank, // positive = moved up
+					PreviousPoints: prevPos.Points,
+					NewPoints:      entry.Points,
+					PointsChange:   entry.Points - prevPos.Points,
+					AvatarURL:      entry.AvatarURL,
+				})
+			}
+		} else {
+			// New user in leaderboard
+			changes = append(changes, models.LeaderboardRankChange{
+				UserID:         entry.UserID,
+				TeamID:         0,
+				Username:       entry.Username,
+				TeamName:       entry.TeamName,
+				PreviousRank:   0, // New entry
+				NewRank:        entry.Rank,
+				RankChange:     entry.Rank, // negative for new entries
+				PreviousPoints: 0,
+				NewPoints:      entry.Points,
+				PointsChange:   entry.Points,
+				AvatarURL:      entry.AvatarURL,
+			})
+		}
+	}
+	
+	return changes
+}
+
+// storeRankingSnapshot stores a ranking snapshot for future comparisons
+func (s *LeaderboardService) storeRankingSnapshot(contestID int64, topPerformers []models.LeaderboardEntry) {
+	snapshot := &models.RankingSnapshot{
+		ContestID:   contestID,
+		SnapshotID:  s.generateSnapshotID(contestID),
+		CreatedAt:   time.Now(),
+		Rankings:    make(map[int64]models.RankPosition),
+		TotalPoints: make(map[int64]float64),
+	}
+	
+	for _, entry := range topPerformers {
+		snapshot.Rankings[entry.UserID] = models.RankPosition{
+			Rank:     entry.Rank,
+			Points:   entry.Points,
+			Username: entry.Username,
+			TeamName: entry.TeamName,
+		}
+		snapshot.TotalPoints[entry.UserID] = entry.Points
+	}
+	
+	s.snapshotMutex.Lock()
+	s.snapshots[contestID] = snapshot
+	s.snapshotMutex.Unlock()
+}
+
+// cacheLeaderboard caches a leaderboard result
+func (s *LeaderboardService) cacheLeaderboard(contestID int64, leaderboard *models.Leaderboard) {
+	cacheKey := s.generateCacheKey(contestID)
+	
+	cached := &models.CachedLeaderboard{
+		Leaderboard: leaderboard,
+		CacheKey:    cacheKey,
+		CachedAt:    time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute), // 5-minute cache
+		IsDirty:     false,
+		LastEventID: 0, // Would be set based on latest match event
+	}
+	
+	s.cacheMutex.Lock()
+	s.cache[cacheKey] = cached
+	s.cacheMutex.Unlock()
+	
+	logger.Info(fmt.Sprintf("Cached leaderboard for contest %d", contestID))
+}
+
+// Helper methods
+func (s *LeaderboardService) generateCacheKey(contestID int64) string {
+	return fmt.Sprintf("leaderboard:contest:%d", contestID)
+}
+
+func (s *LeaderboardService) generateUpdateID(contestID int64) string {
+	return fmt.Sprintf("%d_%d", contestID, time.Now().UnixNano())
+}
+
+func (s *LeaderboardService) generateSnapshotID(contestID int64) string {
+	return fmt.Sprintf("snapshot_%d_%d", contestID, time.Now().UnixNano())
+}
+
+func (s *LeaderboardService) determineUpdateType(changes []models.LeaderboardRankChange) string {
+	if len(changes) == 0 {
+		return "no_change"
+	}
+	
+	hasRankChanges := false
+	hasPointsChanges := false
+	hasNewEntries := false
+	
+	for _, change := range changes {
+		if change.RankChange != 0 {
+			hasRankChanges = true
+		}
+		if change.PointsChange != 0 {
+			hasPointsChanges = true
+		}
+		if change.PreviousRank == 0 {
+			hasNewEntries = true
+		}
+	}
+	
+	if hasNewEntries {
+		return "new_entry"
+	} else if hasRankChanges {
+		return "rank_change"
+	} else if hasPointsChanges {
+		return "points_update"
+	}
+	
+	return "full_refresh"
+}
+
+func (s *LeaderboardService) extractAffectedUserIDs(changes []models.LeaderboardRankChange) []int64 {
+	userIDs := make([]int64, len(changes))
+	for i, change := range changes {
+		userIDs[i] = change.UserID
+	}
+	return userIDs
+}

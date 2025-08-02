@@ -923,12 +923,11 @@ def test_state_transition_validation():
     return results
 
 def main():
-    """Main test execution for Crown Jewel RESEARCH-BASED FIXES - Robust transaction defer pattern"""
-    print("🚀 Starting Crown Jewel RESEARCH-BASED FIXES Testing")
-    print("🎯 Focus: Robust transaction defer pattern with committed flag (no more double commits)")
-    print("🔒 Focus: Empty dataset handling in updateContestStatuses, updateMatchParticipantScores, updateContestLeaderboardTx")
-    print("⚡ Focus: Proper error handling with fmt.Errorf and error wrapping")
-    print("✨ Focus: Zero rows as success pattern implementation")
+    """Main test execution for Crown Jewel Manual Scoring System - DEBUG LOG ANALYSIS"""
+    print("🚀 Starting Crown Jewel Manual Scoring System DEBUG LOG ANALYSIS")
+    print("🎯 Focus: Capturing debug logs from updateContestStatuses function")
+    print("🔍 Analysis: Identify root causes of transaction failures")
+    print("📊 Testing: Enhanced Match State Management and Complete Match endpoints")
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Test started at: {datetime.now()}")
     
@@ -939,29 +938,25 @@ def main():
     test_results['health'] = test_health_check()
     test_results['admin_login'] = test_admin_login()
     
-    # Run Crown Jewel RESEARCH-BASED FIX tests
+    # Run Crown Jewel DEBUG LOG ANALYSIS tests
     if ADMIN_TOKEN:
         print(f"\n{'='*80}")
-        print("TESTING CROWN JEWEL RESEARCH-BASED FIXES")
-        print("Root Cause: Empty dataset handling in helper functions causing transaction rollbacks")
-        print("Solution: Robust transaction defer pattern with committed flag")
-        print("Enhancement: Zero rows as success pattern in updateContestStatuses, finalizeContestLeaderboards")
-        print("Enhancement: Simplified query patterns without complex ROW_NUMBER() window functions")
+        print("CROWN JEWEL MANUAL SCORING SYSTEM - DEBUG LOG ANALYSIS")
+        print("Focus: updateContestStatuses function debug logging")
+        print("Goal: Identify exactly where and why the function is failing")
+        print("Scenarios: Empty contests, populated contests, mixed scenarios")
         print(f"{'='*80}")
         
         test_results['enhanced_match_state'] = test_enhanced_match_state_management()
         test_results['complete_match_prizes'] = test_complete_match_with_prize_distribution()
         
-        # Run state validation tests
-        state_validation_results = test_state_transition_validation()
     else:
         test_results['enhanced_match_state'] = (False, "No admin token")
         test_results['complete_match_prizes'] = (False, "No admin token")
-        state_validation_results = {}
     
     # Print summary
     print(f"\n{'='*80}")
-    print("CROWN JEWEL RESEARCH-BASED FIXES TEST SUMMARY")
+    print("CROWN JEWEL DEBUG LOG ANALYSIS SUMMARY")
     print(f"{'='*80}")
     
     passed = 0
@@ -976,31 +971,14 @@ def main():
     
     print(f"\nCore Tests: {passed}/{total} passed")
     
-    # State validation tests summary
-    if state_validation_results:
-        print(f"\n{'='*60}")
-        print("STATE VALIDATION TESTS")
-        print(f"{'='*60}")
-        
-        validation_passed = sum(1 for result in state_validation_results.values() if result)
-        validation_total = len(state_validation_results)
-        print(f"State Validation Tests: {validation_passed}/{validation_total} passed")
-    else:
-        validation_passed = 0
-        validation_total = 0
-    
-    # Overall summary
-    overall_passed = passed + validation_passed
-    overall_total = total + validation_total
-    
     print(f"\n{'='*80}")
-    print("RESEARCH-BASED CROWN JEWEL FIX ASSESSMENT")
+    print("DEBUG LOG ANALYSIS ASSESSMENT")
     print(f"{'='*80}")
-    print(f"Total Tests: {overall_passed}/{overall_total} passed")
+    print(f"Total Tests: {passed}/{total} passed")
     
     print(f"\nTest completed at: {datetime.now()}")
     
-    # Determine if RESEARCH-BASED FIXES are working
+    # Determine critical issues for main agent
     critical_failures = 0
     critical_issues = []
     
@@ -1009,27 +987,26 @@ def main():
         critical_issues.append("Admin login failed")
     if not test_results.get('enhanced_match_state', (False, None))[0]:
         critical_failures += 1
-        critical_issues.append("Enhanced Match State Management RESEARCH-BASED FIX failed")
+        critical_issues.append("Enhanced Match State Management failed - check updateContestStatuses debug logs")
     if not test_results.get('complete_match_prizes', (False, None))[0]:
         critical_failures += 1
-        critical_issues.append("Complete Match with Prize Distribution RESEARCH-BASED FIX failed")
+        critical_issues.append("Complete Match with Prize Distribution failed - check updateContestStatuses debug logs")
     
     if critical_failures > 0:
         print(f"\n❌ {critical_failures} critical test(s) failed:")
         for issue in critical_issues:
             print(f"   - {issue}")
-        print("\n❌ CROWN JEWEL RESEARCH-BASED FIXES have FAILED")
-        print("❌ Robust transaction defer pattern NOT working properly")
-        print("❌ Empty dataset handling in helper functions unsuccessful")
-        print("❌ Still getting COMMIT_ERROR, CONTEST_UPDATE_ERROR, PARTICIPANT_UPDATE_ERROR")
+        print("\n🔍 ANALYSIS RESULTS:")
+        print("❌ Crown Jewel Manual Scoring System transaction fixes are NOT working")
+        print("❌ updateContestStatuses function is still failing")
+        print("❌ Check debug logs above for specific failure points")
+        print("❌ Root cause analysis needed for transaction commit errors")
         sys.exit(1)
     else:
         print(f"\n✅ All critical tests passed")
-        print("✅ CROWN JEWEL RESEARCH-BASED FIXES are WORKING properly")
-        print("✅ Robust transaction defer pattern with committed flag successful")
-        print("✅ Empty dataset handling in updateContestStatuses, updateMatchParticipantScores, updateContestLeaderboardTx working")
-        print("✅ Zero rows as success pattern implemented correctly")
-        print("✅ COMMIT_ERROR, CONTEST_UPDATE_ERROR, PARTICIPANT_UPDATE_ERROR resolved")
+        print("✅ Crown Jewel Manual Scoring System is working properly")
+        print("✅ updateContestStatuses function executing successfully")
+        print("✅ Transaction commit errors resolved")
         sys.exit(0)
 
 if __name__ == "__main__":

@@ -24,3 +24,7 @@ func Info(v ...interface{}) {
 func Error(v ...interface{}) {
 	ErrorLogger.Println(v...)
 }
+
+func Warn(v ...interface{}) {
+	WarnLogger.Println(v...)
+}

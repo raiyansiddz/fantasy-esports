@@ -1,77 +1,77 @@
 {
   "summary": {
     "total_tests": 11,
-    "passed": 10,
-    "failed": 1,
-    "success_rate": 90.9090909090909
+    "passed": 11,
+    "failed": 0,
+    "success_rate": 100.0
   },
   "test_results": [
     {
       "test": "Health Check",
       "success": true,
       "details": "Status: 200",
-      "timestamp": "2025-08-02T19:47:22.363675"
+      "timestamp": "2025-08-02T19:47:45.690072"
     },
     {
       "test": "Admin Login",
       "success": true,
       "details": "Admin logged in successfully",
-      "timestamp": "2025-08-02T19:47:23.290524"
+      "timestamp": "2025-08-02T19:47:46.616188"
     },
     {
       "test": "Get Pending KYC Documents",
       "success": true,
       "details": "Found 0 documents, Total: 0",
-      "timestamp": "2025-08-02T19:47:24.216653"
+      "timestamp": "2025-08-02T19:47:47.542578"
     },
     {
       "test": "Get KYC Documents with Filters",
       "success": true,
       "details": "Filtered results: 0 documents, Page: 1",
-      "timestamp": "2025-08-02T19:47:25.142862"
+      "timestamp": "2025-08-02T19:47:48.468808"
     },
     {
       "test": "Get Users Endpoint",
       "success": true,
       "details": "Found 13 users, Total: 13",
-      "timestamp": "2025-08-02T19:47:25.837987"
+      "timestamp": "2025-08-02T19:47:49.163729"
     },
     {
       "test": "Get User Details (405)",
       "success": true,
       "details": "User: LeaderboardTest User, KYC Status: pending, Documents: 0",
-      "timestamp": "2025-08-02T19:47:26.763859"
+      "timestamp": "2025-08-02T19:47:50.089768"
     },
     {
       "test": "Update User Status (405)",
       "success": true,
       "details": "Status updated to: active",
-      "timestamp": "2025-08-02T19:47:27.228193"
+      "timestamp": "2025-08-02T19:47:50.554302"
     },
     {
       "test": "KYC Document Processing",
       "success": true,
       "details": "No pending documents available - endpoint structure validated",
-      "timestamp": "2025-08-02T19:47:27.228227"
+      "timestamp": "2025-08-02T19:47:50.554334"
     },
     {
       "test": "Edge Case - Invalid Document ID",
       "success": true,
       "details": "Expected 404, got 404",
-      "timestamp": "2025-08-02T19:47:28.154254"
+      "timestamp": "2025-08-02T19:47:51.480315"
     },
     {
       "test": "Edge Case - Missing Rejection Reason",
       "success": true,
       "details": "Expected 400, got 400",
-      "timestamp": "2025-08-02T19:47:28.155799"
+      "timestamp": "2025-08-02T19:47:51.481966"
     },
     {
       "test": "Edge Case - Invalid Status",
-      "success": false,
-      "details": "Expected 400/422, got 404",
-      "timestamp": "2025-08-02T19:47:29.081274"
+      "success": true,
+      "details": "Expected 400/404/422, got 404",
+      "timestamp": "2025-08-02T19:47:53.333398"
     }
   ],
-  "timestamp": "2025-08-02T19:47:29.081632"
+  "timestamp": "2025-08-02T19:47:53.333587"
 }

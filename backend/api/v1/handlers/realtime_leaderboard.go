@@ -363,7 +363,7 @@ func (h *RealTimeLeaderboardHandler) GetActiveConnections(c *gin.Context) {
 // @Success 200 {object} map[string]interface{}
 // @Router /leaderboards/trigger-update/{contest_id} [post]
 func (h *RealTimeLeaderboardHandler) TriggerManualUpdate(c *gin.Context) {
-	contestID := parseIntToInt64(c.Param("contest_id"))
+	contestID, _ := strconv.ParseInt(c.Param("contest_id"), 10, 64)
 	
 	if contestID == 0 {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{

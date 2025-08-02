@@ -158,6 +158,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ CRITICAL: Crown Jewel fix FAILED - Complete Match with Prize Distribution still failing with multiple errors: 1) ALREADY_COMPLETED error for match 2, 2) CONTEST_UPDATE_ERROR for match 20 (empty contest scenario), 3) LEADERBOARD_FINALIZATION_ERROR for match 1 (mixed scenario). The transaction pipeline fix is NOT working properly. Empty contest_participants scenarios are still causing transaction failures in contest status updates and leaderboard finalization functions."
+        - working: false
+          agent: "testing"
+          comment: "❌ DEFINITIVE FAILURE CONFIRMED: Crown Jewel Manual Scoring System transaction fix has FAILED comprehensive testing. ROOT CAUSE ANALYSIS COMPLETE: 1) Match 1: 365 contests with $450K prize pools but 0 contest_participants causing LEADERBOARD_FINALIZATION_ERROR, 2) Match 2: Already completed status causing ALREADY_COMPLETED error, 3) Match 20: 0 contests causing CONTEST_UPDATE_ERROR, 4) Match 21: 'upcoming' status causing INVALID_STATE_TRANSITION. The main agent's claimed fixes for distributePrizes, finalizeContestLeaderboards, sendMatchCompletionNotifications, and updateContestLeaderboardTx are NOT working. The transaction pipeline fails in multiple edge cases that the Crown Jewel fix was supposed to handle."
 
   - task: "Bulk Score Updates Transaction Logic"
     implemented: true

@@ -502,7 +502,7 @@ def test_state_transition_validation():
         },
         {
             "name": "Valid transition: upcoming to live",
-            "match_id": "3",
+            "match_id": "4",
             "payload": {
                 "match_status": "live", 
                 "team1_score": 0, 
@@ -515,7 +515,7 @@ def test_state_transition_validation():
         },
         {
             "name": "Invalid score format",
-            "match_id": "4",
+            "match_id": "5",
             "payload": {
                 "match_status": "completed", 
                 "team1_score": -1, 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/db"
 	"fmt"

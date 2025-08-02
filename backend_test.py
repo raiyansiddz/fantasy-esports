@@ -871,10 +871,12 @@ def test_state_transition_validation():
     return results
 
 def main():
-    """Main test execution for Crown Jewel DEFINITIVE FIXES - Two-step approach and transaction isolation"""
-    print("🚀 Starting Crown Jewel DEFINITIVE FIXES Testing")
-    print("🎯 Focus: Two-step approach replacing complex UPDATE with ROW_NUMBER() window function")
-    print("🔒 Focus: Transaction isolation level READ COMMITTED preventing phantom reads")
+    """Main test execution for Crown Jewel RESEARCH-BASED FIXES - Robust transaction defer pattern"""
+    print("🚀 Starting Crown Jewel RESEARCH-BASED FIXES Testing")
+    print("🎯 Focus: Robust transaction defer pattern with committed flag (no more double commits)")
+    print("🔒 Focus: Empty dataset handling in updateContestStatuses, updateMatchParticipantScores, updateContestLeaderboardTx")
+    print("⚡ Focus: Proper error handling with fmt.Errorf and error wrapping")
+    print("✨ Focus: Zero rows as success pattern implementation")
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Test started at: {datetime.now()}")
     
@@ -885,13 +887,14 @@ def main():
     test_results['health'] = test_health_check()
     test_results['admin_login'] = test_admin_login()
     
-    # Run Crown Jewel DEFINITIVE FIX tests
+    # Run Crown Jewel RESEARCH-BASED FIX tests
     if ADMIN_TOKEN:
         print(f"\n{'='*80}")
-        print("TESTING CROWN JEWEL DEFINITIVE FIXES")
-        print("Root Cause: Complex UPDATE with ROW_NUMBER() causing validation-to-execution gap")
-        print("Solution: Two-step approach (SELECT ranked data first, then UPDATE individual rows)")
-        print("Enhancement: Transaction isolation READ COMMITTED preventing phantom reads")
+        print("TESTING CROWN JEWEL RESEARCH-BASED FIXES")
+        print("Root Cause: Empty dataset handling in helper functions causing transaction rollbacks")
+        print("Solution: Robust transaction defer pattern with committed flag")
+        print("Enhancement: Zero rows as success pattern in updateContestStatuses, finalizeContestLeaderboards")
+        print("Enhancement: Simplified query patterns without complex ROW_NUMBER() window functions")
         print(f"{'='*80}")
         
         test_results['enhanced_match_state'] = test_enhanced_match_state_management()
@@ -906,7 +909,7 @@ def main():
     
     # Print summary
     print(f"\n{'='*80}")
-    print("CROWN JEWEL DEFINITIVE FIXES TEST SUMMARY")
+    print("CROWN JEWEL RESEARCH-BASED FIXES TEST SUMMARY")
     print(f"{'='*80}")
     
     passed = 0
@@ -939,13 +942,13 @@ def main():
     overall_total = total + validation_total
     
     print(f"\n{'='*80}")
-    print("DEFINITIVE CROWN JEWEL FIX ASSESSMENT")
+    print("RESEARCH-BASED CROWN JEWEL FIX ASSESSMENT")
     print(f"{'='*80}")
     print(f"Total Tests: {overall_passed}/{overall_total} passed")
     
     print(f"\nTest completed at: {datetime.now()}")
     
-    # Determine if DEFINITIVE FIXES are working
+    # Determine if RESEARCH-BASED FIXES are working
     critical_failures = 0
     critical_issues = []
     
@@ -954,26 +957,27 @@ def main():
         critical_issues.append("Admin login failed")
     if not test_results.get('enhanced_match_state', (False, None))[0]:
         critical_failures += 1
-        critical_issues.append("Enhanced Match State Management DEFINITIVE FIX failed")
+        critical_issues.append("Enhanced Match State Management RESEARCH-BASED FIX failed")
     if not test_results.get('complete_match_prizes', (False, None))[0]:
         critical_failures += 1
-        critical_issues.append("Complete Match with Prize Distribution DEFINITIVE FIX failed")
+        critical_issues.append("Complete Match with Prize Distribution RESEARCH-BASED FIX failed")
     
     if critical_failures > 0:
         print(f"\n❌ {critical_failures} critical test(s) failed:")
         for issue in critical_issues:
             print(f"   - {issue}")
-        print("\n❌ CROWN JEWEL DEFINITIVE FIXES have FAILED")
-        print("❌ Two-step approach and transaction isolation NOT working properly")
-        print("❌ Complex UPDATE with ROW_NUMBER() replacement unsuccessful")
+        print("\n❌ CROWN JEWEL RESEARCH-BASED FIXES have FAILED")
+        print("❌ Robust transaction defer pattern NOT working properly")
+        print("❌ Empty dataset handling in helper functions unsuccessful")
+        print("❌ Still getting COMMIT_ERROR, CONTEST_UPDATE_ERROR, PARTICIPANT_UPDATE_ERROR")
         sys.exit(1)
     else:
         print(f"\n✅ All critical tests passed")
-        print("✅ CROWN JEWEL DEFINITIVE FIXES are WORKING properly")
-        print("✅ Two-step approach successfully replaced complex UPDATE operations")
-        print("✅ Transaction isolation READ COMMITTED preventing phantom reads")
-        print("✅ Empty contest scenarios handled correctly without COMMIT_ERROR")
-        print("✅ CONTEST_UPDATE_ERROR, LEADERBOARD_FINALIZATION_ERROR, PARTICIPANT_UPDATE_ERROR resolved")
+        print("✅ CROWN JEWEL RESEARCH-BASED FIXES are WORKING properly")
+        print("✅ Robust transaction defer pattern with committed flag successful")
+        print("✅ Empty dataset handling in updateContestStatuses, updateMatchParticipantScores, updateContestLeaderboardTx working")
+        print("✅ Zero rows as success pattern implemented correctly")
+        print("✅ COMMIT_ERROR, CONTEST_UPDATE_ERROR, PARTICIPANT_UPDATE_ERROR resolved")
         sys.exit(0)
 
 if __name__ == "__main__":

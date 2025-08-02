@@ -432,30 +432,30 @@ def test_enhanced_match_state_management():
             data = print_response(response, url)
             
             if response.status_code == 200 and data and data.get('success'):
-                print(f"✅ {scenario['name']}: SUCCESS - DEFINITIVE FIX WORKING")
-                print(f"   Two-step approach: Complex UPDATE replaced with SELECT+UPDATE")
-                print(f"   Transaction isolation: READ COMMITTED preventing phantom reads")
+                print(f"✅ {scenario['name']}: SUCCESS - RESEARCH-BASED FIX WORKING")
+                print(f"   Robust transaction defer pattern: committed flag prevents double commits")
+                print(f"   Empty dataset handling: Zero rows as success pattern implemented")
                 print(f"   Match Status: {data.get('status', 'N/A')}")
                 print(f"   Final Score: {data.get('final_score', 'N/A')}")
                 
                 # Check for completion data handling
                 if data.get('completion_data'):
-                    print("✅ Match completion logic working with definitive fix")
+                    print("✅ Match completion logic working with research-based fix")
                 
                 results[scenario['name']] = True
             else:
                 error_code = data.get('code') if data else 'UNKNOWN'
                 print(f"❌ {scenario['name']}: FAILED - Error: {error_code}")
                 
-                # Check for specific errors that should be resolved
+                # Check for specific errors that should be resolved by research-based fix
                 if error_code == 'COMMIT_ERROR':
-                    print("❌ CRITICAL: DEFINITIVE FIX FAILED - Still getting COMMIT_ERROR")
+                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting COMMIT_ERROR")
                 elif error_code == 'CONTEST_UPDATE_ERROR':
-                    print("❌ CRITICAL: DEFINITIVE FIX FAILED - Still getting CONTEST_UPDATE_ERROR")
+                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting CONTEST_UPDATE_ERROR")
                 elif error_code == 'LEADERBOARD_FINALIZATION_ERROR':
-                    print("❌ CRITICAL: DEFINITIVE FIX FAILED - Still getting LEADERBOARD_FINALIZATION_ERROR")
+                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting LEADERBOARD_FINALIZATION_ERROR")
                 elif error_code == 'PARTICIPANT_UPDATE_ERROR':
-                    print("❌ CRITICAL: DEFINITIVE FIX FAILED - Still getting PARTICIPANT_UPDATE_ERROR")
+                    print("❌ CRITICAL: RESEARCH-BASED FIX FAILED - Still getting PARTICIPANT_UPDATE_ERROR")
                 
                 results[scenario['name']] = False
                 

@@ -1,0 +1,92 @@
+{
+  "test_focus": "KYC Document Processing Endpoint - JSONB Fix Verification",
+  "endpoint": "PUT /admin/kyc/documents/{document_id}/process",
+  "summary": {
+    "total_tests": 11,
+    "passed": 5,
+    "failed": 6,
+    "success_rate": 45.45454545454545,
+    "avg_response_time": 1.0361000841314143,
+    "main_issue_resolved": false
+  },
+  "test_results": [
+    {
+      "test": "Health Check",
+      "success": true,
+      "details": "Status: 200",
+      "response_time": 0.00445103645324707,
+      "timestamp": "2025-08-02T20:20:09.954481"
+    },
+    {
+      "test": "Admin Login",
+      "success": true,
+      "details": "Admin logged in successfully",
+      "response_time": 0.9516935348510742,
+      "timestamp": "2025-08-02T20:20:10.906270"
+    },
+    {
+      "test": "KYC Processing WITH Notes (1)",
+      "success": false,
+      "details": "Failed: 400 - {\"success\":false,\"error\":\"Document is already verified\",\"code\":\"ALREADY_PROCESSED\"}",
+      "response_time": 0.9495134353637695,
+      "timestamp": "2025-08-02T20:20:13.756982"
+    },
+    {
+      "test": "KYC Processing WITHOUT Notes (2)",
+      "success": false,
+      "details": "Failed: 400 - {\"success\":false,\"error\":\"Document is already verified\",\"code\":\"ALREADY_PROCESSED\"}",
+      "response_time": 0.9492645263671875,
+      "timestamp": "2025-08-02T20:20:14.706319"
+    },
+    {
+      "test": "KYC Rejection WITH Reason & Notes (3)",
+      "success": false,
+      "details": "Failed: 404 - {\"success\":false,\"error\":\"KYC document not found\",\"code\":\"DOCUMENT_NOT_FOUND\"}",
+      "response_time": 0.9495804309844971,
+      "timestamp": "2025-08-02T20:20:15.655971"
+    },
+    {
+      "test": "Edge Case - Invalid Document ID",
+      "success": true,
+      "details": "Expected 404, got 404",
+      "response_time": 0.9495716094970703,
+      "timestamp": "2025-08-02T20:20:16.605617"
+    },
+    {
+      "test": "Edge Case - Missing Rejection Reason",
+      "success": true,
+      "details": "Expected 400, got 400",
+      "response_time": 0.001344442367553711,
+      "timestamp": "2025-08-02T20:20:16.607007"
+    },
+    {
+      "test": "Edge Case - Invalid Status",
+      "success": false,
+      "details": "Expected 400/404/422, got 200",
+      "response_time": 2.3713905811309814,
+      "timestamp": "2025-08-02T20:20:18.978449"
+    },
+    {
+      "test": "Edge Case - Empty Notes",
+      "success": true,
+      "details": "Expected 200/404, got 200",
+      "response_time": 2.371450662612915,
+      "timestamp": "2025-08-02T20:20:21.349952"
+    },
+    {
+      "test": "Edge Case - Long Notes (1000 chars)",
+      "success": false,
+      "details": "Expected 200/404, got 400",
+      "response_time": 0.9494321346282959,
+      "timestamp": "2025-08-02T20:20:22.299439"
+    },
+    {
+      "test": "Edge Case - Special Characters in Notes",
+      "success": false,
+      "details": "Expected 200/404, got 400",
+      "response_time": 0.9494085311889648,
+      "timestamp": "2025-08-02T20:20:23.248902"
+    }
+  ],
+  "timestamp": "2025-08-02T20:20:23.249125"
+}

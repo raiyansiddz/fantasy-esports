@@ -213,13 +213,16 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/api/v1/handlers/analytics.go"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ ROUTE REGISTRATION ISSUE CONFIRMED - BI Dashboard endpoint returns 404 'page not found' despite being properly defined. The analyticsHandler is initialized with biService in server.go, but routes in adminRoutes group (lines 234-238) are not being registered properly."
+      - working: false
+        agent: "testing"
+        comment: "❌ ROUTE REGISTRATION ISSUE PERSISTS - BI Dashboard endpoint still returns 404 despite Go backend running correctly. Testing confirms this is part of a broader pattern where specific analytics handler methods are not accessible, likely due to compilation issues or handler method panics during execution."
 
   - task: "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
     implemented: true

@@ -629,7 +629,7 @@ func (h *WalletHandler) ProcessWithdrawal(c *gin.Context) {
 	withdrawalID := c.Param("id")
 	adminID := c.GetInt64("admin_id")
 
-	var req models.ProcessWithdrawalRequest
+	var req map[string]interface{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
@@ -643,7 +643,7 @@ func (h *WalletHandler) ProcessWithdrawal(c *gin.Context) {
 		"success": true,
 		"withdrawal_id": withdrawalID,
 		"processed_by": adminID,
-		"status": req.Status,
+		"status": req["status"],
 		"message": "Withdrawal processed successfully",
 	})
 }

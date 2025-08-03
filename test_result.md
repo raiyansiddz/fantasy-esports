@@ -200,9 +200,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Complete referral system testing completed successfully"
-    - "KYC Document Processing endpoint fix verification completed successfully"
-  stuck_tasks: []
+    - "Tournament Filter - status=completed returns empty array"
+    - "Get Active Live Streams endpoint"
+    - "Stream URL Validation for admin endpoints"
+    - "Admin endpoint authentication middleware"
+  stuck_tasks:
+    - "Tournament Filter - status=completed returns empty array"
+    - "Get Active Live Streams endpoint"
+    - "Stream URL Validation for admin endpoints"
   test_all: false
   test_priority: "high_first"
 

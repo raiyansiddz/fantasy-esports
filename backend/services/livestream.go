@@ -295,15 +295,48 @@ func (s *LiveStreamService) detectPlatformAndGenerateEmbed(streamURL string) (pl
 // ValidateStreamURL validates if a stream URL is accessible
 func (s *LiveStreamService) ValidateStreamURL(streamURL string) error {
 	// Basic URL validation
-	_, err := url.Parse(streamURL)
+	parsedURL, err := url.Parse(streamURL)
 	if err != nil {
 		return fmt.Errorf("invalid URL format: %w", err)
 	}
 
-	// Check if URL is from supported platform
-	_, _, err = s.detectPlatformAndGenerateEmbed(streamURL)
+	// Validate URL scheme (must be http or https)
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return fmt.Errorf("invalid URL scheme: must be http or https")
+	}
+
+	// Validate URL host is present
+	if parsedURL.Host == "" {
+		return fmt.Errorf("invalid URL: missing host")
+	}
+
+	// Check if URL is from supported platform or valid streaming URL
+	platform, _, err := s.detectPlatformAndGenerateEmbed(streamURL)
 	if err != nil {
 		return fmt.Errorf("unsupported platform or invalid URL: %w", err)
+	}
+
+	// If generic platform, do additional validation for streaming URLs
+	if platform == "generic" {
+		// For generic platforms, require more validation
+		normalizedURL := strings.ToLower(streamURL)
+		
+		// Accept common streaming patterns
+		streamingPatterns := []string{
+			"stream", "live", "rtmp", "hls", "m3u8", "play", "watch", "video",
+		}
+		
+		hasStreamingPattern := false
+		for _, pattern := range streamingPatterns {
+			if strings.Contains(normalizedURL, pattern) {
+				hasStreamingPattern = true
+				break
+			}
+		}
+		
+		if !hasStreamingPattern {
+			return fmt.Errorf("invalid streaming URL: URL must contain streaming-related keywords or be from supported platforms (YouTube, Twitch, Facebook)")
+		}
 	}
 
 	return nil

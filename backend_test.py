@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
 Backend API Testing Script for Fantasy Esports Platform
-Testing the 4 specific issues mentioned in the review request:
+Testing GoLang Fantasy Esports backend analytics endpoints and core functionality:
 
-1. Tournament Filter - status=completed: Empty array instead of null
-2. Get Active Live Streams: 200 with empty array instead of 404
-3. Stream URL Validation: 400/422 with proper error message, not 404
-4. Admin Endpoint Without Auth: 401 (unauthorized) not 404 (not found)
+FOCUS: Analytics routes registration issue testing
+- Health Check: Verify backend is responsive
+- Basic Admin Authentication: Test admin login
+- Working Admin Endpoints: Test known working endpoints
+- Analytics Endpoints: Test expected 404 failures
+- Basic User Endpoints: Test public endpoints
+
+Expected: Analytics endpoints should return 404 due to route registration issues
 """
 
 import requests
@@ -21,6 +25,7 @@ class FantasyEsportsAPITester:
         self.api_base = f"{base_url}/api/v1"
         self.session = requests.Session()
         self.test_results = []
+        self.admin_token = None
         
     def log_test(self, test_name: str, passed: bool, details: str, response_data: Optional[Dict] = None):
         """Log test results"""

@@ -167,7 +167,7 @@ type EngagementTrend struct {
 
 type ConversionFunnel struct {
 	FunnelName        string         `json:"funnel_name"`
-	Steps             []FunnelStep   `json:"steps"`
+	Steps             []BIFunnelStep   `json:"steps"`
 	OverallConversion float64        `json:"overall_conversion_rate"`
 	BottleneckStep    string         `json:"bottleneck_step"`
 }

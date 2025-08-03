@@ -75,7 +75,8 @@ func (s *ReportingService) processReport(reportID int64) {
 	// Get report details
 	report, err := s.GetReport(reportID)
 	if err != nil {
-		s.updateReportStatus(reportID, models.ReportStatusFailed, &err.Error())
+		errMsg := err.Error()
+		s.updateReportStatus(reportID, models.ReportStatusFailed, &errMsg)
 		return
 	}
 

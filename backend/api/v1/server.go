@@ -178,8 +178,8 @@ func (s *Server) setupRoutes() {
 		adminRoutes.PUT("/users/:id/status", adminHandler.UpdateUserStatus)
 
 		// KYC document processing
-		adminRoutes.GET("/kyc/documents", userHandler.GetKYCDocuments)
-		adminRoutes.PUT("/kyc/documents/:id/process", userHandler.ProcessKYCDocument)
+		adminRoutes.GET("/kyc/documents", adminHandler.GetPendingKYCDocuments)
+		adminRoutes.PUT("/kyc/documents/:id/process", adminHandler.ProcessKYC)
 
 		// Live match scoring system
 		adminRoutes.GET("/matches/live-scoring", adminHandler.GetLiveScoringMatches)

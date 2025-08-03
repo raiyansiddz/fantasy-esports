@@ -139,7 +139,8 @@ func (h *TournamentHandler) GetTournaments(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var tournaments []map[string]interface{} = make([]map[string]interface{}, 0)
+	// Initialize tournaments slice to ensure it's never nil
+	tournaments := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		var tournament models.Tournament
 		var gameName sql.NullString

@@ -198,13 +198,16 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/api/v1/handlers/analytics.go"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ ROUTE REGISTRATION ISSUE CONFIRMED - Analytics Dashboard endpoint returns 404 'page not found' despite being properly defined in handlers/analytics.go and services/analytics.go. The handler exists and is initialized in server.go (line 71), but the route registration appears to be failing. All analytics routes in the adminRoutes group (lines 224-231) are not accessible."
+      - working: false
+        agent: "testing"
+        comment: "❌ ROUTE REGISTRATION ISSUE PERSISTS - Despite Go backend running correctly on port 8001 (not Python uvicorn), the analytics dashboard endpoint still returns 404. Comprehensive testing shows the issue is NOT with route registration stopping at a certain point, but specific to certain handlers. Pattern analysis reveals: ✅ /admin/users works, ❌ /admin/kyc/documents fails, ✅ /admin/matches/live-scoring works, ✅ /admin/config works, ❌ /admin/analytics/dashboard fails. This suggests a compilation issue where the binary doesn't reflect current source code, or specific handler methods are panicking during execution."
 
   - task: "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
     implemented: true

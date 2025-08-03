@@ -220,6 +220,28 @@ func (s *Server) setupRoutes() {
 		// System configuration
 		adminRoutes.GET("/config", adminHandler.GetSystemConfig)
 		adminRoutes.PUT("/config", adminHandler.UpdateSystemConfig)
+
+		// Analytics Dashboard
+		adminRoutes.GET("/analytics/dashboard", analyticsHandler.GetAnalyticsDashboard)
+		adminRoutes.GET("/analytics/users", analyticsHandler.GetUserMetrics)
+		adminRoutes.GET("/analytics/revenue", analyticsHandler.GetRevenueMetrics)
+		adminRoutes.GET("/analytics/contests", analyticsHandler.GetContestMetrics)
+		adminRoutes.GET("/analytics/games", analyticsHandler.GetGameMetrics)
+		adminRoutes.GET("/analytics/realtime", analyticsHandler.GetRealTimeMetrics)
+		adminRoutes.GET("/analytics/performance", analyticsHandler.GetPerformanceMetrics)
+
+		// Business Intelligence
+		adminRoutes.GET("/bi/dashboard", analyticsHandler.GetBIDashboard)
+		adminRoutes.GET("/bi/kpis", analyticsHandler.GetKPIMetrics)
+		adminRoutes.GET("/bi/revenue", analyticsHandler.GetRevenueAnalytics)
+		adminRoutes.GET("/bi/user-behavior", analyticsHandler.GetUserBehaviorAnalysis)
+		adminRoutes.GET("/bi/predictive", analyticsHandler.GetPredictiveAnalytics)
+
+		// Advanced Reporting System
+		adminRoutes.POST("/reports/generate", analyticsHandler.GenerateReport)
+		adminRoutes.GET("/reports", analyticsHandler.GetReports)
+		adminRoutes.GET("/reports/:id", analyticsHandler.GetReport)
+		adminRoutes.DELETE("/reports/:id", analyticsHandler.DeleteReport)
 	}
 
 	// WebSocket routes for real-time updates

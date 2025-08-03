@@ -296,7 +296,7 @@ type RetentionData struct {
 
 // Funnel Analysis
 type FunnelAnalysis struct {
-	FunnelSteps []FunnelStep `json:"funnel_steps"`
+	FunnelSteps []AnalyticsFunnelStep `json:"funnel_steps"`
 	ConversionRate float64   `json:"overall_conversion_rate"`
 	AnalysisPeriod string    `json:"analysis_period"`
 	GeneratedAt    time.Time `json:"generated_at"`

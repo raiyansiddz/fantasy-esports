@@ -401,12 +401,30 @@ class FantasyEsportsAPITester:
                 print(f"    {issue['details']}")
             print()
         
-        # Show fixes verified
-        fixes_verified = [r for r in self.test_results if r['passed'] and 'FIXED' in r['details']]
-        if fixes_verified:
-            print("✅ FIXES VERIFIED:")
-            for fix in fixes_verified:
-                print(f"  • {fix['test']}")
+        # Show expected behaviors (404s for analytics)
+        expected_behaviors = [r for r in self.test_results if r['passed'] and 'EXPECTED' in r['details']]
+        if expected_behaviors:
+            print("✅ EXPECTED BEHAVIORS CONFIRMED:")
+            for behavior in expected_behaviors:
+                print(f"  • {behavior['test']}")
+            print()
+        
+        # Show working functionality
+        working_features = [r for r in self.test_results if r['passed'] and 'working' in r['details'].lower()]
+        if working_features:
+            print("✅ WORKING FUNCTIONALITY:")
+            for feature in working_features:
+                print(f"  • {feature['test']}")
+            print()
+        
+        # Analytics-specific summary
+        analytics_tests = [r for r in self.test_results if 'analytics' in r['test'].lower() or 'bi' in r['test'].lower() or 'report' in r['test'].lower()]
+        if analytics_tests:
+            analytics_404s = sum(1 for r in analytics_tests if r['passed'] and 'EXPECTED' in r['details'])
+            print(f"📊 ANALYTICS ENDPOINTS SUMMARY:")
+            print(f"  • Total Analytics Endpoints Tested: {len(analytics_tests)}")
+            print(f"  • Expected 404s Confirmed: {analytics_404s}")
+            print(f"  • Route Registration Issue: {'CONFIRMED' if analytics_404s == len(analytics_tests) else 'PARTIALLY CONFIRMED'}")
             print()
         
         # Save results to file
@@ -416,7 +434,8 @@ class FantasyEsportsAPITester:
                     'total_tests': total_tests,
                     'passed_tests': passed_tests,
                     'failed_tests': failed_tests,
-                    'success_rate': f"{(passed_tests/total_tests)*100:.1f}%"
+                    'success_rate': f"{(passed_tests/total_tests)*100:.1f}%",
+                    'analytics_route_issue_confirmed': len(analytics_tests) > 0 and analytics_404s == len(analytics_tests)
                 },
                 'test_results': self.test_results
             }, f, indent=2, default=str)

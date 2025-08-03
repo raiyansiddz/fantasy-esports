@@ -187,6 +187,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ PARTIALLY WORKING - Most admin endpoints correctly return 401 with 'Authorization header required' when accessed without auth. Working endpoints: /admin/users, /admin/matches/live-scoring, /admin/matches/{id}/start-scoring. However, some endpoints like /admin/kyc/documents and /admin/matches/{id}/live-stream still return 404, indicating routing issues rather than auth middleware problems."
+      - working: true
+        agent: "testing"
+        comment: "✅ FULLY FIXED - All tested admin endpoints now correctly return 401 'Authorization header required' when accessed without auth. Tested endpoints: /admin/users, /admin/kyc/documents, /admin/matches/live-scoring, /admin/matches/1/start-scoring, /admin/matches/1/live-stream. The routing issues have been resolved and auth middleware is working properly across all admin endpoints."
 
 frontend:
   - task: "Frontend referral integration"

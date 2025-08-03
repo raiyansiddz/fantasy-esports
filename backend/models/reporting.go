@@ -385,7 +385,7 @@ type AuditTrailEntry struct {
 type RiskAssessmentReport struct {
 	OverallRiskScore   float64            `json:"overall_risk_score"`
 	RiskCategories     []RiskCategory     `json:"risk_categories"`
-	HighRiskUsers      []HighRiskUser     `json:"high_risk_users"`
+	HighRiskUsers      []ReportingHighRiskUser     `json:"high_risk_users"`
 	RecommendedActions []RecommendedAction `json:"recommended_actions"`
 }
 

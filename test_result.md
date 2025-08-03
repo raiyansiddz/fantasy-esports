@@ -131,6 +131,54 @@ backend:
         agent: "testing"
         comment: "✅ FIXED AND FULLY FUNCTIONAL - The JSONB database update issue has been completely resolved. KYC document processing now works correctly with notes (JSONB marshaling fixed), without notes, and with rejection reasons. Performance improved significantly (avg 0.949s vs previous ~1.4s timeout). Database transactions commit successfully. All validation working properly. Success rate: 92.9% (13/14 tests passed). Minor: Status validation could be stricter but doesn't affect core functionality."
 
+  - task: "Tournament Filter - status=completed returns empty array"
+    implemented: true
+    working: false
+    file: "/app/backend/api/v1/handlers/tournament.go"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE - GET /api/v1/tournaments?status=completed returns 'tournaments': null instead of empty array []. Response: {'page':1,'pages':0,'success':true,'total':0,'tournaments':null}. This violates API contract expecting empty array when no completed tournaments exist."
+
+  - task: "Get Active Live Streams endpoint"
+    implemented: false
+    working: false
+    file: "/app/backend/api/v1/handlers/tournament.go"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE - GET /api/v1/live-streams/active returns 404 'page not found' instead of 200 with empty array. The endpoint appears to be missing or not properly routed. Expected: 200 status with {'success':true,'active_streams':[]}."
+
+  - task: "Stream URL Validation for admin endpoints"
+    implemented: false
+    working: false
+    file: "/app/backend/api/v1/handlers/tournament.go"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE - POST /api/v1/admin/matches/{id}/live-stream returns 404 'page not found' instead of 400/422 with validation error for invalid URLs. The endpoint appears to be missing or not properly routed. Should validate stream_url format and return proper error messages."
+
+  - task: "Admin endpoint authentication middleware"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/middleware/auth.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PARTIALLY WORKING - Most admin endpoints correctly return 401 with 'Authorization header required' when accessed without auth. Working endpoints: /admin/users, /admin/matches/live-scoring, /admin/matches/{id}/start-scoring. However, some endpoints like /admin/kyc/documents and /admin/matches/{id}/live-stream still return 404, indicating routing issues rather than auth middleware problems."
+
 frontend:
   - task: "Frontend referral integration"
     implemented: false

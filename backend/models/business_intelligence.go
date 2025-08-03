@@ -172,7 +172,7 @@ type ConversionFunnel struct {
 	BottleneckStep    string         `json:"bottleneck_step"`
 }
 
-type FunnelStep struct {
+type BIFunnelStep struct {
 	StepName          string  `json:"step_name"`
 	StepOrder         int     `json:"step_order"`
 	Users             int64   `json:"users"`

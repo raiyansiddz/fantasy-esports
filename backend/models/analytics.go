@@ -302,7 +302,7 @@ type FunnelAnalysis struct {
 	GeneratedAt    time.Time `json:"generated_at"`
 }
 
-type FunnelStep struct {
+type AnalyticsFunnelStep struct {
 	StepName     string  `json:"step_name"`
 	StepOrder    int     `json:"step_order"`
 	UserCount    int64   `json:"user_count"`

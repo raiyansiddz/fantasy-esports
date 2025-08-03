@@ -173,9 +173,9 @@ func (s *Server) setupRoutes() {
 	adminRoutes.Use(middleware.AdminAuthMiddleware(s.config.JWTSecret))
 	{
 		// User management
-		adminRoutes.GET("/users", userHandler.GetAllUsers)
-		adminRoutes.GET("/users/:id", userHandler.GetUserDetails)
-		adminRoutes.PUT("/users/:id/status", userHandler.UpdateUserStatus)
+		adminRoutes.GET("/users", adminHandler.GetAllUsers)
+		adminRoutes.GET("/users/:id", adminHandler.GetUserDetails)
+		adminRoutes.PUT("/users/:id/status", adminHandler.UpdateUserStatus)
 
 		// KYC document processing
 		adminRoutes.GET("/kyc/documents", userHandler.GetKYCDocuments)

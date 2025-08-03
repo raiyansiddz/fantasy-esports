@@ -2,246 +2,220 @@ package v1
 
 import (
 	"database/sql"
-	"net/http"
+	"fantasy-esports-backend/api/v1/handlers"
+	"fantasy-esports-backend/api/v1/middleware"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/pkg/cdn"
-	"fantasy-esports-backend/api/v1/middleware"
-	"fantasy-esports-backend/api/v1/handlers"
+
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Server struct {
+	router *gin.Engine
 	db     *sql.DB
 	config *config.Config
-	cdn    *cdn.CloudinaryClient
-	upgrader websocket.Upgrader
 }
 
 func NewServer(db *sql.DB, cfg *config.Config) *Server {
-	// Initialize CDN client
-	cdnClient, err := cdn.NewCloudinaryClient(cfg.CloudinaryURL)
-	if err != nil {
-		panic("Failed to initialize CDN client: " + err.Error())
-	}
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+
+	// CORS middleware
+	router.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "authorization,content-type")
+		
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		
+		c.Next()
+	})
 
 	return &Server{
+		router: router,
 		db:     db,
 		config: cfg,
-		cdn:    cdnClient,
-		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				return true // Allow all origins for now
-			},
-		},
 	}
 }
 
-func (s *Server) Start(addr string) error {
-	gin.SetMode(s.config.GinMode)
-	r := gin.Default()
+func (s *Server) setupRoutes() {
+	// Initialize CDN client
+	cdnClient := cdn.NewCloudinaryClient(s.config.CloudinaryURL)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(s.db, s.config, s.cdn)
-	userHandler := handlers.NewUserHandler(s.db, s.config, s.cdn)
+	authHandler := handlers.NewAuthHandler(s.db, s.config, cdnClient)
+	userHandler := handlers.NewUserHandler(s.db, s.config, cdnClient)
 	gameHandler := handlers.NewGameHandler(s.db, s.config)
 	contestHandler := handlers.NewContestHandler(s.db, s.config)
 	walletHandler := handlers.NewWalletHandler(s.db, s.config)
-	adminHandler := handlers.NewAdminHandler(s.db, s.config, s.cdn)
-
-	// Middleware
-	r.Use(middleware.CORS())
-	r.Use(middleware.RequestLogger())
-	r.Use(middleware.ErrorHandler())
+	adminHandler := handlers.NewAdminHandler(s.db, s.config, cdnClient)
+	realtimeHandler := handlers.NewRealtimeLeaderboardHandler(s.db)
+	tournamentHandler := handlers.NewTournamentHandler(s.db, s.config, cdnClient)
 
 	// Health check
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "healthy", "service": "fantasy-esports-backend"})
+	s.router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":  "healthy",
+			"version": "1.0.0",
+			"service": "fantasy-esports-backend",
+		})
 	})
 
 	// Swagger documentation
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	s.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// API v1 routes
-	api := r.Group("/api/v1")
+	v1 := s.router.Group("/api/v1")
+	
+	// Public routes (no authentication required)
 	{
-		// Authentication routes
-		auth := api.Group("/auth")
-		{
-			auth.POST("/verify-mobile", authHandler.VerifyMobile)
-			auth.POST("/verify-otp", authHandler.VerifyOTP)
-			auth.POST("/refresh", authHandler.RefreshToken)
-			auth.POST("/logout", middleware.AuthMiddleware(s.config.JWTSecret), authHandler.Logout)
-			auth.POST("/social-login", authHandler.SocialLogin)
-		}
+		// Authentication
+		v1.POST("/auth/verify-mobile", authHandler.VerifyMobile)
+		v1.POST("/auth/verify-otp", authHandler.VerifyOTP)
+		v1.POST("/auth/refresh", authHandler.RefreshToken)
+		v1.POST("/auth/social-login", authHandler.SocialLogin)
 
-		// User routes
-		users := api.Group("/users")
-		users.Use(middleware.AuthMiddleware(s.config.JWTSecret))
-		{
-			users.GET("/profile", userHandler.GetProfile)
-			users.PUT("/profile", userHandler.UpdateProfile)
-			users.POST("/kyc/upload", userHandler.UploadKYC)
-			users.GET("/kyc/status", userHandler.GetKYCStatus)
-			users.PUT("/preferences", userHandler.UpdatePreferences)
-		}
+		// Games (public information)
+		v1.GET("/games", gameHandler.GetGames)
+		v1.GET("/games/:id", gameHandler.GetGameDetails)
+		v1.GET("/games/:id/tournaments", gameHandler.GetGameTournaments)
+		v1.GET("/games/:id/players", gameHandler.GetGamePlayers)
 
-		// Games and tournaments routes
-		games := api.Group("/games")
-		{
-			games.GET("/", gameHandler.GetGames)
-			games.GET("/:id", gameHandler.GetGameDetails)
-		}
+		// Tournaments (public information)
+		v1.GET("/tournaments", tournamentHandler.GetTournaments)
+		v1.GET("/tournaments/:id", tournamentHandler.GetTournamentDetails)
+		v1.GET("/tournaments/:id/bracket", tournamentHandler.GetTournamentBracket)
 
-		tournaments := api.Group("/tournaments")
-		{
-			tournaments.GET("/", gameHandler.GetTournaments)
-			tournaments.GET("/:id", gameHandler.GetTournamentDetails)
-		}
+		// Matches (public information)
+		v1.GET("/matches", gameHandler.GetMatches)
+		v1.GET("/matches/:id", gameHandler.GetMatchDetails)
+		v1.GET("/matches/:id/players", gameHandler.GetMatchPlayers)
+		v1.GET("/matches/:id/player-performance", gameHandler.GetPlayerPerformance)
 
-		matches := api.Group("/matches")
-		{
-			matches.GET("/", gameHandler.GetMatches)
-			matches.GET("/:id", gameHandler.GetMatchDetails)
-			matches.GET("/:id/players", gameHandler.GetMatchPlayers)
-			matches.GET("/:id/player-performance", gameHandler.GetPlayerPerformance)
-		}
+		// Live streams (public)
+		v1.GET("/matches/:id/live-stream", tournamentHandler.GetMatchLiveStream)
+		v1.GET("/live-streams/active", tournamentHandler.GetActiveLiveStreams)
 
-		// Contest routes
-		contests := api.Group("/contests")
-		contests.Use(middleware.AuthMiddleware(s.config.JWTSecret))
-		{
-			contests.GET("/", contestHandler.GetContests)
-			contests.GET("/:id", contestHandler.GetContestDetails)
-			contests.POST("/:id/join", contestHandler.JoinContest)
-			contests.DELETE("/:id/leave", contestHandler.LeaveContest)
-			contests.GET("/my-entries", contestHandler.GetMyEntries)
-			contests.POST("/create-private", contestHandler.CreatePrivateContest)
-		}
-
-		// Fantasy team routes
-		teams := api.Group("/teams")
-		teams.Use(middleware.AuthMiddleware(s.config.JWTSecret))
-		{
-			teams.POST("/create", contestHandler.CreateTeam)
-			teams.PUT("/:id", contestHandler.UpdateTeam)
-			teams.GET("/my-teams", contestHandler.GetMyTeams)
-			teams.GET("/:id", contestHandler.GetTeamDetails)
-			teams.DELETE("/:id", contestHandler.DeleteTeam)
-			teams.POST("/:id/clone", contestHandler.CloneTeam)
-			teams.POST("/validate", contestHandler.ValidateTeam)
-			teams.GET("/:id/performance", contestHandler.GetTeamPerformance)
-		}
-
-		// Leaderboard routes
-		leaderboards := api.Group("/leaderboards")
-		leaderboards.Use(middleware.AuthMiddleware(s.config.JWTSecret))
-		{
-			leaderboards.GET("/contests/:id", contestHandler.GetContestLeaderboard)
-			leaderboards.GET("/live/:id", contestHandler.GetLiveLeaderboard)
-			leaderboards.GET("/contests/:id/my-rank", contestHandler.GetMyRank)
-			
-			// Real-time leaderboard routes ⭐
-			realtimeHandler := handlers.NewRealTimeLeaderboardHandler(s.db, s.config, contestHandler.GetLeaderboardService())
-			leaderboards.GET("/real-time/:id", realtimeHandler.GetRealTimeLeaderboard)
-			leaderboards.GET("/connections/:contest_id", realtimeHandler.GetActiveConnections)
-			leaderboards.POST("/trigger-update/:contest_id", realtimeHandler.TriggerManualUpdate)
-			
-			// WebSocket endpoint for real-time updates
-			leaderboards.GET("/ws/contest/:contest_id", realtimeHandler.HandleLeaderboardWebSocket)
-		}
-
-		// Wallet routes
-		wallet := api.Group("/wallet")
-		wallet.Use(middleware.AuthMiddleware(s.config.JWTSecret))
-		{
-			wallet.GET("/balance", walletHandler.GetBalance)
-			wallet.POST("/deposit", walletHandler.Deposit)
-			wallet.POST("/withdraw", walletHandler.Withdraw)
-			wallet.GET("/transactions", walletHandler.GetTransactions)
-			wallet.GET("/payment-methods", walletHandler.GetPaymentMethods)
-			wallet.POST("/payment-methods", walletHandler.AddPaymentMethod)
-		}
-
-		// Payment routes
-		payments := api.Group("/payments")
-		payments.Use(middleware.AuthMiddleware(s.config.JWTSecret))
-		{
-			payments.GET("/:id/status", walletHandler.GetPaymentStatus)
-		}
-
-		// Referral routes
-		referrals := api.Group("/referrals")
-		referrals.Use(middleware.AuthMiddleware(s.config.JWTSecret))
-		{
-			referrals.GET("/my-stats", walletHandler.GetReferralStats)
-			referrals.GET("/history", walletHandler.GetReferralHistory)
-			referrals.POST("/apply", walletHandler.ApplyReferralCode)
-			referrals.POST("/share", walletHandler.ShareReferral)
-			referrals.GET("/leaderboard", walletHandler.GetReferralLeaderboard)
-		}
-
-		// Admin routes
-		admin := api.Group("/admin")
-		admin.Use(middleware.AdminAuthMiddleware(s.config.JWTSecret))
-		{
-			// Admin authentication
-			admin.POST("/login", adminHandler.Login)
-
-			// Match scoring routes
-			admin.GET("/matches/live-scoring", adminHandler.GetLiveScoringMatches)
-			admin.POST("/matches/:id/start-scoring", adminHandler.StartManualScoring)
-			admin.POST("/matches/:id/events", adminHandler.AddMatchEvent)
-			admin.PUT("/matches/:id/players/:player_id/stats", adminHandler.UpdatePlayerStats)
-			admin.POST("/matches/:id/events/bulk", adminHandler.BulkUpdateEvents)
-			admin.PUT("/matches/:id/score", adminHandler.UpdateMatchScore)
-			admin.POST("/matches/:id/recalculate-points", adminHandler.RecalculatePoints)
-			admin.GET("/matches/:id/dashboard", adminHandler.GetLiveDashboard)
-			admin.POST("/matches/:id/complete", adminHandler.CompleteMatch)
-			admin.GET("/matches/:id/events", adminHandler.GetMatchEvents)
-			admin.PUT("/matches/:id/events/:event_id", adminHandler.EditMatchEvent)
-			admin.DELETE("/matches/:id/events/:event_id", adminHandler.DeleteMatchEvent)
-
-			// User management
-			admin.GET("/users", adminHandler.GetUsers)
-			admin.GET("/users/:id", adminHandler.GetUserDetails)
-			admin.PUT("/users/:id/status", adminHandler.UpdateUserStatus)
-			
-			// KYC Management
-			admin.GET("/kyc/pending", adminHandler.GetPendingKYCDocuments)
-			admin.PUT("/kyc/documents/:document_id/process", adminHandler.ProcessKYC)
-
-			// Game management
-			admin.POST("/games", adminHandler.CreateGame)
-			admin.PUT("/games/:id", adminHandler.UpdateGame)
-			admin.DELETE("/games/:id", adminHandler.DeleteGame)
-
-			// Tournament management
-			admin.POST("/tournaments", adminHandler.CreateTournament)
-			admin.PUT("/tournaments/:id", adminHandler.UpdateTournament)
-			admin.POST("/matches", adminHandler.CreateMatch)
-			admin.PUT("/matches/:id", adminHandler.UpdateMatch)
-
-			// Contest management
-			admin.POST("/contests", adminHandler.CreateContest)
-			admin.PUT("/contests/:id", adminHandler.UpdateContest)
-			admin.DELETE("/contests/:id", adminHandler.CancelContest)
-
-			// Financial management
-			admin.GET("/transactions", adminHandler.GetTransactions)
-			admin.PUT("/withdrawals/:id/approve", adminHandler.ApproveWithdrawal)
-			admin.PUT("/withdrawals/:id/reject", adminHandler.RejectWithdrawal)
-
-			// System configuration
-			admin.GET("/config", adminHandler.GetSystemConfig)
-			admin.PUT("/config/:key", adminHandler.UpdateSystemConfig)
-		}
-
-		// WebSocket routes for live scoring
-		api.GET("/admin/ws/live-scoring/:match_id", middleware.AdminWebSocketMiddleware(s.config.JWTSecret), adminHandler.HandleLiveScoringWebSocket)
+		// Admin login (public)
+		v1.POST("/admin/login", adminHandler.Login)
 	}
 
-	return r.Run(addr)
+	// Protected user routes (require user authentication)
+	userRoutes := v1.Group("")
+	userRoutes.Use(middleware.AuthMiddleware(s.config.JWTSecret))
+	{
+		// User management
+		userRoutes.POST("/auth/logout", authHandler.Logout)
+		userRoutes.GET("/users/profile", userHandler.GetProfile)
+		userRoutes.PUT("/users/profile", userHandler.UpdateProfile)
+		userRoutes.PUT("/users/preferences", userHandler.UpdatePreferences)
+
+		// KYC
+		userRoutes.POST("/users/kyc/upload", userHandler.UploadKYCDocuments)
+		userRoutes.GET("/users/kyc/status", userHandler.GetKYCStatus)
+
+		// Referrals
+		userRoutes.GET("/referrals/my-stats", userHandler.GetReferralStats)
+		userRoutes.GET("/referrals/history", userHandler.GetReferralHistory)
+		userRoutes.POST("/referrals/apply", userHandler.ApplyReferralCode)
+		userRoutes.POST("/referrals/share", userHandler.ShareReferral)
+		userRoutes.GET("/referrals/leaderboard", userHandler.GetReferralLeaderboard)
+
+		// Contest management
+		userRoutes.GET("/contests", contestHandler.GetContests)
+		userRoutes.GET("/contests/:id", contestHandler.GetContestDetails)
+		userRoutes.POST("/contests/:id/join", contestHandler.JoinContest)
+		userRoutes.DELETE("/contests/:id/leave", contestHandler.LeaveContest)
+		userRoutes.GET("/contests/my-entries", contestHandler.GetMyEntries)
+		userRoutes.POST("/contests/create-private", contestHandler.CreatePrivateContest)
+
+		// Fantasy team management
+		userRoutes.POST("/teams/create", contestHandler.CreateTeam)
+		userRoutes.GET("/teams/my-teams", contestHandler.GetMyTeams)
+		userRoutes.GET("/teams/:id", contestHandler.GetTeamDetails)
+		userRoutes.PUT("/teams/:id", contestHandler.UpdateTeam)
+		userRoutes.DELETE("/teams/:id", contestHandler.DeleteTeam)
+		userRoutes.POST("/teams/:id/clone", contestHandler.CloneTeam)
+		userRoutes.POST("/teams/validate", contestHandler.ValidateTeam)
+		userRoutes.GET("/teams/:id/performance", contestHandler.GetTeamPerformance)
+
+		// Leaderboards
+		userRoutes.GET("/leaderboards/contests/:id", contestHandler.GetContestLeaderboard)
+		userRoutes.GET("/leaderboards/live/:id", contestHandler.GetLiveLeaderboard)
+		userRoutes.GET("/leaderboards/contests/:id/my-rank", contestHandler.GetMyRank)
+
+		// Wallet management
+		userRoutes.GET("/wallet/balance", walletHandler.GetBalance)
+		userRoutes.POST("/wallet/deposit", walletHandler.Deposit)
+		userRoutes.POST("/wallet/withdraw", walletHandler.Withdraw)
+		userRoutes.GET("/wallet/transactions", walletHandler.GetTransactions)
+		userRoutes.GET("/payments/:id/status", walletHandler.GetPaymentStatus)
+		userRoutes.GET("/wallet/payment-methods", walletHandler.GetPaymentMethods)
+		userRoutes.POST("/wallet/payment-methods", walletHandler.AddPaymentMethod)
+	}
+
+	// Protected admin routes (require admin authentication)
+	adminRoutes := v1.Group("/admin")
+	adminRoutes.Use(middleware.AdminAuthMiddleware(s.config.JWTSecret))
+	{
+		// User management
+		adminRoutes.GET("/users", userHandler.GetAllUsers)
+		adminRoutes.GET("/users/:id", userHandler.GetUserDetails)
+		adminRoutes.PUT("/users/:id/status", userHandler.UpdateUserStatus)
+
+		// KYC document processing
+		adminRoutes.GET("/kyc/documents", userHandler.GetKYCDocuments)
+		adminRoutes.PUT("/kyc/documents/:id/process", userHandler.ProcessKYCDocument)
+
+		// Live match scoring system
+		adminRoutes.GET("/matches/live-scoring", adminHandler.GetLiveScoringMatches)
+		adminRoutes.POST("/matches/:id/start-scoring", adminHandler.StartManualScoring)
+		adminRoutes.POST("/matches/:id/events", adminHandler.AddMatchEvent)
+		adminRoutes.PUT("/matches/:id/players/:player_id/stats", adminHandler.UpdatePlayerStats)
+		adminRoutes.POST("/matches/:id/events/bulk", adminHandler.BulkUpdateEvents)
+		adminRoutes.PUT("/matches/:id/score", adminHandler.UpdateMatchScore)
+		adminRoutes.POST("/matches/:id/recalculate-points", adminHandler.RecalculateFantasyPoints)
+		adminRoutes.GET("/matches/:id/dashboard", adminHandler.GetMatchDashboard)
+		adminRoutes.POST("/matches/:id/complete", adminHandler.CompleteMatch)
+		adminRoutes.GET("/matches/:id/events", adminHandler.GetMatchEvents)
+		adminRoutes.PUT("/matches/:id/events/:event_id", adminHandler.EditMatchEvent)
+		adminRoutes.DELETE("/matches/:id/events/:event_id", adminHandler.DeleteMatchEvent)
+
+		// Tournament and stage management
+		adminRoutes.POST("/tournaments/:id/stages", tournamentHandler.CreateTournamentStage)
+		adminRoutes.POST("/tournaments/stages/:stage_id/advance", tournamentHandler.AdvanceToNextStage)
+
+		// Live streaming management
+		adminRoutes.POST("/matches/:id/live-stream", tournamentHandler.SetMatchLiveStream)
+		adminRoutes.PUT("/matches/:id/live-stream/activate", tournamentHandler.ActivateMatchLiveStream)
+		adminRoutes.DELETE("/matches/:id/live-stream", tournamentHandler.RemoveMatchLiveStream)
+
+		// Contest management
+		adminRoutes.POST("/contests", contestHandler.CreateContest)
+		adminRoutes.PUT("/contests/:id", contestHandler.UpdateContest)
+		adminRoutes.DELETE("/contests/:id", contestHandler.DeleteContest)
+
+		// Financial management
+		adminRoutes.GET("/transactions", walletHandler.GetAllTransactions)
+		adminRoutes.PUT("/withdrawals/:id/process", walletHandler.ProcessWithdrawal)
+
+		// System configuration
+		adminRoutes.GET("/config", adminHandler.GetSystemConfig)
+		adminRoutes.PUT("/config", adminHandler.UpdateSystemConfig)
+	}
+
+	// WebSocket routes for real-time updates
+	v1.GET("/ws/leaderboard/:contest_id", realtimeHandler.HandleLeaderboardWebSocket)
+	adminRoutes.GET("/ws/live-scoring/:match_id", adminHandler.HandleLiveScoringWebSocket)
+}
+
+func (s *Server) Start(addr string) error {
+	s.setupRoutes()
+	return s.router.Run(addr)
 }

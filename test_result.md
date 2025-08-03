@@ -162,7 +162,7 @@ backend:
         comment: "✅ FIXED - GET /api/v1/live-streams/active now correctly returns 200 with empty array [] instead of 404. Response includes proper success field and count field. Backend rebuild successfully added the missing endpoint routing."
 
   - task: "Stream URL Validation for admin endpoints"
-    implemented: false
+    implemented: true
     working: false
     file: "/app/backend/api/v1/handlers/tournament.go"
     stuck_count: 1
@@ -172,6 +172,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL ISSUE - POST /api/v1/admin/matches/{id}/live-stream returns 404 'page not found' instead of 400/422 with validation error for invalid URLs. The endpoint appears to be missing or not properly routed. Should validate stream_url format and return proper error messages."
+      - working: false
+        agent: "testing"
+        comment: "❌ PARTIALLY FIXED - POST /api/v1/admin/matches/{id}/live-stream endpoint now exists and works with proper auth, but URL validation is missing. Tested with valid match ID 2224 and admin auth - endpoint accepts invalid URLs like 'not-a-url' and returns 200 success instead of 400 validation error. The routing issue is fixed but validation logic needs implementation."
 
   - task: "Admin endpoint authentication middleware"
     implemented: true

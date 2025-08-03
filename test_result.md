@@ -147,16 +147,19 @@ backend:
         comment: "✅ FIXED - GET /api/v1/tournaments?status=completed now correctly returns empty array [] instead of null. Response structure is correct with proper pagination fields. Backend rebuild with Go 1.21.3 successfully resolved the null array initialization issue."
 
   - task: "Get Active Live Streams endpoint"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "/app/backend/api/v1/handlers/tournament.go"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL ISSUE - GET /api/v1/live-streams/active returns 404 'page not found' instead of 200 with empty array. The endpoint appears to be missing or not properly routed. Expected: 200 status with {'success':true,'active_streams':[]}."
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED - GET /api/v1/live-streams/active now correctly returns 200 with empty array [] instead of 404. Response includes proper success field and count field. Backend rebuild successfully added the missing endpoint routing."
 
   - task: "Stream URL Validation for admin endpoints"
     implemented: false

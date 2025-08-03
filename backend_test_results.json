@@ -1,10 +1,10 @@
 {
   "summary": {
-    "total_tests": 16,
-    "passed_tests": 16,
-    "failed_tests": 0,
-    "success_rate": "100.0%",
-    "analytics_route_issue_confirmed": false
+    "total_tests": 7,
+    "passed_tests": 2,
+    "failed_tests": 5,
+    "success_rate": "28.6%",
+    "analytics_route_fix_verified": false
   },
   "test_results": [
     {
@@ -13,10 +13,9 @@
       "details": "Backend is running. Status: healthy",
       "response_data": {
         "service": "fantasy-esports-backend",
-        "status": "healthy",
-        "version": "1.0.0"
+        "status": "healthy"
       },
-      "timestamp": "2025-08-03 19:12:45"
+      "timestamp": "2025-08-03 19:31:20"
     },
     {
       "test": "Admin Login Authentication",
@@ -26,153 +25,62 @@
         "status_code": 200,
         "has_token": true
       },
-      "timestamp": "2025-08-03 19:12:46"
-    },
-    {
-      "test": "Working Admin Endpoint - Get Users",
-      "passed": true,
-      "details": "\u2705 Get Users working correctly (status: 200)",
-      "response_data": {
-        "status_code": 200,
-        "endpoint": "/admin/users"
-      },
-      "timestamp": "2025-08-03 19:12:47"
-    },
-    {
-      "test": "Working Admin Endpoint - Get KYC Documents",
-      "passed": true,
-      "details": "\u2705 Get KYC Documents working correctly (status: 200)",
-      "response_data": {
-        "status_code": 200,
-        "endpoint": "/admin/kyc/documents"
-      },
-      "timestamp": "2025-08-03 19:12:48"
-    },
-    {
-      "test": "Working Admin Endpoint - Get System Config",
-      "passed": true,
-      "details": "\u2705 Get System Config working correctly (status: 200)",
-      "response_data": {
-        "status_code": 200,
-        "endpoint": "/admin/config"
-      },
-      "timestamp": "2025-08-03 19:12:48"
-    },
-    {
-      "test": "Working Admin Endpoints Summary",
-      "passed": true,
-      "details": "\u2705 All working admin endpoints functional (Success rate: 3/3)",
-      "response_data": {
-        "success_count": 3,
-        "total_count": 3
-      },
-      "timestamp": "2025-08-03 19:12:48"
+      "timestamp": "2025-08-03 19:31:21"
     },
     {
       "test": "Analytics Endpoint - Analytics Dashboard",
-      "passed": true,
-      "details": "\u2705 EXPECTED: Analytics Dashboard returns 404 (route not registered)",
+      "passed": false,
+      "details": "\u274c STILL BROKEN: Analytics Dashboard still returns 404 (route registration issue not fixed)",
       "response_data": {
         "status_code": 404,
         "endpoint": "/admin/analytics/dashboard",
-        "expected": true
+        "fixed": false
       },
-      "timestamp": "2025-08-03 19:12:48"
-    },
-    {
-      "test": "Analytics Endpoint - User Analytics",
-      "passed": true,
-      "details": "\u2705 EXPECTED: User Analytics returns 404 (route not registered)",
-      "response_data": {
-        "status_code": 404,
-        "endpoint": "/admin/analytics/users",
-        "expected": true
-      },
-      "timestamp": "2025-08-03 19:12:48"
+      "timestamp": "2025-08-03 19:31:21"
     },
     {
       "test": "Analytics Endpoint - BI Dashboard",
-      "passed": true,
-      "details": "\u2705 EXPECTED: BI Dashboard returns 404 (route not registered)",
+      "passed": false,
+      "details": "\u274c STILL BROKEN: BI Dashboard still returns 404 (route registration issue not fixed)",
       "response_data": {
         "status_code": 404,
         "endpoint": "/admin/bi/dashboard",
-        "expected": true
+        "fixed": false
       },
-      "timestamp": "2025-08-03 19:12:48"
-    },
-    {
-      "test": "Analytics Endpoint - KPI Metrics",
-      "passed": true,
-      "details": "\u2705 EXPECTED: KPI Metrics returns 404 (route not registered)",
-      "response_data": {
-        "status_code": 404,
-        "endpoint": "/admin/bi/kpis",
-        "expected": true
-      },
-      "timestamp": "2025-08-03 19:12:48"
+      "timestamp": "2025-08-03 19:31:21"
     },
     {
       "test": "Analytics Endpoint - Generate Report",
-      "passed": true,
-      "details": "\u2705 EXPECTED: Generate Report returns 404 (route not registered)",
+      "passed": false,
+      "details": "\u274c STILL BROKEN: Generate Report still returns 404 (route registration issue not fixed)",
       "response_data": {
         "status_code": 404,
         "endpoint": "/admin/reports/generate",
-        "expected": true
+        "fixed": false
       },
-      "timestamp": "2025-08-03 19:12:48"
+      "timestamp": "2025-08-03 19:31:21"
     },
     {
       "test": "Analytics Endpoint - Get Reports",
-      "passed": true,
-      "details": "\u2705 EXPECTED: Get Reports returns 404 (route not registered)",
+      "passed": false,
+      "details": "\u274c STILL BROKEN: Get Reports still returns 404 (route registration issue not fixed)",
       "response_data": {
         "status_code": 404,
         "endpoint": "/admin/reports",
-        "expected": true
+        "fixed": false
       },
-      "timestamp": "2025-08-03 19:12:48"
+      "timestamp": "2025-08-03 19:31:21"
     },
     {
       "test": "Analytics Endpoints Summary",
-      "passed": true,
-      "details": "\u2705 All analytics endpoints return expected 404s (route registration issue confirmed) (Expected 404s: 6/6)",
+      "passed": false,
+      "details": "\u274c 4/4 analytics endpoints still failing (Working endpoints: 0/4)",
       "response_data": {
-        "expected_404_count": 6,
-        "total_count": 6
+        "working_count": 0,
+        "total_count": 4,
+        "route_fix_verified": false
       },
-      "timestamp": "2025-08-03 19:12:48"
-    },
-    {
-      "test": "Basic User Endpoint - Get Games",
-      "passed": true,
-      "details": "\u2705 Get Games working correctly",
-      "response_data": {
-        "status_code": 200,
-        "endpoint": "/games"
-      },
-      "timestamp": "2025-08-03 19:12:48"
-    },
-    {
-      "test": "Basic User Endpoint - Get Tournaments",
-      "passed": true,
-      "details": "\u2705 Get Tournaments working correctly",
-      "response_data": {
-        "status_code": 200,
-        "endpoint": "/tournaments"
-      },
-      "timestamp": "2025-08-03 19:12:49"
-    },
-    {
-      "test": "Basic User Endpoints Summary",
-      "passed": true,
-      "details": "\u2705 All basic user endpoints working (Success rate: 2/2)",
-      "response_data": {
-        "success_count": 2,
-        "total_count": 2
-      },
-      "timestamp": "2025-08-03 19:12:49"
+      "timestamp": "2025-08-03 19:31:21"
     }
   ]
 }

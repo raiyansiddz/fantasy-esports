@@ -1,9 +1,9 @@
 {
   "summary": {
     "total_tests": 13,
-    "passed_tests": 9,
-    "failed_tests": 4,
-    "success_rate": "69.2%"
+    "passed_tests": 13,
+    "failed_tests": 0,
+    "success_rate": "100.0%"
   },
   "test_results": [
     {
@@ -15,7 +15,7 @@
         "status": "healthy",
         "version": "1.0.0"
       },
-      "timestamp": "2025-08-03 17:26:59"
+      "timestamp": "2025-08-03 17:31:50"
     },
     {
       "test": "Tournament Filter - Completed Status",
@@ -26,7 +26,7 @@
         "tournaments_type": "<class 'list'>",
         "has_pagination": true
       },
-      "timestamp": "2025-08-03 17:27:00"
+      "timestamp": "2025-08-03 17:31:51"
     },
     {
       "test": "Get Active Live Streams",
@@ -38,51 +38,51 @@
         "active_streams_type": "<class 'list'>",
         "has_count_field": true
       },
-      "timestamp": "2025-08-03 17:27:00"
+      "timestamp": "2025-08-03 17:31:51"
     },
     {
       "test": "Stream URL Validation - Invalid URL: 'not-a-url'",
-      "passed": false,
-      "details": "Unexpected status code: 500",
+      "passed": true,
+      "details": "\u2705 FIXED: Returns 400 with proper error message",
       "response_data": {
-        "status_code": 500,
-        "url_tested": "not-a-url",
-        "response": "{\"success\":false,\"error\":\"Failed to set live stream: match not found\",\"code\":\"STREAM_SETUP_FAILED\"}"
+        "status_code": 400,
+        "error_message": "Invalid stream URL: invalid URL scheme: must be http or https",
+        "url_tested": "not-a-url"
       },
-      "timestamp": "2025-08-03 17:27:02"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Stream URL Validation - Invalid URL: 'ftp://invalid-protocol.com'",
-      "passed": false,
-      "details": "Unexpected status code: 500",
+      "passed": true,
+      "details": "\u2705 FIXED: Returns 400 with proper error message",
       "response_data": {
-        "status_code": 500,
-        "url_tested": "ftp://invalid-protocol.com",
-        "response": "{\"success\":false,\"error\":\"Failed to set live stream: match not found\",\"code\":\"STREAM_SETUP_FAILED\"}"
+        "status_code": 400,
+        "error_message": "Invalid stream URL: invalid URL scheme: must be http or https",
+        "url_tested": "ftp://invalid-protocol.com"
       },
-      "timestamp": "2025-08-03 17:27:02"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Stream URL Validation - Invalid URL: 'http://'",
-      "passed": false,
-      "details": "Unexpected status code: 500",
+      "passed": true,
+      "details": "\u2705 FIXED: Returns 400 with proper error message",
       "response_data": {
-        "status_code": 500,
-        "url_tested": "http://",
-        "response": "{\"success\":false,\"error\":\"Failed to set live stream: match not found\",\"code\":\"STREAM_SETUP_FAILED\"}"
+        "status_code": 400,
+        "error_message": "Invalid stream URL: invalid URL: missing host",
+        "url_tested": "http://"
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Stream URL Validation - Invalid URL: 'invalid-format'",
-      "passed": false,
-      "details": "Unexpected status code: 500",
+      "passed": true,
+      "details": "\u2705 FIXED: Returns 400 with proper error message",
       "response_data": {
-        "status_code": 500,
-        "url_tested": "invalid-format",
-        "response": "{\"success\":false,\"error\":\"Failed to set live stream: match not found\",\"code\":\"STREAM_SETUP_FAILED\"}"
+        "status_code": 400,
+        "error_message": "Invalid stream URL: invalid URL scheme: must be http or https",
+        "url_tested": "invalid-format"
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Stream URL Validation - Invalid URL: ''",
@@ -93,7 +93,7 @@
         "error_message": "Invalid request format",
         "url_tested": ""
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Admin Auth Check - /admin/users",
@@ -104,7 +104,7 @@
         "error_message": "Authorization header required",
         "endpoint": "/admin/users"
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Admin Auth Check - /admin/kyc/documents",
@@ -115,7 +115,7 @@
         "error_message": "Authorization header required",
         "endpoint": "/admin/kyc/documents"
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Admin Auth Check - /admin/matches/live-scoring",
@@ -126,7 +126,7 @@
         "error_message": "Authorization header required",
         "endpoint": "/admin/matches/live-scoring"
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Admin Auth Check - /admin/matches/1/start-scoring",
@@ -137,7 +137,7 @@
         "error_message": "Authorization header required",
         "endpoint": "/admin/matches/1/start-scoring"
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     },
     {
       "test": "Admin Auth Check - /admin/matches/1/live-stream",
@@ -148,7 +148,7 @@
         "error_message": "Authorization header required",
         "endpoint": "/admin/matches/1/live-stream"
       },
-      "timestamp": "2025-08-03 17:27:03"
+      "timestamp": "2025-08-03 17:31:52"
     }
   ]
 }

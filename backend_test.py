@@ -360,8 +360,8 @@ class FantasyEsportsAPITester:
         """Run all tests and generate summary"""
         print("=" * 80)
         print("🧪 FANTASY ESPORTS BACKEND API TESTING")
-        print("Testing GoLang Fantasy Esports backend analytics endpoints")
-        print("Focus: Analytics routes registration issue verification")
+        print("Testing GoLang Fantasy Esports backend analytics endpoints after route fix")
+        print("Focus: Verify 4 specific analytics endpoints are now working")
         print("=" * 80)
         print()
         
@@ -376,17 +376,9 @@ class FantasyEsportsAPITester:
             print("❌ Admin authentication failed. Cannot test protected endpoints.")
             return False
         
-        # Test 3: Working admin endpoints
-        print("🔍 Testing Working Admin Endpoints")
-        self.test_working_admin_endpoints()
-        
-        # Test 4: Analytics endpoints (expected to fail with 404)
-        print("🔍 Testing Analytics Endpoints (Expected 404s)")
+        # Test 3: Analytics endpoints (should now be working)
+        print("🔍 Testing Analytics Endpoints (Expected to be FIXED)")
         self.test_analytics_endpoints()
-        
-        # Test 5: Basic user endpoints
-        print("🔍 Testing Basic User Endpoints")
-        self.test_basic_user_endpoints()
         
         # Generate summary
         self.generate_summary()

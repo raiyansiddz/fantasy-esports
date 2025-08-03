@@ -52,6 +52,9 @@ func (s *Server) setupRoutes() {
 		log.Fatal("Failed to initialize CDN client:", err)
 	}
 
+	// Initialize services
+	leaderboardService := services.NewLeaderboardService(s.db)
+	
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(s.db, s.config, cdnClient)
 	userHandler := handlers.NewUserHandler(s.db, s.config, cdnClient)
@@ -59,7 +62,7 @@ func (s *Server) setupRoutes() {
 	contestHandler := handlers.NewContestHandler(s.db, s.config)
 	walletHandler := handlers.NewWalletHandler(s.db, s.config)
 	adminHandler := handlers.NewAdminHandler(s.db, s.config, cdnClient)
-	realtimeHandler := handlers.NewRealtimeLeaderboardHandler(s.db)
+	realtimeHandler := handlers.NewRealTimeLeaderboardHandler(s.db, s.config, leaderboardService)
 	tournamentHandler := handlers.NewTournamentHandler(s.db, s.config, cdnClient)
 
 	// Health check

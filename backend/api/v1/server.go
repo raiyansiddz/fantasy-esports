@@ -6,6 +6,7 @@ import (
 	"fantasy-esports-backend/api/v1/middleware"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/pkg/cdn"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"

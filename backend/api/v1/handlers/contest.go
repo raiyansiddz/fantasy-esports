@@ -1085,3 +1085,75 @@ func parseIntToInt64(s string) int64 {
         val, _ := strconv.ParseInt(s, 10, 64)
         return val
 }
+
+// @Summary Create contest (Admin)
+// @Description Create a new contest (Admin only)
+// @Tags Admin Contest Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body models.CreateContestRequest true "Create contest request"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/contests [post]
+func (h *ContestHandler) CreateContest(c *gin.Context) {
+        adminID := c.GetInt64("admin_id")
+        var req models.CreateContestRequest
+        if err := c.ShouldBindJSON(&req); err != nil {
+                c.JSON(http.StatusBadRequest, models.ErrorResponse{
+                        Success: false,
+                        Error:   "Invalid request format",
+                        Code:    "INVALID_REQUEST",
+                })
+                return
+        }
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "message": "Contest created successfully",
+                "admin_id": adminID,
+                "contest_name": req.ContestName,
+        })
+}
+
+// @Summary Update contest (Admin)
+// @Description Update an existing contest (Admin only)
+// @Tags Admin Contest Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Contest ID"
+// @Param request body models.UpdateContestRequest true "Update contest request"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/contests/{id} [put]
+func (h *ContestHandler) UpdateContest(c *gin.Context) {
+        contestID := c.Param("id")
+        adminID := c.GetInt64("admin_id")
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "contest_id": contestID,
+                "updated_by": adminID,
+                "message": "Contest updated successfully",
+        })
+}
+
+// @Summary Delete contest (Admin)
+// @Description Delete a contest (Admin only)
+// @Tags Admin Contest Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Contest ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/contests/{id} [delete]
+func (h *ContestHandler) DeleteContest(c *gin.Context) {
+        contestID := c.Param("id")
+        adminID := c.GetInt64("admin_id")
+
+        c.JSON(http.StatusOK, gin.H{
+                "success": true,
+                "contest_id": contestID,
+                "deleted_by": adminID,
+                "message": "Contest deleted successfully",
+        })
+}

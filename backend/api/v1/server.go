@@ -173,7 +173,7 @@ func (s *Server) setupRoutes() {
 	adminRoutes.Use(middleware.AdminAuthMiddleware(s.config.JWTSecret))
 	{
 		// User management
-		adminRoutes.GET("/users", adminHandler.GetAllUsers)
+		adminRoutes.GET("/users", adminHandler.GetUsers)
 		adminRoutes.GET("/users/:id", adminHandler.GetUserDetails)
 		adminRoutes.PUT("/users/:id/status", adminHandler.UpdateUserStatus)
 

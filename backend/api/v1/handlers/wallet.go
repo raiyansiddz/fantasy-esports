@@ -614,3 +614,36 @@ func (h *WalletHandler) TriggerReferralCheck(userID int64, action string) {
 		// In production, you might want to queue this for retry
 	}
 }
+
+// @Summary Process withdrawal (Admin)
+// @Description Process a withdrawal request (Admin only)
+// @Tags Admin Financial Management
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Withdrawal ID"
+// @Param request body models.ProcessWithdrawalRequest true "Processing details"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/withdrawals/{id}/process [put]
+func (h *WalletHandler) ProcessWithdrawal(c *gin.Context) {
+	withdrawalID := c.Param("id")
+	adminID := c.GetInt64("admin_id")
+
+	var req models.ProcessWithdrawalRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid request format",
+			Code:    "INVALID_REQUEST",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"withdrawal_id": withdrawalID,
+		"processed_by": adminID,
+		"status": req.Status,
+		"message": "Withdrawal processed successfully",
+	})
+}

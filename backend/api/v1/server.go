@@ -210,7 +210,7 @@ func (s *Server) setupRoutes() {
 		adminRoutes.DELETE("/contests/:id", contestHandler.DeleteContest)
 
 		// Financial management
-		adminRoutes.GET("/transactions", walletHandler.GetAllTransactions)
+		adminRoutes.GET("/transactions", walletHandler.GetTransactions)
 		adminRoutes.PUT("/withdrawals/:id/process", walletHandler.ProcessWithdrawal)
 
 		// System configuration

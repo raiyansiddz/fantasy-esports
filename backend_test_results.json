@@ -1,0 +1,146 @@
+{
+  "summary": {
+    "total_tests": 13,
+    "passed_tests": 4,
+    "failed_tests": 9,
+    "success_rate": "30.8%"
+  },
+  "test_results": [
+    {
+      "test": "Backend Health Check",
+      "passed": true,
+      "details": "Backend is running. Status: healthy",
+      "response_data": {
+        "service": "fantasy-esports-backend",
+        "status": "healthy"
+      },
+      "timestamp": "2025-08-03 17:11:10"
+    },
+    {
+      "test": "Tournament Filter - Completed Status",
+      "passed": false,
+      "details": "\u274c CRITICAL: tournaments field is null/none instead of empty array",
+      "response_data": {
+        "page": 1,
+        "pages": 0,
+        "success": true,
+        "total": 0,
+        "tournaments": null
+      },
+      "timestamp": "2025-08-03 17:11:11"
+    },
+    {
+      "test": "Get Active Live Streams",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 200 with empty array",
+      "response_data": {
+        "status_code": 404,
+        "response": "404 page not found"
+      },
+      "timestamp": "2025-08-03 17:11:11"
+    },
+    {
+      "test": "Stream URL Validation - Invalid URL: 'not-a-url'",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 400/422 for invalid URL",
+      "response_data": {
+        "status_code": 404,
+        "url_tested": "not-a-url"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Stream URL Validation - Invalid URL: 'ftp://invalid-protocol.com'",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 400/422 for invalid URL",
+      "response_data": {
+        "status_code": 404,
+        "url_tested": "ftp://invalid-protocol.com"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Stream URL Validation - Invalid URL: 'http://'",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 400/422 for invalid URL",
+      "response_data": {
+        "status_code": 404,
+        "url_tested": "http://"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Stream URL Validation - Invalid URL: 'invalid-format'",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 400/422 for invalid URL",
+      "response_data": {
+        "status_code": 404,
+        "url_tested": "invalid-format"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Stream URL Validation - Invalid URL: ''",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 400/422 for invalid URL",
+      "response_data": {
+        "status_code": 404,
+        "url_tested": ""
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Admin Auth Check - /admin/users",
+      "passed": true,
+      "details": "\u2705 FIXED: Returns 401 with proper error message",
+      "response_data": {
+        "status_code": 401,
+        "error_message": "Authorization header required",
+        "endpoint": "/admin/users"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Admin Auth Check - /admin/kyc/documents",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 401 for missing auth",
+      "response_data": {
+        "status_code": 404,
+        "endpoint": "/admin/kyc/documents"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Admin Auth Check - /admin/matches/live-scoring",
+      "passed": true,
+      "details": "\u2705 FIXED: Returns 401 with proper error message",
+      "response_data": {
+        "status_code": 401,
+        "error_message": "Authorization header required",
+        "endpoint": "/admin/matches/live-scoring"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Admin Auth Check - /admin/matches/1/start-scoring",
+      "passed": true,
+      "details": "\u2705 FIXED: Returns 401 with proper error message",
+      "response_data": {
+        "status_code": 401,
+        "error_message": "Authorization header required",
+        "endpoint": "/admin/matches/1/start-scoring"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    },
+    {
+      "test": "Admin Auth Check - /admin/matches/1/live-stream",
+      "passed": false,
+      "details": "\u274c CRITICAL: Returns 404 instead of 401 for missing auth",
+      "response_data": {
+        "status_code": 404,
+        "endpoint": "/admin/matches/1/live-stream"
+      },
+      "timestamp": "2025-08-03 17:11:12"
+    }
+  ]
+}

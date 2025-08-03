@@ -335,7 +335,8 @@ class FantasyEsportsAPITester:
         """Run all tests and generate summary"""
         print("=" * 80)
         print("🧪 FANTASY ESPORTS BACKEND API TESTING")
-        print("Testing 4 specific issues mentioned in review request")
+        print("Testing GoLang Fantasy Esports backend analytics endpoints")
+        print("Focus: Analytics routes registration issue verification")
         print("=" * 80)
         print()
         
@@ -344,21 +345,23 @@ class FantasyEsportsAPITester:
             print("❌ Backend is not running. Cannot proceed with tests.")
             return False
         
-        # Test 2: Tournament filter with completed status
-        print("🔍 Testing Issue 1: Tournament Filter - status=completed")
-        self.test_tournament_filter_completed()
+        # Test 2: Admin authentication
+        print("🔍 Testing Admin Authentication")
+        if not self.test_admin_login():
+            print("❌ Admin authentication failed. Cannot test protected endpoints.")
+            return False
         
-        # Test 3: Active live streams
-        print("🔍 Testing Issue 2: Get Active Live Streams")
-        self.test_active_live_streams()
+        # Test 3: Working admin endpoints
+        print("🔍 Testing Working Admin Endpoints")
+        self.test_working_admin_endpoints()
         
-        # Test 4: Stream URL validation
-        print("🔍 Testing Issue 3: Stream URL Validation")
-        self.test_stream_url_validation()
+        # Test 4: Analytics endpoints (expected to fail with 404)
+        print("🔍 Testing Analytics Endpoints (Expected 404s)")
+        self.test_analytics_endpoints()
         
-        # Test 5: Admin endpoints without auth
-        print("🔍 Testing Issue 4: Admin Endpoint Without Auth")
-        self.test_admin_endpoint_without_auth()
+        # Test 5: Basic user endpoints
+        print("🔍 Testing Basic User Endpoints")
+        self.test_basic_user_endpoints()
         
         # Generate summary
         self.generate_summary()

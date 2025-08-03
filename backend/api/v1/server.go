@@ -46,7 +46,10 @@ func NewServer(db *sql.DB, cfg *config.Config) *Server {
 
 func (s *Server) setupRoutes() {
 	// Initialize CDN client
-	cdnClient := cdn.NewCloudinaryClient(s.config.CloudinaryURL)
+	cdnClient, err := cdn.NewCloudinaryClient(s.config.CloudinaryURL)
+	if err != nil {
+		log.Fatal("Failed to initialize CDN client:", err)
+	}
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(s.db, s.config, cdnClient)

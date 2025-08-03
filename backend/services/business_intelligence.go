@@ -737,7 +737,7 @@ func (s *BusinessIntelligenceService) calculateChurnPrediction() (*models.ChurnP
 	} else {
 		defer highRiskRows.Close()
 		for highRiskRows.Next() {
-			var user models.HighRiskUser
+			var user models.BIHighRiskUser
 			var daysInactive float64
 			highRiskRows.Scan(&user.UserID, &user.Username, &daysInactive, &user.Value)
 			

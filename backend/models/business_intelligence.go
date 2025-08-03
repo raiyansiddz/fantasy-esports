@@ -231,7 +231,7 @@ type ChurnPrediction struct {
 	OverallChurnRate    float64           `json:"overall_churn_rate"`
 	ChurnBySegment      []SegmentChurn    `json:"churn_by_segment"`
 	ChurnFactors        []ChurnFactor     `json:"churn_factors"`
-	HighRiskUsers       []HighRiskUser    `json:"high_risk_users"`
+	HighRiskUsers       []BIHighRiskUser    `json:"high_risk_users"`
 	RetentionStrategies []RetentionStrategy `json:"retention_strategies"`
 }
 

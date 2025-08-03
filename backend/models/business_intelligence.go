@@ -250,11 +250,13 @@ type ChurnFactor struct {
 }
 
 type BIHighRiskUser struct {
-	UserID            int64   `json:"user_id"`
-	ChurnProbability  float64 `json:"churn_probability"`
-	RiskFactors       []string `json:"risk_factors"`
-	RecommendedAction string  `json:"recommended_action"`
-	Value             float64 `json:"user_value"`
+	UserID            int64     `json:"user_id"`
+	Username          string    `json:"username"`
+	ChurnProbability  float64   `json:"churn_probability"`
+	RiskFactors       []string  `json:"risk_factors"`
+	RecommendedAction string    `json:"recommended_action"`
+	Value             float64   `json:"user_value"`
+	LastActivity      time.Time `json:"last_activity"`
 }
 
 type RetentionStrategy struct {

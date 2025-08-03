@@ -275,14 +275,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Tournament Filter - status=completed returns empty array"
-    - "Get Active Live Streams endpoint"
-    - "Stream URL Validation for admin endpoints"
-    - "Admin endpoint authentication middleware"
+    - "Analytics Dashboard endpoint (GET /admin/analytics/dashboard)"
+    - "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
+    - "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
   stuck_tasks:
-    - "Tournament Filter - status=completed returns empty array"
-    - "Get Active Live Streams endpoint"
-    - "Stream URL Validation for admin endpoints"
+    - "Analytics Dashboard endpoint (GET /admin/analytics/dashboard)"
+    - "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
+    - "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
   test_all: false
   test_priority: "high_first"
 

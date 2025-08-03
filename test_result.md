@@ -163,9 +163,9 @@ backend:
 
   - task: "Stream URL Validation for admin endpoints"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/tournament.go"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
@@ -175,6 +175,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ PARTIALLY FIXED - POST /api/v1/admin/matches/{id}/live-stream endpoint now exists and works with proper auth, but URL validation is missing. Tested with valid match ID 2224 and admin auth - endpoint accepts invalid URLs like 'not-a-url' and returns 200 success instead of 400 validation error. The routing issue is fixed but validation logic needs implementation."
+      - working: true
+        agent: "testing"
+        comment: "✅ FULLY FIXED - Enhanced URL validation is now completely implemented and working perfectly! Comprehensive testing shows: ✅ Invalid URLs properly rejected with 400 status and clear error messages (tested: 'not-a-url', 'ftp://invalid', 'http://', 'invalid-format', empty string) ✅ Valid streaming URLs accepted (YouTube, Twitch, generic streaming URLs with keywords) ✅ Edge cases handled properly (URLs without streaming keywords rejected with clear messages) ✅ All validation logic working as expected with proper error messages. Success rate: 100% (23/23 tests passed including enhanced validation tests)."
 
   - task: "Admin endpoint authentication middleware"
     implemented: true

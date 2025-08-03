@@ -249,7 +249,7 @@ type ChurnFactor struct {
 	Actionability     string  `json:"actionability"`
 }
 
-type HighRiskUser struct {
+type BIHighRiskUser struct {
 	UserID            int64   `json:"user_id"`
 	ChurnProbability  float64 `json:"churn_probability"`
 	RiskFactors       []string `json:"risk_factors"`

@@ -194,6 +194,66 @@ backend:
         agent: "testing"
         comment: "✅ FULLY FIXED - All tested admin endpoints now correctly return 401 'Authorization header required' when accessed without auth. Tested endpoints: /admin/users, /admin/kyc/documents, /admin/matches/live-scoring, /admin/matches/1/start-scoring, /admin/matches/1/live-stream. The routing issues have been resolved and auth middleware is working properly across all admin endpoints."
 
+  - task: "Analytics Dashboard endpoint (GET /admin/analytics/dashboard)"
+    implemented: true
+    working: false
+    file: "/app/backend/api/v1/handlers/analytics.go"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ ROUTE REGISTRATION ISSUE CONFIRMED - Analytics Dashboard endpoint returns 404 'page not found' despite being properly defined in handlers/analytics.go and services/analytics.go. The handler exists and is initialized in server.go (line 71), but the route registration appears to be failing. All analytics routes in the adminRoutes group (lines 224-231) are not accessible."
+
+  - task: "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
+    implemented: true
+    working: false
+    file: "/app/backend/api/v1/handlers/analytics.go"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ ROUTE REGISTRATION ISSUE CONFIRMED - BI Dashboard endpoint returns 404 'page not found' despite being properly defined. The analyticsHandler is initialized with biService in server.go, but routes in adminRoutes group (lines 234-238) are not being registered properly."
+
+  - task: "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
+    implemented: true
+    working: false
+    file: "/app/backend/api/v1/handlers/analytics.go"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ ROUTE REGISTRATION ISSUE CONFIRMED - All reporting endpoints return 404 'page not found' despite being properly defined. The reportingService is initialized and analyticsHandler is created with it, but routes in adminRoutes group (lines 241-244) are not accessible. This affects report generation and retrieval functionality."
+
+  - task: "Analytics services initialization and dependency injection"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/server.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ SERVICES PROPERLY INITIALIZED - All analytics services (AnalyticsService, BusinessIntelligenceService, ReportingService) are correctly initialized in server.go lines 57-60. The analyticsHandler is properly created with all three services (line 71). The issue is not with service initialization but with route registration."
+
+  - task: "Admin authentication for analytics endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/api/v1/middleware/auth.go"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ ADMIN AUTH MIDDLEWARE WORKING - Admin authentication is working correctly. Other admin endpoints in the same adminRoutes group (lines 176-222) work properly with AdminAuthMiddleware. The 404 errors for analytics endpoints occur before auth middleware is reached, confirming route registration issue."
+
 frontend:
   - task: "Frontend referral integration"
     implemented: false

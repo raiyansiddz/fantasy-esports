@@ -188,7 +188,7 @@ class FantasyEsportsAPITester:
         return overall_success
 
     def test_analytics_endpoints(self):
-        """Test analytics endpoints - expected to return 404 due to route registration issues"""
+        """Test the 4 specific analytics endpoints that were previously failing with 404"""
         if not self.admin_token:
             self.log_test(
                 "Analytics Endpoints Test",
@@ -200,16 +200,15 @@ class FantasyEsportsAPITester:
 
         headers = {"Authorization": f"Bearer {self.admin_token}"}
         
+        # Focus on the 4 specific endpoints mentioned in the review request
         analytics_endpoints = [
             {"method": "GET", "path": "/admin/analytics/dashboard", "name": "Analytics Dashboard"},
-            {"method": "GET", "path": "/admin/analytics/users", "name": "User Analytics"},
             {"method": "GET", "path": "/admin/bi/dashboard", "name": "BI Dashboard"},
-            {"method": "GET", "path": "/admin/bi/kpis", "name": "KPI Metrics"},
             {"method": "POST", "path": "/admin/reports/generate", "name": "Generate Report"},
             {"method": "GET", "path": "/admin/reports", "name": "Get Reports"}
         ]
         
-        expected_404_count = 0
+        success_count = 0
         total_count = len(analytics_endpoints)
         
         for endpoint in analytics_endpoints:
@@ -223,31 +222,55 @@ class FantasyEsportsAPITester:
                         "format": "json",
                         "date_from": "2024-01-01",
                         "date_to": "2024-12-31",
-                        "description": "Test report"
+                        "description": "Test report for analytics verification"
                     }
                     response = self.session.post(f"{self.api_base}{endpoint['path']}", headers=headers, json=payload, timeout=10)
                 
-                if response.status_code == 404:
+                if response.status_code == 200:
+                    try:
+                        data = response.json()
+                        if data.get('success'):
+                            self.log_test(
+                                f"Analytics Endpoint - {endpoint['name']}",
+                                True,
+                                f"✅ FIXED: {endpoint['name']} now working correctly (status: 200, success: true)",
+                                {"status_code": 200, "endpoint": endpoint['path'], "has_success": True}
+                            )
+                            success_count += 1
+                        else:
+                            self.log_test(
+                                f"Analytics Endpoint - {endpoint['name']}",
+                                False,
+                                f"❌ {endpoint['name']} returns 200 but success=false",
+                                {"status_code": 200, "endpoint": endpoint['path'], "success": data.get('success')}
+                            )
+                    except Exception as json_err:
+                        self.log_test(
+                            f"Analytics Endpoint - {endpoint['name']}",
+                            False,
+                            f"❌ {endpoint['name']} returns 200 but invalid JSON: {str(json_err)}",
+                            {"status_code": 200, "endpoint": endpoint['path'], "json_error": str(json_err)}
+                        )
+                elif response.status_code == 404:
                     self.log_test(
                         f"Analytics Endpoint - {endpoint['name']}",
-                        True,  # This is expected behavior
-                        f"✅ EXPECTED: {endpoint['name']} returns 404 (route not registered)",
-                        {"status_code": 404, "endpoint": endpoint['path'], "expected": True}
-                    )
-                    expected_404_count += 1
-                elif response.status_code in [200, 201]:
-                    self.log_test(
-                        f"Analytics Endpoint - {endpoint['name']}",
-                        False,  # This means the route is actually working
-                        f"❌ UNEXPECTED: {endpoint['name']} is working (status: {response.status_code}) - route registration issue may be fixed",
-                        {"status_code": response.status_code, "endpoint": endpoint['path'], "expected": False}
+                        False,
+                        f"❌ STILL BROKEN: {endpoint['name']} still returns 404 (route registration issue not fixed)",
+                        {"status_code": 404, "endpoint": endpoint['path'], "fixed": False}
                     )
                 elif response.status_code == 401:
                     self.log_test(
                         f"Analytics Endpoint - {endpoint['name']}",
                         False,
-                        f"❌ UNEXPECTED: {endpoint['name']} returns 401 (auth issue, but route exists)",
-                        {"status_code": 401, "endpoint": endpoint['path'], "expected": False}
+                        f"❌ AUTH ISSUE: {endpoint['name']} returns 401 (authentication problem)",
+                        {"status_code": 401, "endpoint": endpoint['path'], "auth_issue": True}
+                    )
+                elif response.status_code == 500:
+                    self.log_test(
+                        f"Analytics Endpoint - {endpoint['name']}",
+                        False,
+                        f"❌ SERVER ERROR: {endpoint['name']} returns 500 (internal server error)",
+                        {"status_code": 500, "endpoint": endpoint['path'], "response": response.text[:200]}
                     )
                 else:
                     self.log_test(
@@ -265,13 +288,13 @@ class FantasyEsportsAPITester:
                     {"error": str(e), "endpoint": endpoint['path']}
                 )
         
-        # Success means we got the expected 404s
-        overall_success = expected_404_count == total_count
+        # Success means all endpoints are now working (returning 200 with success=true)
+        overall_success = success_count == total_count
         self.log_test(
             "Analytics Endpoints Summary",
             overall_success,
-            f"{'✅ All analytics endpoints return expected 404s (route registration issue confirmed)' if overall_success else f'❌ {total_count - expected_404_count}/{total_count} analytics endpoints are unexpectedly working'} (Expected 404s: {expected_404_count}/{total_count})",
-            {"expected_404_count": expected_404_count, "total_count": total_count}
+            f"{'✅ All 4 analytics endpoints are now working correctly (route registration issue FIXED)' if overall_success else f'❌ {total_count - success_count}/{total_count} analytics endpoints still failing'} (Working endpoints: {success_count}/{total_count})",
+            {"working_count": success_count, "total_count": total_count, "route_fix_verified": overall_success}
         )
         
         return overall_success

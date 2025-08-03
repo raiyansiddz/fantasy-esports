@@ -226,7 +226,7 @@ func (s *LiveStreamService) GetActiveLiveStreams() ([]LiveStream, error) {
 	}
 	defer rows.Close()
 
-	var streams []LiveStream
+	var streams []LiveStream = make([]LiveStream, 0)
 	for rows.Next() {
 		var stream LiveStream
 		err := rows.Scan(

@@ -222,7 +222,6 @@ func (s *Server) setupRoutes() {
 		adminRoutes.PUT("/config", adminHandler.UpdateSystemConfig)
 
 		// Analytics Dashboard
-		/*
 		adminRoutes.GET("/analytics/dashboard", analyticsHandler.GetAnalyticsDashboard)
 		adminRoutes.GET("/analytics/users", analyticsHandler.GetUserMetrics)
 		adminRoutes.GET("/analytics/revenue", analyticsHandler.GetRevenueMetrics)
@@ -243,7 +242,6 @@ func (s *Server) setupRoutes() {
 		adminRoutes.GET("/reports", analyticsHandler.GetReports)
 		adminRoutes.GET("/reports/:id", analyticsHandler.GetReport)
 		adminRoutes.DELETE("/reports/:id", analyticsHandler.DeleteReport)
-		*/
 	}
 
 	// WebSocket routes for real-time updates

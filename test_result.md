@@ -133,15 +133,18 @@ backend:
 
   - task: "Tournament Filter - status=completed returns empty array"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/tournament.go"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL ISSUE - GET /api/v1/tournaments?status=completed returns 'tournaments': null instead of empty array []. Response: {'page':1,'pages':0,'success':true,'total':0,'tournaments':null}. This violates API contract expecting empty array when no completed tournaments exist."
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED - GET /api/v1/tournaments?status=completed now correctly returns empty array [] instead of null. Response structure is correct with proper pagination fields. Backend rebuild with Go 1.21.3 successfully resolved the null array initialization issue."
 
   - task: "Get Active Live Streams endpoint"
     implemented: false

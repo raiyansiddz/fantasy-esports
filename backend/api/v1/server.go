@@ -129,11 +129,11 @@ func (s *Server) setupRoutes() {
 		userRoutes.GET("/users/kyc/status", userHandler.GetKYCStatus)
 
 		// Referrals
-		userRoutes.GET("/referrals/my-stats", userHandler.GetReferralStats)
-		userRoutes.GET("/referrals/history", userHandler.GetReferralHistory)
-		userRoutes.POST("/referrals/apply", userHandler.ApplyReferralCode)
-		userRoutes.POST("/referrals/share", userHandler.ShareReferral)
-		userRoutes.GET("/referrals/leaderboard", userHandler.GetReferralLeaderboard)
+		userRoutes.GET("/referrals/my-stats", walletHandler.GetReferralStats)
+		userRoutes.GET("/referrals/history", walletHandler.GetReferralHistory)
+		userRoutes.POST("/referrals/apply", walletHandler.ApplyReferralCode)
+		userRoutes.POST("/referrals/share", walletHandler.ShareReferral)
+		userRoutes.GET("/referrals/leaderboard", walletHandler.GetReferralLeaderboard)
 
 		// Contest management
 		userRoutes.GET("/contests", contestHandler.GetContests)

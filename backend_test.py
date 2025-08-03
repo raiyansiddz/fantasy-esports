@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
 Backend API Testing Script for Fantasy Esports Platform
-Testing GoLang Fantasy Esports backend analytics endpoints and core functionality:
+Testing GoLang Fantasy Esports backend analytics endpoints after route registration fix:
 
-FOCUS: Analytics routes registration issue testing
+FOCUS: Verify analytics endpoints are now working after Go backend fix
 - Health Check: Verify backend is responsive
-- Basic Admin Authentication: Test admin login
-- Working Admin Endpoints: Test known working endpoints
-- Analytics Endpoints: Test expected 404 failures
-- Basic User Endpoints: Test public endpoints
+- Admin Authentication: Test admin login
+- Analytics Endpoints: Test the 4 specific endpoints that were failing:
+  1. GET /admin/analytics/dashboard
+  2. GET /admin/bi/dashboard  
+  3. POST /admin/reports/generate
+  4. GET /admin/reports
 
-Expected: Analytics endpoints should return 404 due to route registration issues
+Expected: Analytics endpoints should now return 200 with proper JSON responses
 """
 
 import requests

@@ -188,7 +188,7 @@ func (s *Server) setupRoutes() {
 		adminRoutes.PUT("/matches/:id/players/:player_id/stats", adminHandler.UpdatePlayerStats)
 		adminRoutes.POST("/matches/:id/events/bulk", adminHandler.BulkUpdateEvents)
 		adminRoutes.PUT("/matches/:id/score", adminHandler.UpdateMatchScore)
-		adminRoutes.POST("/matches/:id/recalculate-points", adminHandler.RecalculateFantasyPoints)
+		adminRoutes.POST("/matches/:id/recalculate-points", adminHandler.RecalculatePoints)
 		adminRoutes.GET("/matches/:id/dashboard", adminHandler.GetMatchDashboard)
 		adminRoutes.POST("/matches/:id/complete", adminHandler.CompleteMatch)
 		adminRoutes.GET("/matches/:id/events", adminHandler.GetMatchEvents)

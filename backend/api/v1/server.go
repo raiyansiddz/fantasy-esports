@@ -125,7 +125,7 @@ func (s *Server) setupRoutes() {
 		userRoutes.PUT("/users/preferences", userHandler.UpdatePreferences)
 
 		// KYC
-		userRoutes.POST("/users/kyc/upload", userHandler.UploadKYCDocuments)
+		userRoutes.POST("/users/kyc/upload", userHandler.UploadKYC)
 		userRoutes.GET("/users/kyc/status", userHandler.GetKYCStatus)
 
 		// Referrals

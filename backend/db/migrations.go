@@ -544,9 +544,145 @@ INSERT INTO contests (match_id, name, contest_type, entry_fee, max_participants,
 '{"team_size": 4, "captain_multiplier": 2.0, "vice_captain_multiplier": 1.5, "max_players_per_team": 2, "min_players_per_team": 1, "total_credits": 100}', 'live', 1)
 ON CONFLICT DO NOTHING;
 
+-- Generated Reports Table
+CREATE TABLE IF NOT EXISTS generated_reports (
+    id BIGSERIAL PRIMARY KEY,
+    report_type VARCHAR(50) NOT NULL,
+    format VARCHAR(20) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    title VARCHAR(500) NOT NULL,
+    description TEXT,
+    file_path VARCHAR(1000),
+    file_size BIGINT,
+    generated_by BIGINT NOT NULL,
+    request_data JSONB NOT NULL,
+    result_data JSONB,
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    expires_at TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (generated_by) REFERENCES admin_users(id),
+    INDEX idx_report_type (report_type),
+    INDEX idx_report_status (status),
+    INDEX idx_generated_by (generated_by),
+    INDEX idx_created_at (created_at),
+    INDEX idx_expires_at (expires_at)
+);
+
+-- System Error Logs Table (for error handling tracking)
+CREATE TABLE IF NOT EXISTS system_error_logs (
+    id BIGSERIAL PRIMARY KEY,
+    error_code VARCHAR(10) NOT NULL,
+    error_message TEXT NOT NULL,
+    user_message TEXT,
+    http_status INTEGER NOT NULL,
+    request_id VARCHAR(100),
+    user_id BIGINT,
+    admin_id BIGINT,
+    request_data JSONB,
+    context_data JSONB,
+    stack_trace TEXT,
+    resolved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (admin_id) REFERENCES admin_users(id),
+    INDEX idx_error_code (error_code),
+    INDEX idx_http_status (http_status),
+    INDEX idx_created_at (created_at),
+    INDEX idx_resolved (resolved),
+    INDEX idx_request_id (request_id)
+);
+
+-- Analytics Cache Table (for performance optimization)
+CREATE TABLE IF NOT EXISTS analytics_cache (
+    id BIGSERIAL PRIMARY KEY,
+    cache_key VARCHAR(500) NOT NULL UNIQUE,
+    cache_data JSONB NOT NULL,
+    filters JSONB,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    hit_count INTEGER DEFAULT 0,
+    INDEX idx_cache_key (cache_key),
+    INDEX idx_expires_at (expires_at),
+    INDEX idx_generated_at (generated_at)
+);
+
+-- Business Insights Table
+CREATE TABLE IF NOT EXISTS business_insights (
+    id BIGSERIAL PRIMARY KEY,
+    insight_id VARCHAR(50) NOT NULL UNIQUE,
+    category VARCHAR(100) NOT NULL,
+    title VARCHAR(500) NOT NULL,
+    description TEXT NOT NULL,
+    impact VARCHAR(50) NOT NULL,
+    priority VARCHAR(50) NOT NULL,
+    confidence_score DECIMAL(5,2) NOT NULL,
+    recommended_action TEXT,
+    data_sources TEXT[],
+    metadata JSONB,
+    is_active BOOLEAN DEFAULT TRUE,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    acknowledged_by BIGINT,
+    acknowledged_at TIMESTAMP,
+    FOREIGN KEY (acknowledged_by) REFERENCES admin_users(id),
+    INDEX idx_insight_id (insight_id),
+    INDEX idx_category (category),
+    INDEX idx_priority (priority),
+    INDEX idx_generated_at (generated_at),
+    INDEX idx_is_active (is_active)
+);
+
+-- Custom Metrics Table
+CREATE TABLE IF NOT EXISTS custom_metrics (
+    id BIGSERIAL PRIMARY KEY,
+    metric_id VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    formula TEXT NOT NULL,
+    parameters JSONB,
+    category VARCHAR(100) NOT NULL,
+    data_sources TEXT[],
+    update_frequency VARCHAR(50) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES admin_users(id),
+    INDEX idx_metric_id (metric_id),
+    INDEX idx_category (category),
+    INDEX idx_created_by (created_by),
+    INDEX idx_is_active (is_active)
+);
+
+-- Alert Configurations Table
+CREATE TABLE IF NOT EXISTS alert_configurations (
+    id BIGSERIAL PRIMARY KEY,
+    alert_id VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(200) NOT NULL,
+    description TEXT,
+    metric_id VARCHAR(100),
+    threshold_value DECIMAL(15,4) NOT NULL,
+    condition_type VARCHAR(20) NOT NULL,
+    severity VARCHAR(20) NOT NULL,
+    notification_channels TEXT[],
+    recipients TEXT[],
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES admin_users(id),
+    INDEX idx_alert_id (alert_id),
+    INDEX idx_metric_id (metric_id),
+    INDEX idx_severity (severity),
+    INDEX idx_is_active (is_active)
+);
+
 -- Insert sample admin user
 INSERT INTO admin_users (username, email, password_hash, full_name, role, permissions, is_active) VALUES
 ('admin', 'admin@fantasy-esports.com', '$2a$10$rQ7gJz5QZ5Z5Z5Z5Z5Z5Zu5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z', 'Super Admin', 'super_admin', 
-'{"users": "full", "games": "full", "contests": "full", "scoring": "full", "finance": "full"}', true)
+'{"users": "full", "games": "full", "contests": "full", "scoring": "full", "finance": "full", "analytics": "full", "reporting": "full"}', true)
 ON CONFLICT (username) DO NOTHING;
 `

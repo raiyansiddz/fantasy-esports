@@ -392,9 +392,9 @@ func (s *NotificationService) GetConfig(provider models.NotificationProvider, ch
 
 // GetNotificationStats retrieves notification statistics
 func (s *NotificationService) GetNotificationStats(channel *models.NotificationChannel, provider *models.NotificationProvider, days int) (*models.NotificationStats, error) {
-	whereClause := "WHERE created_at >= NOW() - INTERVAL $1 || ' days'"
-	args := []interface{}{days}
-	argIndex := 2
+	whereClause := fmt.Sprintf("WHERE created_at >= NOW() - INTERVAL '%d days'", days)
+	args := []interface{}{}
+	argIndex := 1
 
 	if channel != nil {
 		whereClause += fmt.Sprintf(" AND channel = $%d", argIndex)

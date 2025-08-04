@@ -48,11 +48,11 @@ func NewMailchimpNotifier() *MailchimpNotifier {
 func (m *MailchimpNotifier) Send(request *models.SendNotificationRequest, config map[string]string) (*models.NotificationResponse, error) {
 	// Validate config
 	if err := m.ValidateConfig(config); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, err
 	}

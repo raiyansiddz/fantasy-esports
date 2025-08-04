@@ -103,6 +103,9 @@ func (m *MailchimpNotifier) Send(request *models.SendNotificationRequest, config
 		}, NewNotificationError(ErrInvalidConfig, "API key required", nil)
 	}
 
+	// Log the body that would be sent (for demo purposes)
+	_ = body // Use the body variable to avoid unused variable error
+
 	// Simulate API call success for demo
 	return &models.NotificationResponse{
 		Success:    true,

@@ -53,11 +53,11 @@ func NewFCMNotifier() *FCMNotifier {
 func (f *FCMNotifier) Send(request *models.SendNotificationRequest, config map[string]string) (*models.NotificationResponse, error) {
 	// Validate config
 	if err := f.ValidateConfig(config); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, err
 	}
@@ -92,11 +92,11 @@ func (f *FCMNotifier) Send(request *models.SendNotificationRequest, config map[s
 	// Convert to JSON
 	jsonData, err := json.Marshal(fcmRequest)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to encode request",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrTemplateParsing, "Failed to encode request", err)
 	}
@@ -105,11 +105,11 @@ func (f *FCMNotifier) Send(request *models.SendNotificationRequest, config map[s
 	baseURL := config["base_url"]
 	httpReq, err := http.NewRequest("POST", baseURL, bytes.NewBuffer(jsonData))
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to create HTTP request",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to create HTTP request", err)
 	}
@@ -122,11 +122,11 @@ func (f *FCMNotifier) Send(request *models.SendNotificationRequest, config map[s
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(httpReq)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Network error",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Network error", err)
 	}
@@ -135,11 +135,11 @@ func (f *FCMNotifier) Send(request *models.SendNotificationRequest, config map[s
 	// Parse response
 	var fcmResponse FCMResponse
 	if err := json.NewDecoder(resp.Body).Decode(&fcmResponse); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to parse response",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to parse response", err)
 	}
@@ -192,4 +192,9 @@ func (f *FCMNotifier) GetProviderName() models.NotificationProvider {
 // GetChannel returns the notification channel
 func (f *FCMNotifier) GetChannel() models.NotificationChannel {
 	return models.ChannelPush
+}
+
+// Helper function
+func stringPtr(s string) *string {
+	return &s
 }

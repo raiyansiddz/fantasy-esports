@@ -83,11 +83,12 @@ func (f *Fast2SMSNotifier) Send(request *models.SendNotificationRequest, config 
 	// Convert to JSON
 	jsonData, err := json.Marshal(apiRequest)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to encode request",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, NewNotificationError(ErrTemplateParsing, "Failed to encode request", err)
 	}
 

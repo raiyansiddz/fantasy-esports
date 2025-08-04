@@ -126,11 +126,12 @@ func (f *Fast2SMSNotifier) Send(request *models.SendNotificationRequest, config 
 	// Parse response
 	var apiResponse Fast2SMSResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to parse response",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to parse response", err)
 	}
 

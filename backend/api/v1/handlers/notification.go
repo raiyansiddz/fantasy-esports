@@ -844,13 +844,13 @@ func (h *NotificationHandler) GetChannelStats(c *gin.Context) {
 func (h *NotificationHandler) validateRecipient(channel models.NotificationChannel, recipient string) error {
 	switch channel {
 	case models.ChannelSMS, models.ChannelWhatsApp:
-		// Validate phone number format (basic validation)
+		// First check if it starts with proper format (letters/invalid chars first)
+		if len(recipient) > 0 && recipient[0] != '+' && (recipient[0] < '0' || recipient[0] > '9') {
+			return fmt.Errorf("phone number should start with + or digit")
+		}
+		// Then validate length
 		if len(recipient) < 10 {
 			return fmt.Errorf("invalid phone number format")
-		}
-		// Should start with + or digit
-		if recipient[0] != '+' && (recipient[0] < '0' || recipient[0] > '9') {
-			return fmt.Errorf("phone number should start with + or digit")
 		}
 	case models.ChannelEmail:
 		// Basic email validation

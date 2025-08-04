@@ -39,11 +39,12 @@ func (s *NotificationService) SendNotification(request *models.SendNotificationR
 		var err error
 		template, err = s.GetTemplate(*request.TemplateID)
 		if err != nil {
+			errMsg := err.Error()
 			return &models.NotificationResponse{
 				Success: false,
 				Status:  models.StatusFailed,
 				Message: "Template not found",
-				Error:   &err.Error(),
+				Error:   &errMsg,
 			}, err
 		}
 		

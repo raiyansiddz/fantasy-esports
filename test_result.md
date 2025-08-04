@@ -302,12 +302,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Notification System Fixes - Statistics Filtering and Enhanced Validation"
     - "Analytics Dashboard endpoint (GET /admin/analytics/dashboard)"
     - "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
     - "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
   stuck_tasks:
-    - "Notification System Fixes - Statistics Filtering and Enhanced Validation"
     - "Analytics Dashboard endpoint (GET /admin/analytics/dashboard)"
     - "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
     - "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"

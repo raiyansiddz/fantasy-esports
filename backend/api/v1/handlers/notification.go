@@ -137,6 +137,68 @@ func (h *NotificationHandler) SendBulkNotification(c *gin.Context) {
 		return
 	}
 
+	// Validate required fields
+	if len(request.Recipients) == 0 && request.UserFilter == nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Recipients list or user filter is required for bulk notifications",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate channel
+	validChannels := []models.NotificationChannel{
+		models.ChannelSMS, models.ChannelEmail, models.ChannelPush, models.ChannelWhatsApp,
+	}
+	validChannel := false
+	for _, ch := range validChannels {
+		if request.Channel == ch {
+			validChannel = true
+			break
+		}
+	}
+	if !validChannel {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid channel. Must be one of: sms, email, push, whatsapp",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate that either template_id or body is provided
+	if request.TemplateID == nil && (request.Body == nil || *request.Body == "") {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Either template_id or body must be provided",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate recipients format
+	for _, recipient := range request.Recipients {
+		if err := h.validateRecipient(request.Channel, recipient); err != nil {
+			c.JSON(http.StatusBadRequest, models.ErrorResponse{
+				Success: false,
+				Error:   fmt.Sprintf("Invalid recipient '%s': %s", recipient, err.Error()),
+				Code:    "VALIDATION_ERROR",
+			})
+			return
+		}
+	}
+
+	// Limit bulk recipients to prevent abuse
+	if len(request.Recipients) > 1000 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Maximum 1000 recipients allowed per bulk request",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
 	responses, err := h.notificationService.SendBulkNotification(&request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{

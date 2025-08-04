@@ -1,10 +1,10 @@
 {
   "summary": {
     "total_tests": 24,
-    "passed_tests": 9,
-    "failed_tests": 15,
-    "success_rate": "37.5%",
-    "statistics_fix_verified": false,
+    "passed_tests": 20,
+    "failed_tests": 4,
+    "success_rate": "83.3%",
+    "statistics_fix_verified": true,
     "validation_fix_verified": false
   },
   "test_results": [
@@ -17,7 +17,7 @@
         "status": "healthy",
         "version": "1.0.0"
       },
-      "timestamp": "2025-08-04 15:09:14"
+      "timestamp": "2025-08-04 15:14:51"
     },
     {
       "test": "Admin Login Authentication",
@@ -27,150 +27,150 @@
         "status_code": 200,
         "has_token": true
       },
-      "timestamp": "2025-08-04 15:09:15"
+      "timestamp": "2025-08-04 15:14:52"
     },
     {
       "test": "Statistics Filtering - No filters",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {},
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:15"
+      "timestamp": "2025-08-04 15:14:53"
     },
     {
       "test": "Statistics Filtering - Channel SMS filter",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "channel": "sms"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:15"
+      "timestamp": "2025-08-04 15:14:53"
     },
     {
       "test": "Statistics Filtering - Channel Email filter",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "channel": "email"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:16"
+      "timestamp": "2025-08-04 15:14:54"
     },
     {
       "test": "Statistics Filtering - Provider Fast2SMS filter",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "provider": "fast2sms"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:16"
+      "timestamp": "2025-08-04 15:14:54"
     },
     {
       "test": "Statistics Filtering - Provider SMTP filter",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "provider": "smtp"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:16"
+      "timestamp": "2025-08-04 15:14:54"
     },
     {
       "test": "Statistics Filtering - Combined channel=sms&provider=fast2sms",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "channel": "sms",
           "provider": "fast2sms"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:16"
+      "timestamp": "2025-08-04 15:14:55"
     },
     {
       "test": "Statistics Filtering - Combined channel=email&provider=smtp",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "channel": "email",
           "provider": "smtp"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:55"
     },
     {
       "test": "Statistics Filtering - Days=7 filter",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "days": "7"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Statistics Filtering - Days=30 filter",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "days": "30"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Statistics Filtering - Combined channel=sms&provider=fast2sms&days=7",
-      "passed": false,
-      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
+      "passed": true,
+      "details": "\u2705 FIXED: Statistics filtering working correctly (status: 200, success: true)",
       "response_data": {
-        "status_code": 500,
+        "status_code": 200,
         "params": {
           "channel": "sms",
           "provider": "fast2sms",
           "days": "7"
         },
-        "sql_error": true
+        "has_stats": true
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Statistics Filtering Summary",
-      "passed": false,
-      "details": "\u274c 10/10 statistics filtering scenarios still failing (Success rate: 0/10)",
+      "passed": true,
+      "details": "\u2705 ALL statistics filtering scenarios working correctly (SQL syntax errors FIXED) (Success rate: 10/10)",
       "response_data": {
-        "working_count": 0,
+        "working_count": 10,
         "total_count": 10,
-        "sql_fix_verified": false
+        "sql_fix_verified": true
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Single Validation - Invalid SMS recipient (too short)",
@@ -181,7 +181,7 @@
         "expected": "invalid phone number",
         "actual": "invalid phone number format"
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Single Validation - Invalid SMS recipient (bad format)",
@@ -192,7 +192,7 @@
         "expected": "phone number should start with",
         "actual": "invalid phone number format"
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Single Validation - Invalid email recipient (no @)",
@@ -203,7 +203,7 @@
         "expected": "invalid email format",
         "actual": "invalid email format"
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Single Validation - Invalid email recipient (no .)",
@@ -214,7 +214,7 @@
         "expected": "invalid email format",
         "actual": "invalid email format"
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Single Validation - Invalid push token (too short)",
@@ -225,7 +225,7 @@
         "expected": "invalid push token",
         "actual": "invalid push token format"
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Bulk Validation - Too many recipients (>1000)",
@@ -235,7 +235,7 @@
         "status_code": 404,
         "response": "404 page not found"
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Bulk Validation - Invalid recipient in bulk list",
@@ -245,7 +245,7 @@
         "status_code": 404,
         "response": "404 page not found"
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Enhanced Validation Summary",
@@ -256,7 +256,7 @@
         "total_count": 7,
         "validation_fix_verified": false
       },
-      "timestamp": "2025-08-04 15:09:17"
+      "timestamp": "2025-08-04 15:14:56"
     },
     {
       "test": "Working Endpoint - Get Templates",
@@ -266,7 +266,7 @@
         "status_code": 200,
         "endpoint": "/admin/templates"
       },
-      "timestamp": "2025-08-04 15:09:18"
+      "timestamp": "2025-08-04 15:14:57"
     },
     {
       "test": "Working Endpoint - Get Config",
@@ -276,7 +276,7 @@
         "status_code": 200,
         "endpoint": "/admin/config/notifications"
       },
-      "timestamp": "2025-08-04 15:09:19"
+      "timestamp": "2025-08-04 15:14:58"
     },
     {
       "test": "Working Notification Endpoints Summary",
@@ -286,7 +286,7 @@
         "success_count": 2,
         "total_count": 2
       },
-      "timestamp": "2025-08-04 15:09:19"
+      "timestamp": "2025-08-04 15:14:58"
     }
   ]
 }

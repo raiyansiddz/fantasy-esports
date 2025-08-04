@@ -302,6 +302,86 @@ func (h *NotificationHandler) CreateTemplate(c *gin.Context) {
 		return
 	}
 
+	// Validate required fields
+	if request.Name == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Template name is required",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	if request.Body == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Template body is required",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate channel
+	validChannels := []models.NotificationChannel{
+		models.ChannelSMS, models.ChannelEmail, models.ChannelPush, models.ChannelWhatsApp,
+	}
+	validChannel := false
+	for _, ch := range validChannels {
+		if request.Channel == ch {
+			validChannel = true
+			break
+		}
+	}
+	if !validChannel {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid channel. Must be one of: sms, email, push, whatsapp",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate provider
+	validProviders := []models.NotificationProvider{
+		models.ProviderFast2SMS, models.ProviderSMTP, models.ProviderSES, models.ProviderMailchimp,
+		models.ProviderFCM, models.ProviderOneSignal, models.ProviderWhatsAppCloud,
+	}
+	validProvider := false
+	for _, pr := range validProviders {
+		if request.Provider == pr {
+			validProvider = true
+			break
+		}
+	}
+	if !validProvider {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid provider",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate name length
+	if len(request.Name) > 200 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Template name must not exceed 200 characters",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate subject length if provided
+	if request.Subject != nil && len(*request.Subject) > 500 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Subject must not exceed 500 characters",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
 	// Get admin user ID from context (set by auth middleware)
 	adminID, exists := c.Get("admin_id")
 	if !exists {

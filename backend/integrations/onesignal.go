@@ -39,11 +39,11 @@ func NewOneSignalNotifier() *OneSignalNotifier {
 func (o *OneSignalNotifier) Send(request *models.SendNotificationRequest, config map[string]string) (*models.NotificationResponse, error) {
 	// Validate config
 	if err := o.ValidateConfig(config); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, err
 	}

@@ -21,11 +21,12 @@ func NewSMTPNotifier() *SMTPNotifier {
 func (s *SMTPNotifier) Send(request *models.SendNotificationRequest, config map[string]string) (*models.NotificationResponse, error) {
 	// Validate config
 	if err := s.ValidateConfig(config); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, err
 	}
 

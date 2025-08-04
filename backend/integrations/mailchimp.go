@@ -74,9 +74,9 @@ func (m *MailchimpNotifier) Send(request *models.SendNotificationRequest, config
 	// This is a simplified implementation for demonstration
 
 	// Prepare email content
-	subject := "Notification"
-	if request.Subject != nil {
-		subject = *request.Subject
+	body := ""
+	if request.Body != nil {
+		body = *request.Body
 	}
 
 	// Create a simple transactional email request

@@ -69,6 +69,7 @@ func (s *Server) setupRoutes() {
 	realtimeHandler := handlers.NewRealTimeLeaderboardHandler(s.db, s.config, leaderboardService)
 	tournamentHandler := handlers.NewTournamentHandler(s.db, s.config, cdnClient)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService, biService, reportingService)
+	notificationHandler := handlers.NewNotificationHandler(s.db, s.config)
 
 	// Health check
 	s.router.GET("/health", func(c *gin.Context) {

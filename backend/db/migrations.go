@@ -683,6 +683,6 @@ CREATE TABLE IF NOT EXISTS alert_configurations (
 -- Insert sample admin user
 INSERT INTO admin_users (username, email, password_hash, full_name, role, permissions, is_active) VALUES
 ('admin', 'admin@fantasy-esports.com', '$2a$10$rQ7gJz5QZ5Z5Z5Z5Z5Z5Zu5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z', 'Super Admin', 'super_admin', 
-'{"users": "full", "games": "full", "contests": "full", "scoring": "full", "finance": "full", "analytics": "full", "reporting": "full"}', true)
+'{"users": "full", "games": "full", "contests": "full", "scoring": "full", "finance": "full", "analytics": "full", "reporting": "full", "notifications": "full"}', true)
 ON CONFLICT (username) DO NOTHING;
 `

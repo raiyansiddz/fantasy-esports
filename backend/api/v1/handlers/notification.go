@@ -776,3 +776,29 @@ func (h *NotificationHandler) GetChannelStats(c *gin.Context) {
 		"period":  fmt.Sprintf("%d days", days),
 	})
 }
+
+// validateRecipient validates recipient format based on channel
+func (h *NotificationHandler) validateRecipient(channel models.NotificationChannel, recipient string) error {
+	switch channel {
+	case models.ChannelSMS, models.ChannelWhatsApp:
+		// Validate phone number format (basic validation)
+		if len(recipient) < 10 {
+			return fmt.Errorf("invalid phone number format")
+		}
+		// Should start with + or digit
+		if recipient[0] != '+' && (recipient[0] < '0' || recipient[0] > '9') {
+			return fmt.Errorf("phone number should start with + or digit")
+		}
+	case models.ChannelEmail:
+		// Basic email validation
+		if !strings.Contains(recipient, "@") || !strings.Contains(recipient, ".") {
+			return fmt.Errorf("invalid email format")
+		}
+	case models.ChannelPush:
+		// Push notification token should not be empty
+		if len(recipient) < 10 {
+			return fmt.Errorf("invalid push token format")
+		}
+	}
+	return nil
+}

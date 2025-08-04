@@ -193,8 +193,3 @@ func (f *FCMNotifier) GetProviderName() models.NotificationProvider {
 func (f *FCMNotifier) GetChannel() models.NotificationChannel {
 	return models.ChannelPush
 }
-
-// Helper function
-func stringPtr(s string) *string {
-	return &s
-}

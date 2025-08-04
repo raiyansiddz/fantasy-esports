@@ -108,11 +108,11 @@ func (o *OneSignalNotifier) Send(request *models.SendNotificationRequest, config
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(httpReq)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Network error",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Network error", err)
 	}

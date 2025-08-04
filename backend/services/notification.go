@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"fantasy-esports-backend/integrations"
 	"fantasy-esports-backend/models"

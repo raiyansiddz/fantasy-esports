@@ -75,11 +75,12 @@ func (s *SMTPNotifier) Send(request *models.SendNotificationRequest, config map[
 	addr := fmt.Sprintf("%s:%s", host, port)
 	err := smtp.SendMail(addr, auth, fromEmail, []string{request.Recipient}, []byte(message))
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to send email",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to send email", err)
 	}
 

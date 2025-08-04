@@ -55,11 +55,12 @@ func (s *NotificationService) SendNotification(request *models.SendNotificationR
 	// Get configuration for the provider
 	config, err := s.getProviderConfig(*provider, request.Channel)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration error",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, err
 	}
 

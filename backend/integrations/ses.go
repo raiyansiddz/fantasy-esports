@@ -87,11 +87,11 @@ func (s *SESNotifier) Send(request *models.SendNotificationRequest, config map[s
 	
 	httpReq, err := http.NewRequest("POST", sesURL, strings.NewReader(formData.Encode()))
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to create HTTP request",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to create HTTP request", err)
 	}

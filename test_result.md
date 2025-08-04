@@ -264,13 +264,16 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/services/notification.go"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL ISSUES FOUND - Comprehensive testing of notification system fixes reveals significant problems: ISSUE 1 - Statistics Filtering: ALL 10 tests FAILED with SQL syntax errors (pq: syntax error at or near '$1'). The GetNotificationStats function SQL query fix is NOT working. ISSUE 2 - Enhanced Validation: PARTIALLY WORKING - Template validation fully working (7/7 tests), but recipient validation broken. Validation logic checks template_id/body BEFORE validating recipient format, causing wrong error messages. Overall success rate: 41.5% (17/41 tests). The notification system fixes mentioned in review request are NOT properly implemented."
+      - working: false
+        agent: "testing"
+        comment: "❌ NOTIFICATION SYSTEM FIXES STILL NOT FULLY IMPLEMENTED - Comprehensive re-testing shows: ISSUE 1 - Statistics Filtering: ALL 10/10 statistics filtering tests STILL FAILING with identical SQL syntax errors (pq: syntax error at or near '$1'). No improvement from previous test. ISSUE 2 - Enhanced Validation: MOSTLY FIXED but 1 edge case failing - 7/8 validation tests passing (87.5% success). Recipient validation now happens before template validation for most cases, but SMS format validation message inconsistent. Previously working functionality remains intact (2/2 tests passing). Overall success rate: 48.0% (12/25 tests). The SQL syntax error in GetNotificationStats function requires immediate attention - the fix has not been applied correctly."
 
 frontend:
   - task: "Frontend referral integration"

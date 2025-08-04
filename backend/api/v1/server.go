@@ -171,6 +171,9 @@ func (s *Server) setupRoutes() {
 		userRoutes.GET("/payments/:id/status", walletHandler.GetPaymentStatus)
 		userRoutes.GET("/wallet/payment-methods", walletHandler.GetPaymentMethods)
 		userRoutes.POST("/wallet/payment-methods", walletHandler.AddPaymentMethod)
+
+		// Notification endpoints (for users)
+		userRoutes.POST("/notify/send", notificationHandler.SendNotification)
 	}
 
 	// Protected admin routes (require admin authentication)

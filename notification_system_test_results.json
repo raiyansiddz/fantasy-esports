@@ -10,7 +10,7 @@
       "Notification Sending": true,
       "Template Processing": true,
       "Statistics": false,
-      "Edge Cases": false
+      "Edge Cases": true
     }
   },
   "detailed_results": [
@@ -23,7 +23,7 @@
         "status": "healthy",
         "version": "1.0.0"
       },
-      "timestamp": "2025-08-04 14:21:02"
+      "timestamp": "2025-08-04 14:38:53"
     },
     {
       "test": "Admin Login Authentication",
@@ -33,7 +33,7 @@
         "status_code": 200,
         "has_token": true
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "User Authentication Setup",
@@ -43,7 +43,7 @@
         "status_code": 200,
         "mobile_verification": true
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Auth Required - User Send Notification",
@@ -53,7 +53,7 @@
         "status_code": 401,
         "auth_type": "user"
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Auth Required - Admin Send Notification",
@@ -63,7 +63,7 @@
         "status_code": 401,
         "auth_type": "admin"
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Auth Required - Admin Bulk Notification",
@@ -73,7 +73,7 @@
         "status_code": 401,
         "auth_type": "admin"
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Auth Required - Create Template",
@@ -83,7 +83,7 @@
         "status_code": 401,
         "auth_type": "admin"
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Auth Required - Get Templates",
@@ -93,7 +93,7 @@
         "status_code": 401,
         "auth_type": "admin"
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Auth Required - Get Config",
@@ -103,7 +103,7 @@
         "status_code": 401,
         "auth_type": "admin"
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Auth Required - Get Stats",
@@ -113,42 +113,42 @@
         "status_code": 401,
         "auth_type": "admin"
       },
-      "timestamp": "2025-08-04 14:21:03"
+      "timestamp": "2025-08-04 14:38:54"
     },
     {
       "test": "Create SMS Template",
       "passed": true,
-      "details": "SMS template created successfully with ID 82",
+      "details": "SMS template created successfully with ID 101",
       "response_data": {
-        "template_id": 82,
+        "template_id": 101,
         "name": "Test SMS Template"
       },
-      "timestamp": "2025-08-04 14:21:04"
+      "timestamp": "2025-08-04 14:38:55"
     },
     {
       "test": "Create Email Template",
       "passed": true,
-      "details": "Email template created successfully with ID 83",
+      "details": "Email template created successfully with ID 102",
       "response_data": {
-        "template_id": 83,
+        "template_id": 102,
         "name": "Test Email Template"
       },
-      "timestamp": "2025-08-04 14:21:04"
+      "timestamp": "2025-08-04 14:38:55"
     },
     {
       "test": "Get Templates with Pagination",
       "passed": true,
-      "details": "Retrieved 10 templates. Total: 83",
+      "details": "Retrieved 10 templates. Total: 102",
       "response_data": {
         "template_count": 10,
         "pagination": {
           "limit": 10,
           "page": 1,
-          "total": 83,
-          "total_pages": 9
+          "total": 102,
+          "total_pages": 11
         }
       },
-      "timestamp": "2025-08-04 14:21:05"
+      "timestamp": "2025-08-04 14:38:56"
     },
     {
       "test": "Get Templates with Filtering",
@@ -157,27 +157,27 @@
       "response_data": {
         "filtered_count": 10
       },
-      "timestamp": "2025-08-04 14:21:06"
+      "timestamp": "2025-08-04 14:38:57"
     },
     {
       "test": "Get Specific Template",
       "passed": true,
-      "details": "Retrieved template 82 successfully",
+      "details": "Retrieved template 101 successfully",
       "response_data": {
-        "template_id": 82,
+        "template_id": 101,
         "name": "Test SMS Template"
       },
-      "timestamp": "2025-08-04 14:21:07"
+      "timestamp": "2025-08-04 14:38:57"
     },
     {
       "test": "Update Template",
       "passed": true,
-      "details": "Template 82 updated successfully",
+      "details": "Template 101 updated successfully",
       "response_data": {
-        "template_id": 82,
+        "template_id": 101,
         "success": true
       },
-      "timestamp": "2025-08-04 14:21:07"
+      "timestamp": "2025-08-04 14:38:58"
     },
     {
       "test": "Update Fast2SMS Configuration",
@@ -187,7 +187,7 @@
         "provider": "fast2sms",
         "config_key": "api_key"
       },
-      "timestamp": "2025-08-04 14:21:07"
+      "timestamp": "2025-08-04 14:38:58"
     },
     {
       "test": "Update SMTP Configuration",
@@ -197,7 +197,7 @@
         "provider": "smtp",
         "config_key": "username"
       },
-      "timestamp": "2025-08-04 14:21:08"
+      "timestamp": "2025-08-04 14:38:59"
     },
     {
       "test": "Get Fast2SMS Configuration",
@@ -207,7 +207,7 @@
         "config_count": 3,
         "has_api_key": true
       },
-      "timestamp": "2025-08-04 14:21:08"
+      "timestamp": "2025-08-04 14:38:59"
     },
     {
       "test": "Get SMTP Configuration",
@@ -217,7 +217,7 @@
         "config_count": 6,
         "has_username": true
       },
-      "timestamp": "2025-08-04 14:21:09"
+      "timestamp": "2025-08-04 14:39:00"
     },
     {
       "test": "Admin Send SMS (Configuration Error Expected)",
@@ -227,7 +227,7 @@
         "status_code": 500,
         "error_type": "configuration"
       },
-      "timestamp": "2025-08-04 14:21:11"
+      "timestamp": "2025-08-04 14:39:01"
     },
     {
       "test": "Admin Send Email (Configuration Error Expected)",
@@ -237,7 +237,7 @@
         "status_code": 500,
         "error_type": "configuration"
       },
-      "timestamp": "2025-08-04 14:21:12"
+      "timestamp": "2025-08-04 14:39:03"
     },
     {
       "test": "Admin Send Push (Configuration Error Expected)",
@@ -247,7 +247,7 @@
         "status_code": 500,
         "error_type": "configuration"
       },
-      "timestamp": "2025-08-04 14:21:14"
+      "timestamp": "2025-08-04 14:39:04"
     },
     {
       "test": "Admin Send WhatsApp (Configuration Error Expected)",
@@ -257,7 +257,7 @@
         "status_code": 500,
         "error_type": "configuration"
       },
-      "timestamp": "2025-08-04 14:21:15"
+      "timestamp": "2025-08-04 14:39:06"
     },
     {
       "test": "Admin Bulk Notification (Configuration Error Expected)",
@@ -267,7 +267,7 @@
         "status_code": 200,
         "has_responses": true
       },
-      "timestamp": "2025-08-04 14:21:18"
+      "timestamp": "2025-08-04 14:39:09"
     },
     {
       "test": "Template Variable Processing",
@@ -278,17 +278,16 @@
         "error": "NETWORK_ERROR: Failed to parse response (caused by: json: cannot unmarshal string into Go struct field Fast2SMSResponse.message of type []string)",
         "code": "SEND_FAILED"
       },
-      "timestamp": "2025-08-04 14:21:20"
+      "timestamp": "2025-08-04 14:39:11"
     },
     {
       "test": "Get Notification Statistics",
-      "passed": true,
-      "details": "Retrieved notification stats for 7 days. Total sent: 15",
+      "passed": false,
+      "details": "Get notification stats failed with status 500",
       "response_data": {
-        "total_sent": 15,
-        "delivery_rate": 0
+        "status_code": 500
       },
-      "timestamp": "2025-08-04 14:21:20"
+      "timestamp": "2025-08-04 14:39:11"
     },
     {
       "test": "Get Channel Statistics",
@@ -297,7 +296,7 @@
       "response_data": {
         "channel_count": 4
       },
-      "timestamp": "2025-08-04 14:21:21"
+      "timestamp": "2025-08-04 14:39:11"
     },
     {
       "test": "Get Filtered Notification Statistics",
@@ -306,7 +305,7 @@
       "response_data": {
         "status_code": 500
       },
-      "timestamp": "2025-08-04 14:21:21"
+      "timestamp": "2025-08-04 14:39:11"
     },
     {
       "test": "Invalid Template ID (404 Expected)",
@@ -315,16 +314,16 @@
       "response_data": {
         "status_code": 404
       },
-      "timestamp": "2025-08-04 14:21:21"
+      "timestamp": "2025-08-04 14:39:12"
     },
     {
       "test": "Malformed Request (400 Expected)",
-      "passed": false,
-      "details": "Expected 400 but got 201",
+      "passed": true,
+      "details": "Correctly returns 400 for malformed template creation request",
       "response_data": {
-        "status_code": 201
+        "status_code": 400
       },
-      "timestamp": "2025-08-04 14:21:22"
+      "timestamp": "2025-08-04 14:39:12"
     },
     {
       "test": "Invalid Channel/Provider Combination",
@@ -333,7 +332,7 @@
       "response_data": {
         "error_type": "invalid_combination"
       },
-      "timestamp": "2025-08-04 14:21:22"
+      "timestamp": "2025-08-04 14:39:12"
     },
     {
       "test": "Missing Config Parameters (400 Expected)",
@@ -342,7 +341,7 @@
       "response_data": {
         "status_code": 400
       },
-      "timestamp": "2025-08-04 14:21:22"
+      "timestamp": "2025-08-04 14:39:12"
     }
   ]
 }

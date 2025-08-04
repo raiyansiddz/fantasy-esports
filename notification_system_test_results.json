@@ -1,0 +1,326 @@
+{
+  "summary": {
+    "total_tests": 31,
+    "passed_tests": 24,
+    "success_rate": 77.41935483870968,
+    "categories": {
+      "Authentication": true,
+      "Template Management": false,
+      "Configuration Management": false,
+      "Notification Sending": true,
+      "Template Processing": false,
+      "Statistics": false,
+      "Edge Cases": false
+    }
+  },
+  "detailed_results": [
+    {
+      "test": "Backend Health Check",
+      "passed": true,
+      "details": "Backend is running. Status: healthy",
+      "response_data": {
+        "service": "fantasy-esports-backend",
+        "status": "healthy",
+        "version": "1.0.0"
+      },
+      "timestamp": "2025-08-04 14:15:02"
+    },
+    {
+      "test": "Admin Login Authentication",
+      "passed": true,
+      "details": "Admin login successful. Token obtained.",
+      "response_data": {
+        "status_code": 200,
+        "has_token": true
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "User Authentication Setup",
+      "passed": true,
+      "details": "Mobile verification endpoint working. User auth flow available.",
+      "response_data": {
+        "status_code": 200,
+        "mobile_verification": true
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Auth Required - User Send Notification",
+      "passed": true,
+      "details": "Correctly returns 401 for missing user authentication",
+      "response_data": {
+        "status_code": 401,
+        "auth_type": "user"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Auth Required - Admin Send Notification",
+      "passed": true,
+      "details": "Correctly returns 401 for missing admin authentication",
+      "response_data": {
+        "status_code": 401,
+        "auth_type": "admin"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Auth Required - Admin Bulk Notification",
+      "passed": true,
+      "details": "Correctly returns 401 for missing admin authentication",
+      "response_data": {
+        "status_code": 401,
+        "auth_type": "admin"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Auth Required - Create Template",
+      "passed": true,
+      "details": "Correctly returns 401 for missing admin authentication",
+      "response_data": {
+        "status_code": 401,
+        "auth_type": "admin"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Auth Required - Get Templates",
+      "passed": true,
+      "details": "Correctly returns 401 for missing admin authentication",
+      "response_data": {
+        "status_code": 401,
+        "auth_type": "admin"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Auth Required - Get Config",
+      "passed": true,
+      "details": "Correctly returns 401 for missing admin authentication",
+      "response_data": {
+        "status_code": 401,
+        "auth_type": "admin"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Auth Required - Get Stats",
+      "passed": true,
+      "details": "Correctly returns 401 for missing admin authentication",
+      "response_data": {
+        "status_code": 401,
+        "auth_type": "admin"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Create SMS Template",
+      "passed": false,
+      "details": "Template creation failed with status 401",
+      "response_data": {
+        "status_code": 401,
+        "response": "{\"success\":false,\"error\":\"Unauthorized\",\"code\":\"UNAUTHORIZED\"}"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Create Email Template",
+      "passed": false,
+      "details": "Template creation failed with status 401",
+      "response_data": {
+        "status_code": 401,
+        "response": "{\"success\":false,\"error\":\"Unauthorized\",\"code\":\"UNAUTHORIZED\"}"
+      },
+      "timestamp": "2025-08-04 14:15:03"
+    },
+    {
+      "test": "Get Templates with Pagination",
+      "passed": true,
+      "details": "Retrieved 10 templates. Total: 64",
+      "response_data": {
+        "template_count": 10,
+        "pagination": {
+          "limit": 10,
+          "page": 1,
+          "total": 64,
+          "total_pages": 7
+        }
+      },
+      "timestamp": "2025-08-04 14:15:04"
+    },
+    {
+      "test": "Get Templates with Filtering",
+      "passed": true,
+      "details": "Retrieved 10 SMS templates with Fast2SMS provider",
+      "response_data": {
+        "filtered_count": 10
+      },
+      "timestamp": "2025-08-04 14:15:05"
+    },
+    {
+      "test": "Update Fast2SMS Configuration",
+      "passed": false,
+      "details": "Configuration update failed with status 401",
+      "response_data": {
+        "status_code": 401,
+        "response": "{\"success\":false,\"error\":\"Unauthorized\",\"code\":\"UNAUTHORIZED\"}"
+      },
+      "timestamp": "2025-08-04 14:15:05"
+    },
+    {
+      "test": "Update SMTP Configuration",
+      "passed": false,
+      "details": "SMTP configuration update failed with status 401",
+      "response_data": {
+        "status_code": 401
+      },
+      "timestamp": "2025-08-04 14:15:05"
+    },
+    {
+      "test": "Get Fast2SMS Configuration",
+      "passed": true,
+      "details": "Retrieved Fast2SMS configuration with 3 settings",
+      "response_data": {
+        "config_count": 3,
+        "has_api_key": true
+      },
+      "timestamp": "2025-08-04 14:15:05"
+    },
+    {
+      "test": "Get SMTP Configuration",
+      "passed": true,
+      "details": "Retrieved SMTP configuration with 6 settings",
+      "response_data": {
+        "config_count": 6,
+        "has_username": true
+      },
+      "timestamp": "2025-08-04 14:15:06"
+    },
+    {
+      "test": "Admin Send SMS (Configuration Error Expected)",
+      "passed": true,
+      "details": "Correctly returned configuration error: INVALID_CONFIG: Missing required config: api_key",
+      "response_data": {
+        "status_code": 500,
+        "error_type": "configuration"
+      },
+      "timestamp": "2025-08-04 14:15:07"
+    },
+    {
+      "test": "Admin Send Email (Configuration Error Expected)",
+      "passed": true,
+      "details": "Correctly returned configuration error: INVALID_CONFIG: Missing required config: username",
+      "response_data": {
+        "status_code": 500,
+        "error_type": "configuration"
+      },
+      "timestamp": "2025-08-04 14:15:09"
+    },
+    {
+      "test": "Admin Send Push (Configuration Error Expected)",
+      "passed": true,
+      "details": "Correctly returned configuration error: INVALID_CONFIG: Missing required config: server_key",
+      "response_data": {
+        "status_code": 500,
+        "error_type": "configuration"
+      },
+      "timestamp": "2025-08-04 14:15:10"
+    },
+    {
+      "test": "Admin Send WhatsApp (Configuration Error Expected)",
+      "passed": true,
+      "details": "Correctly returned configuration error: INVALID_CONFIG: Missing required config: access_token",
+      "response_data": {
+        "status_code": 500,
+        "error_type": "configuration"
+      },
+      "timestamp": "2025-08-04 14:15:11"
+    },
+    {
+      "test": "Admin Bulk Notification (Configuration Error Expected)",
+      "passed": true,
+      "details": "Bulk notification handled correctly (configuration errors expected)",
+      "response_data": {
+        "status_code": 200,
+        "has_responses": true
+      },
+      "timestamp": "2025-08-04 14:15:14"
+    },
+    {
+      "test": "Template Variable Processing Test",
+      "passed": false,
+      "details": "Cannot test template processing - no admin token or templates available",
+      "response_data": {
+        "admin_token": true,
+        "templates": 0
+      },
+      "timestamp": "2025-08-04 14:15:14"
+    },
+    {
+      "test": "Get Notification Statistics",
+      "passed": true,
+      "details": "Retrieved notification stats for 7 days. Total sent: 6",
+      "response_data": {
+        "total_sent": 6,
+        "delivery_rate": 0
+      },
+      "timestamp": "2025-08-04 14:15:14"
+    },
+    {
+      "test": "Get Channel Statistics",
+      "passed": true,
+      "details": "Retrieved channel stats for 30 days. 4 channel/provider combinations",
+      "response_data": {
+        "channel_count": 4
+      },
+      "timestamp": "2025-08-04 14:15:15"
+    },
+    {
+      "test": "Get Filtered Notification Statistics",
+      "passed": false,
+      "details": "Get filtered stats failed with status 500",
+      "response_data": {
+        "status_code": 500
+      },
+      "timestamp": "2025-08-04 14:15:15"
+    },
+    {
+      "test": "Invalid Template ID (404 Expected)",
+      "passed": true,
+      "details": "Correctly returns 404 for non-existent template",
+      "response_data": {
+        "status_code": 404
+      },
+      "timestamp": "2025-08-04 14:15:15"
+    },
+    {
+      "test": "Malformed Request (400 Expected)",
+      "passed": false,
+      "details": "Expected 400 but got 401",
+      "response_data": {
+        "status_code": 401
+      },
+      "timestamp": "2025-08-04 14:15:15"
+    },
+    {
+      "test": "Invalid Channel/Provider Combination",
+      "passed": true,
+      "details": "Correctly handles invalid provider/channel combination: UNSUPPORTED_PROVIDER: Unsupported provider/channel combination",
+      "response_data": {
+        "error_type": "invalid_combination"
+      },
+      "timestamp": "2025-08-04 14:15:16"
+    },
+    {
+      "test": "Missing Config Parameters (400 Expected)",
+      "passed": true,
+      "details": "Correctly returns 400 for missing provider/channel parameters",
+      "response_data": {
+        "status_code": 400
+      },
+      "timestamp": "2025-08-04 14:15:16"
+    }
+  ]
+}

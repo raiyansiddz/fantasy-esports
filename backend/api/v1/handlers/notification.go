@@ -82,21 +82,21 @@ func (h *NotificationHandler) SendNotification(c *gin.Context) {
 		return
 	}
 
-	// Validate that either template_id or body is provided
-	if request.TemplateID == nil && (request.Body == nil || *request.Body == "") {
+	// Validate recipient format based on channel (MOVED UP)
+	if err := h.validateRecipient(request.Channel, request.Recipient); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
-			Error:   "Either template_id or body must be provided",
+			Error:   err.Error(),
 			Code:    "VALIDATION_ERROR",
 		})
 		return
 	}
 
-	// Validate recipient format based on channel
-	if err := h.validateRecipient(request.Channel, request.Recipient); err != nil {
+	// Validate that either template_id or body is provided (MOVED DOWN)
+	if request.TemplateID == nil && (request.Body == nil || *request.Body == "") {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
-			Error:   err.Error(),
+			Error:   "Either template_id or body must be provided",
 			Code:    "VALIDATION_ERROR",
 		})
 		return

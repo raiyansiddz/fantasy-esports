@@ -51,6 +51,56 @@ func (h *NotificationHandler) SendNotification(c *gin.Context) {
 		return
 	}
 
+	// Validate required fields
+	if request.Recipient == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Recipient is required",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate channel
+	validChannels := []models.NotificationChannel{
+		models.ChannelSMS, models.ChannelEmail, models.ChannelPush, models.ChannelWhatsApp,
+	}
+	validChannel := false
+	for _, ch := range validChannels {
+		if request.Channel == ch {
+			validChannel = true
+			break
+		}
+	}
+	if !validChannel {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid channel. Must be one of: sms, email, push, whatsapp",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate that either template_id or body is provided
+	if request.TemplateID == nil && (request.Body == nil || *request.Body == "") {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Either template_id or body must be provided",
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// Validate recipient format based on channel
+	if err := h.validateRecipient(request.Channel, request.Recipient); err != nil {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   err.Error(),
+			Code:    "VALIDATION_ERROR",
+		})
+		return
+	}
+
 	response, err := h.notificationService.SendNotification(&request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{

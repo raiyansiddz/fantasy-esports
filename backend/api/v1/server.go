@@ -246,6 +246,28 @@ func (s *Server) setupRoutes() {
 		adminRoutes.GET("/reports", analyticsHandler.GetReports)
 		adminRoutes.GET("/reports/:id", analyticsHandler.GetReport)
 		adminRoutes.DELETE("/reports/:id", analyticsHandler.DeleteReport)
+
+		// Notification Management
+		adminRoutes.POST("/notify/send", notificationHandler.SendNotification)
+		adminRoutes.POST("/notify/bulk", notificationHandler.SendBulkNotification)
+		adminRoutes.POST("/notify/sms", notificationHandler.SendSMS)
+		adminRoutes.POST("/notify/email", notificationHandler.SendEmail)
+		adminRoutes.POST("/notify/push", notificationHandler.SendPush)
+		adminRoutes.POST("/notify/whatsapp", notificationHandler.SendWhatsApp)
+
+		// Template Management
+		adminRoutes.POST("/templates", notificationHandler.CreateTemplate)
+		adminRoutes.GET("/templates", notificationHandler.GetTemplates)
+		adminRoutes.GET("/templates/:id", notificationHandler.GetTemplate)
+		adminRoutes.PUT("/templates/:id", notificationHandler.UpdateTemplate)
+
+		// Configuration Management
+		adminRoutes.PUT("/config/notifications", notificationHandler.UpdateConfig)
+		adminRoutes.GET("/config/notifications", notificationHandler.GetConfig)
+
+		// Statistics
+		adminRoutes.GET("/stats/notifications", notificationHandler.GetNotificationStats)
+		adminRoutes.GET("/stats/channels", notificationHandler.GetChannelStats)
 	}
 
 	// WebSocket routes for real-time updates

@@ -40,11 +40,12 @@ func NewFast2SMSNotifier() *Fast2SMSNotifier {
 func (f *Fast2SMSNotifier) Send(request *models.SendNotificationRequest, config map[string]string) (*models.NotificationResponse, error) {
 	// Validate config
 	if err := f.ValidateConfig(config); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, err
 	}
 

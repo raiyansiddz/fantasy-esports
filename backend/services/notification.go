@@ -69,11 +69,12 @@ func (s *NotificationService) SendNotification(request *models.SendNotificationR
 	if template != nil {
 		processedBody, err := s.processTemplate(template, request.Variables)
 		if err != nil {
+			errMsg := err.Error()
 			return &models.NotificationResponse{
 				Success: false,
 				Status:  models.StatusFailed,
 				Message: "Template processing failed",
-				Error:   &err.Error(),
+				Error:   &errMsg,
 			}, err
 		}
 		

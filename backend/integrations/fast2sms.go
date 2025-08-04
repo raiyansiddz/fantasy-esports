@@ -113,11 +113,12 @@ func (f *Fast2SMSNotifier) Send(request *models.SendNotificationRequest, config 
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(httpReq)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Network error",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Network error", err)
 	}
 	defer resp.Body.Close()

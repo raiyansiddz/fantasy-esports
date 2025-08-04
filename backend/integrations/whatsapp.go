@@ -163,11 +163,11 @@ func (w *WhatsAppNotifier) Send(request *models.SendNotificationRequest, config 
 	// Parse response
 	var waResponse WhatsAppResponse
 	if err := json.NewDecoder(resp.Body).Decode(&waResponse); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to parse response",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to parse response", err)
 	}

@@ -110,7 +110,8 @@ func (s *NotificationService) SendNotification(request *models.SendNotificationR
 	if err != nil {
 		// Update log with error
 		if logID > 0 {
-			s.updateNotificationLog(logID, models.StatusFailed, nil, &err.Error())
+			errMsg := err.Error()
+			s.updateNotificationLog(logID, models.StatusFailed, nil, &errMsg)
 		}
 		return response, err
 	}

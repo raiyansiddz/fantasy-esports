@@ -17,7 +17,7 @@
         "status": "healthy",
         "version": "1.0.0"
       },
-      "timestamp": "2025-08-04 15:14:51"
+      "timestamp": "2025-08-04 16:22:59"
     },
     {
       "test": "Admin Login Authentication",
@@ -27,7 +27,7 @@
         "status_code": 200,
         "has_token": true
       },
-      "timestamp": "2025-08-04 15:14:52"
+      "timestamp": "2025-08-04 16:23:00"
     },
     {
       "test": "Statistics Filtering - No filters",
@@ -38,7 +38,7 @@
         "params": {},
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:53"
+      "timestamp": "2025-08-04 16:23:01"
     },
     {
       "test": "Statistics Filtering - Channel SMS filter",
@@ -51,7 +51,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:53"
+      "timestamp": "2025-08-04 16:23:01"
     },
     {
       "test": "Statistics Filtering - Channel Email filter",
@@ -64,7 +64,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:54"
+      "timestamp": "2025-08-04 16:23:02"
     },
     {
       "test": "Statistics Filtering - Provider Fast2SMS filter",
@@ -77,7 +77,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:54"
+      "timestamp": "2025-08-04 16:23:02"
     },
     {
       "test": "Statistics Filtering - Provider SMTP filter",
@@ -90,7 +90,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:54"
+      "timestamp": "2025-08-04 16:23:03"
     },
     {
       "test": "Statistics Filtering - Combined channel=sms&provider=fast2sms",
@@ -104,7 +104,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:55"
+      "timestamp": "2025-08-04 16:23:03"
     },
     {
       "test": "Statistics Filtering - Combined channel=email&provider=smtp",
@@ -118,7 +118,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:55"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Statistics Filtering - Days=7 filter",
@@ -131,7 +131,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Statistics Filtering - Days=30 filter",
@@ -144,7 +144,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Statistics Filtering - Combined channel=sms&provider=fast2sms&days=7",
@@ -159,7 +159,7 @@
         },
         "has_stats": true
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Statistics Filtering Summary",
@@ -170,7 +170,7 @@
         "total_count": 10,
         "sql_fix_verified": true
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Single Validation - Invalid SMS recipient (too short)",
@@ -181,7 +181,7 @@
         "expected": "invalid phone number",
         "actual": "invalid phone number format"
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Single Validation - Invalid SMS recipient (bad format)",
@@ -192,7 +192,7 @@
         "expected": "phone number should start with",
         "actual": "invalid phone number format"
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Single Validation - Invalid email recipient (no @)",
@@ -203,7 +203,7 @@
         "expected": "invalid email format",
         "actual": "invalid email format"
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Single Validation - Invalid email recipient (no .)",
@@ -214,7 +214,7 @@
         "expected": "invalid email format",
         "actual": "invalid email format"
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Single Validation - Invalid push token (too short)",
@@ -225,7 +225,7 @@
         "expected": "invalid push token",
         "actual": "invalid push token format"
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Bulk Validation - Too many recipients (>1000)",
@@ -235,7 +235,7 @@
         "status_code": 404,
         "response": "404 page not found"
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Bulk Validation - Invalid recipient in bulk list",
@@ -245,7 +245,7 @@
         "status_code": 404,
         "response": "404 page not found"
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Enhanced Validation Summary",
@@ -256,7 +256,7 @@
         "total_count": 7,
         "validation_fix_verified": false
       },
-      "timestamp": "2025-08-04 15:14:56"
+      "timestamp": "2025-08-04 16:23:04"
     },
     {
       "test": "Working Endpoint - Get Templates",
@@ -266,7 +266,7 @@
         "status_code": 200,
         "endpoint": "/admin/templates"
       },
-      "timestamp": "2025-08-04 15:14:57"
+      "timestamp": "2025-08-04 16:23:05"
     },
     {
       "test": "Working Endpoint - Get Config",
@@ -276,7 +276,7 @@
         "status_code": 200,
         "endpoint": "/admin/config/notifications"
       },
-      "timestamp": "2025-08-04 15:14:58"
+      "timestamp": "2025-08-04 16:23:06"
     },
     {
       "test": "Working Notification Endpoints Summary",
@@ -286,7 +286,7 @@
         "success_count": 2,
         "total_count": 2
       },
-      "timestamp": "2025-08-04 15:14:58"
+      "timestamp": "2025-08-04 16:23:06"
     }
   ]
 }

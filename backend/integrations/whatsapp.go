@@ -117,11 +117,11 @@ func (w *WhatsAppNotifier) Send(request *models.SendNotificationRequest, config 
 	// Convert to JSON
 	jsonData, err := json.Marshal(waRequest)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to encode request",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrTemplateParsing, "Failed to encode request", err)
 	}

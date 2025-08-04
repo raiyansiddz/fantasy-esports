@@ -1,11 +1,13 @@
 {
   "summary": {
-    "total_tests": 41,
-    "passed_tests": 17,
-    "failed_tests": 24,
-    "success_rate": "41.5%",
-    "issue_1_stats_fix": false,
-    "issue_2_validation_fix": false
+    "total_tests": 25,
+    "passed_tests": 12,
+    "failed_tests": 13,
+    "success_rate": "48.0%",
+    "stats_fix_success": false,
+    "validation_fix_success": false,
+    "working_functionality_success": true,
+    "both_critical_fixes_working": false
   },
   "test_results": [
     {
@@ -17,139 +19,139 @@
         "status": "healthy",
         "version": "1.0.0"
       },
-      "timestamp": "2025-08-04 14:41:11"
+      "timestamp": "2025-08-04 14:59:05"
     },
     {
       "test": "Admin Login Authentication",
       "passed": true,
-      "details": "Admin login successful. Token obtained.",
+      "details": "\u2705 Admin login successful. Token obtained.",
       "response_data": {
         "status_code": 200,
         "has_token": true
       },
-      "timestamp": "2025-08-04 14:41:12"
+      "timestamp": "2025-08-04 14:59:06"
     },
     {
-      "test": "Stats Filtering - No filters",
+      "test": "Statistics Filter - No filters",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {},
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:12"
+      "timestamp": "2025-08-04 14:59:06"
     },
     {
-      "test": "Stats Filtering - SMS channel filter",
+      "test": "Statistics Filter - Channel SMS filter",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "channel": "sms"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:12"
+      "timestamp": "2025-08-04 14:59:06"
     },
     {
-      "test": "Stats Filtering - Email channel filter",
+      "test": "Statistics Filter - Channel Email filter",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "channel": "email"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:12"
+      "timestamp": "2025-08-04 14:59:07"
     },
     {
-      "test": "Stats Filtering - Fast2SMS provider filter",
+      "test": "Statistics Filter - Provider Fast2SMS filter",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "provider": "fast2sms"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:13"
+      "timestamp": "2025-08-04 14:59:07"
     },
     {
-      "test": "Stats Filtering - SMTP provider filter",
+      "test": "Statistics Filter - Provider SMTP filter",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "provider": "smtp"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:13"
+      "timestamp": "2025-08-04 14:59:07"
     },
     {
-      "test": "Stats Filtering - SMS + Fast2SMS filter",
+      "test": "Statistics Filter - Combined channel=sms&provider=fast2sms",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "channel": "sms",
           "provider": "fast2sms"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:13"
+      "timestamp": "2025-08-04 14:59:07"
     },
     {
-      "test": "Stats Filtering - Email + SMTP filter",
+      "test": "Statistics Filter - Combined channel=email&provider=smtp",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "channel": "email",
           "provider": "smtp"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:13"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Stats Filtering - 7 days filter",
+      "test": "Statistics Filter - Days=7 filter",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "days": "7"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Stats Filtering - 30 days filter",
+      "test": "Statistics Filter - Days=30 filter",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
           "days": "30"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Stats Filtering - Combined filters",
+      "test": "Statistics Filter - Combined channel=sms&provider=fast2sms&days=7",
       "passed": false,
-      "details": "\u274c SQL ERROR: Statistics endpoint still failing with 500 - SQL query fix not working",
+      "details": "\u274c STILL BROKEN: SQL syntax error not fixed - failed to get stats: pq: syntax error at or near \"$1\"",
       "response_data": {
         "status_code": 500,
         "params": {
@@ -157,322 +159,151 @@
           "provider": "fast2sms",
           "days": "7"
         },
-        "response": "{\"success\":false,\"error\":\"failed to get stats: pq: syntax error at or near \\\"$1\\\"\",\"code\":\"STATS_FETCH_FAILED\"}"
+        "sql_error": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Statistics Filtering Summary",
+      "test": "Issue 1 - Statistics Filtering Fix Summary",
       "passed": false,
-      "details": "\u274c 10/10 statistics filtering tests failed (Success rate: 0/10)",
+      "details": "\u274c 10/10 statistics filtering tests still failing (Success rate: 0/10)",
       "response_data": {
-        "success_count": 0,
-        "total_count": 10
+        "working_count": 0,
+        "total_count": 10,
+        "sql_fix_verified": false
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Send Validation - Missing required fields",
+      "test": "Single Validation - Invalid SMS recipient (too short)",
       "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Missing required fields",
+      "details": "\u2705 FIXED: Correct recipient validation error returned",
       "response_data": {
         "status_code": 400,
-        "error": "Recipient is required",
-        "payload": {}
+        "expected_error": "invalid phone number",
+        "got_expected": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Send Validation - Missing recipient",
+      "test": "Single Validation - Invalid SMS recipient (bad format)",
+      "passed": false,
+      "details": "\u274c Unexpected validation error: invalid phone number format",
+      "response_data": {
+        "status_code": 400,
+        "expected_error": "phone number should start with",
+        "unexpected_error": "invalid phone number format"
+      },
+      "timestamp": "2025-08-04 14:59:08"
+    },
+    {
+      "test": "Single Validation - Invalid email recipient (no @)",
       "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Missing recipient",
+      "details": "\u2705 FIXED: Correct recipient validation error returned",
       "response_data": {
         "status_code": 400,
-        "error": "Recipient is required",
-        "payload": {
-          "channel": "sms"
-        }
+        "expected_error": "invalid email format",
+        "got_expected": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Send Validation - Missing channel",
+      "test": "Single Validation - Invalid email recipient (no .)",
       "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Missing channel",
+      "details": "\u2705 FIXED: Correct recipient validation error returned",
       "response_data": {
         "status_code": 400,
-        "error": "Invalid channel. Must be one of: sms, email, push, whatsapp",
-        "payload": {
-          "recipient": "+919876543210"
-        }
+        "expected_error": "invalid email format",
+        "got_expected": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Send Validation - Invalid channel",
+      "test": "Single Validation - Invalid push token (too short)",
       "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Invalid channel",
+      "details": "\u2705 FIXED: Correct recipient validation error returned",
       "response_data": {
         "status_code": 400,
-        "error": "Invalid channel. Must be one of: sms, email, push, whatsapp",
-        "payload": {
-          "channel": "invalid_channel",
-          "recipient": "+919876543210"
-        }
+        "expected_error": "invalid push token",
+        "got_expected": true
       },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Send Validation - Invalid SMS recipient (too short)",
-      "passed": false,
-      "details": "Wrong error message. Expected 'invalid phone number' in 'either template_id or body must be provided'",
-      "response_data": {
-        "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "invalid phone number"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Send Validation - Invalid SMS recipient (bad format)",
-      "passed": false,
-      "details": "Wrong error message. Expected 'phone number should start with' in 'either template_id or body must be provided'",
-      "response_data": {
-        "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "phone number should start with"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Send Validation - Invalid email recipient (no @)",
-      "passed": false,
-      "details": "Wrong error message. Expected 'invalid email format' in 'either template_id or body must be provided'",
-      "response_data": {
-        "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "invalid email format"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Send Validation - Invalid email recipient (no .)",
-      "passed": false,
-      "details": "Wrong error message. Expected 'invalid email format' in 'either template_id or body must be provided'",
-      "response_data": {
-        "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "invalid email format"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Send Validation - Invalid push token (too short)",
-      "passed": false,
-      "details": "Wrong error message. Expected 'invalid push token' in 'either template_id or body must be provided'",
-      "response_data": {
-        "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "invalid push token"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Send Validation - Missing template_id and body",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Missing template_id and body",
-      "response_data": {
-        "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "payload": {
-          "channel": "sms",
-          "recipient": "+919876543210"
-        }
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Send Notification Validation Summary",
-      "passed": false,
-      "details": "\u274c 5/10 validation tests failed (Success rate: 5/10)",
-      "response_data": {
-        "success_count": 5,
-        "total_count": 10
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Bulk Validation - Empty recipients and no user filter",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Empty recipients and no user filter",
-      "response_data": {
-        "status_code": 400,
-        "error": "Recipients list or user filter is required for bulk notifications"
-      },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
       "test": "Bulk Validation - Too many recipients (>1000)",
-      "passed": false,
-      "details": "Wrong error message. Expected 'maximum 1000 recipients allowed' in 'either template_id or body must be provided'",
+      "passed": true,
+      "details": "\u2705 FIXED: Correct bulk validation error returned",
       "response_data": {
         "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "maximum 1000 recipients allowed"
+        "expected_error": "maximum 1000 recipients allowed",
+        "got_expected": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
       "test": "Bulk Validation - Invalid recipient in bulk list",
-      "passed": false,
-      "details": "Wrong error message. Expected 'invalid recipient' in 'either template_id or body must be provided'",
+      "passed": true,
+      "details": "\u2705 FIXED: Correct bulk validation error returned",
       "response_data": {
         "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "invalid recipient"
+        "expected_error": "invalid recipient",
+        "got_expected": true
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
       "test": "Bulk Validation - Invalid email in bulk list",
+      "passed": true,
+      "details": "\u2705 FIXED: Correct bulk validation error returned",
+      "response_data": {
+        "status_code": 400,
+        "expected_error": "invalid recipient",
+        "got_expected": true
+      },
+      "timestamp": "2025-08-04 14:59:08"
+    },
+    {
+      "test": "Issue 2 - Enhanced Validation Fix Summary",
       "passed": false,
-      "details": "Wrong error message. Expected 'invalid recipient' in 'either template_id or body must be provided'",
+      "details": "\u274c 1/8 validation tests still failing (Single: 4/5, Bulk: 3/3)",
       "response_data": {
-        "status_code": 400,
-        "error": "Either template_id or body must be provided",
-        "expected": "invalid recipient"
+        "single_success": 4,
+        "bulk_success": 3,
+        "total_success": 7,
+        "total_tests": 8,
+        "validation_fix_verified": false
       },
-      "timestamp": "2025-08-04 14:41:14"
+      "timestamp": "2025-08-04 14:59:08"
     },
     {
-      "test": "Bulk Notification Validation Summary",
-      "passed": false,
-      "details": "\u274c 3/4 bulk validation tests failed (Success rate: 1/4)",
-      "response_data": {
-        "success_count": 1,
-        "total_count": 4
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation - Missing required fields",
+      "test": "Working Endpoint - Get Templates",
       "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Missing required fields",
+      "details": "\u2705 Get Templates still working correctly (status: 200)",
       "response_data": {
-        "status_code": 400,
-        "error": "Template name is required"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation - Missing body",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Missing body",
-      "response_data": {
-        "status_code": 400,
-        "error": "Template body is required"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation - Missing channel",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Missing channel",
-      "response_data": {
-        "status_code": 400,
-        "error": "Invalid channel. Must be one of: sms, email, push, whatsapp"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation - Invalid channel",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Invalid channel",
-      "response_data": {
-        "status_code": 400,
-        "error": "Invalid channel. Must be one of: sms, email, push, whatsapp"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation - Invalid provider",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Invalid provider",
-      "response_data": {
-        "status_code": 400,
-        "error": "Invalid provider"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation - Name too long (>200 chars)",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Name too long (>200 chars)",
-      "response_data": {
-        "status_code": 400,
-        "error": "Template name must not exceed 200 characters"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation - Subject too long (>500 chars)",
-      "passed": true,
-      "details": "\u2705 FIXED: Proper validation error returned for Subject too long (>500 chars)",
-      "response_data": {
-        "status_code": 400,
-        "error": "Subject must not exceed 500 characters"
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Template Validation Summary",
-      "passed": true,
-      "details": "\u2705 All template validation tests passed (Success rate: 7/7)",
-      "response_data": {
-        "success_count": 7,
-        "total_count": 7
-      },
-      "timestamp": "2025-08-04 14:41:14"
-    },
-    {
-      "test": "Valid Scenario - Valid SMS notification",
-      "passed": false,
-      "details": "Valid request failed with status 500",
-      "response_data": {
-        "status_code": 500,
-        "response": "{\"success\":false,\"error\":\"NETWORK_ERROR: Failed to parse response (caused by: json: cannot unmarshal string into Go struct field Fast2SMSResponse.message of type []string)\",\"code\":\"SEND_FAILED\"}"
-      },
-      "timestamp": "2025-08-04 14:41:16"
-    },
-    {
-      "test": "Valid Scenario - Valid email notification",
-      "passed": false,
-      "details": "Valid request failed with status 500",
-      "response_data": {
-        "status_code": 500,
-        "response": "{\"success\":false,\"error\":\"INVALID_CONFIG: Missing required config: password\",\"code\":\"SEND_FAILED\"}"
-      },
-      "timestamp": "2025-08-04 14:41:17"
-    },
-    {
-      "test": "Valid Scenario - Valid template creation",
-      "passed": true,
-      "details": "\u2705 Valid request processed successfully",
-      "response_data": {
-        "status_code": 201,
+        "status_code": 200,
         "endpoint": "/admin/templates"
       },
-      "timestamp": "2025-08-04 14:41:18"
+      "timestamp": "2025-08-04 14:59:09"
     },
     {
-      "test": "Valid Notification Scenarios Summary",
-      "passed": false,
-      "details": "\u274c 2/3 valid scenarios failed (Success rate: 1/3)",
+      "test": "Working Endpoint - Get Notification Config",
+      "passed": true,
+      "details": "\u2705 Get Notification Config still working correctly (status: 200)",
       "response_data": {
-        "success_count": 1,
-        "total_count": 3
+        "status_code": 200,
+        "endpoint": "/admin/config/notifications"
       },
-      "timestamp": "2025-08-04 14:41:18"
+      "timestamp": "2025-08-04 14:59:09"
+    },
+    {
+      "test": "Previously Working Functionality Summary",
+      "passed": true,
+      "details": "\u2705 All previously working endpoints still functional (Success rate: 2/2)",
+      "response_data": {
+        "success_count": 2,
+        "total_count": 2
+      },
+      "timestamp": "2025-08-04 14:59:09"
     }
   ]
 }

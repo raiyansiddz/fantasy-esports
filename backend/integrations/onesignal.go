@@ -121,11 +121,11 @@ func (o *OneSignalNotifier) Send(request *models.SendNotificationRequest, config
 	// Parse response
 	var osResponse OneSignalResponse
 	if err := json.NewDecoder(resp.Body).Decode(&osResponse); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to parse response",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to parse response", err)
 	}

@@ -47,6 +47,7 @@ func RunMigrations(db *sql.DB) error {
 		createReferralsTable,
 		createAdminUsersTable,
 		createSystemConfigTable,
+		createNotificationTablesSQL, // Add notification migrations
 		insertDefaultConfigs,
 		insertSampleData,
 	}

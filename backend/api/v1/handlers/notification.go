@@ -303,7 +303,7 @@ func (h *NotificationHandler) CreateTemplate(c *gin.Context) {
 	}
 
 	// Get admin user ID from context (set by auth middleware)
-	adminID, exists := c.Get("user_id")
+	adminID, exists := c.Get("admin_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
 			Success: false,
@@ -496,7 +496,7 @@ func (h *NotificationHandler) UpdateConfig(c *gin.Context) {
 	}
 
 	// Get admin user ID from context
-	adminID, exists := c.Get("user_id")
+	adminID, exists := c.Get("admin_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
 			Success: false,

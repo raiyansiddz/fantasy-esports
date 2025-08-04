@@ -52,7 +52,8 @@ func (m *MailchimpNotifier) Send(request *models.SendNotificationRequest, config
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, err
 	}
 

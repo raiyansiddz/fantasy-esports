@@ -82,7 +82,8 @@ func (w *WhatsAppNotifier) Send(request *models.SendNotificationRequest, config 
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, err
 	}
 
@@ -120,7 +121,8 @@ func (w *WhatsAppNotifier) Send(request *models.SendNotificationRequest, config 
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to encode request",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, NewNotificationError(ErrTemplateParsing, "Failed to encode request", err)
 	}
 
@@ -135,7 +137,8 @@ func (w *WhatsAppNotifier) Send(request *models.SendNotificationRequest, config 
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to create HTTP request",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to create HTTP request", err)
 	}
 
@@ -151,7 +154,8 @@ func (w *WhatsAppNotifier) Send(request *models.SendNotificationRequest, config 
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Network error",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Network error", err)
 	}
 	defer resp.Body.Close()
@@ -163,7 +167,8 @@ func (w *WhatsAppNotifier) Send(request *models.SendNotificationRequest, config 
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to parse response",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to parse response", err)
 	}
 

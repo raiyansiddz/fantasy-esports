@@ -42,7 +42,8 @@ func (s *SESNotifier) Send(request *models.SendNotificationRequest, config map[s
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Configuration validation failed",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, err
 	}
 
@@ -90,7 +91,8 @@ func (s *SESNotifier) Send(request *models.SendNotificationRequest, config map[s
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to create HTTP request",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Failed to create HTTP request", err)
 	}
 
@@ -103,7 +105,8 @@ func (s *SESNotifier) Send(request *models.SendNotificationRequest, config map[s
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to sign request",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, NewNotificationError(ErrAuthError, "Failed to sign request", err)
 	}
 
@@ -115,7 +118,8 @@ func (s *SESNotifier) Send(request *models.SendNotificationRequest, config map[s
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Network error",
-			Error:   &err.Error(),
+			errMsg := err.Error()
+			Error:   &errMsg,
 		}, NewNotificationError(ErrNetworkError, "Network error", err)
 	}
 	defer resp.Body.Close()

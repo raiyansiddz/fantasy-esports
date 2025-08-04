@@ -361,7 +361,7 @@ class NotificationSystemTester:
         for test in bulk_validation_tests:
             try:
                 response = self.session.post(
-                    f"{self.api_base}/notify/bulk", 
+                    f"{self.api_base}/admin/notify/bulk", 
                     headers=headers, 
                     json=test["payload"], 
                     timeout=10

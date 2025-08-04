@@ -101,11 +101,11 @@ func (s *SESNotifier) Send(request *models.SendNotificationRequest, config map[s
 	
 	// Sign request
 	if err := s.signRequest(httpReq, config); err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Failed to sign request",
-			errMsg := err.Error()
 			Error:   &errMsg,
 		}, NewNotificationError(ErrAuthError, "Failed to sign request", err)
 	}

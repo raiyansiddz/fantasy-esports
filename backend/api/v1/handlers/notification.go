@@ -167,17 +167,17 @@ func (h *NotificationHandler) SendBulkNotification(c *gin.Context) {
 		return
 	}
 
-	// Validate that either template_id or body is provided
-	if request.TemplateID == nil && (request.Body == nil || *request.Body == "") {
+	// Limit bulk recipients to prevent abuse (MOVED UP)
+	if len(request.Recipients) > 1000 {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
-			Error:   "Either template_id or body must be provided",
+			Error:   "Maximum 1000 recipients allowed per bulk request",
 			Code:    "VALIDATION_ERROR",
 		})
 		return
 	}
 
-	// Validate recipients format
+	// Validate recipients format (MOVED UP)
 	for _, recipient := range request.Recipients {
 		if err := h.validateRecipient(request.Channel, recipient); err != nil {
 			c.JSON(http.StatusBadRequest, models.ErrorResponse{
@@ -189,11 +189,11 @@ func (h *NotificationHandler) SendBulkNotification(c *gin.Context) {
 		}
 	}
 
-	// Limit bulk recipients to prevent abuse
-	if len(request.Recipients) > 1000 {
+	// Validate that either template_id or body is provided (MOVED DOWN)
+	if request.TemplateID == nil && (request.Body == nil || *request.Body == "") {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
-			Error:   "Maximum 1000 recipients allowed per bulk request",
+			Error:   "Either template_id or body must be provided",
 			Code:    "VALIDATION_ERROR",
 		})
 		return

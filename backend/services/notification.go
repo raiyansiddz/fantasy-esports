@@ -90,11 +90,12 @@ func (s *NotificationService) SendNotification(request *models.SendNotificationR
 	// Create notifier
 	notifier, err := s.notifierFactory.CreateNotifier(*provider, request.Channel)
 	if err != nil {
+		errMsg := err.Error()
 		return &models.NotificationResponse{
 			Success: false,
 			Status:  models.StatusFailed,
 			Message: "Notifier creation failed",
-			Error:   &err.Error(),
+			Error:   &errMsg,
 		}, err
 	}
 

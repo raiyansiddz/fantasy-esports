@@ -260,6 +260,18 @@ backend:
         agent: "testing"
         comment: "✅ ADMIN AUTH MIDDLEWARE WORKING - Admin authentication is working correctly. Other admin endpoints in the same adminRoutes group (lines 176-222) work properly with AdminAuthMiddleware. The 404 errors for analytics endpoints occur before auth middleware is reached, confirming route registration issue."
 
+  - task: "Notification System Fixes - Statistics Filtering and Enhanced Validation"
+    implemented: true
+    working: false
+    file: "/app/backend/services/notification.go"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUES FOUND - Comprehensive testing of notification system fixes reveals significant problems: ISSUE 1 - Statistics Filtering: ALL 10 tests FAILED with SQL syntax errors (pq: syntax error at or near '$1'). The GetNotificationStats function SQL query fix is NOT working. ISSUE 2 - Enhanced Validation: PARTIALLY WORKING - Template validation fully working (7/7 tests), but recipient validation broken. Validation logic checks template_id/body BEFORE validating recipient format, causing wrong error messages. Overall success rate: 41.5% (17/41 tests). The notification system fixes mentioned in review request are NOT properly implemented."
+
 frontend:
   - task: "Frontend referral integration"
     implemented: false

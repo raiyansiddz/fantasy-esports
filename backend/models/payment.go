@@ -150,8 +150,8 @@ func maskKey(key string) string {
 	return key[:4] + "****" + key[len(key)-4:]
 }
 
-// TransactionSummary provides summary view for transactions
-type TransactionSummary struct {
+// PaymentTransactionSummary provides summary view for payment transactions
+type PaymentTransactionSummary struct {
 	TransactionID        string    `json:"transaction_id"`
 	Gateway              string    `json:"gateway"`
 	Amount               float64   `json:"amount"`

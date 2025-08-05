@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/db"
 	"fantasy-esports-backend/internal/services"

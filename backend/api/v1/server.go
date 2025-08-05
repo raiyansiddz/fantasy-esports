@@ -176,6 +176,11 @@ func (s *Server) setupRoutes() {
 		userRoutes.GET("/wallet/payment-methods", walletHandler.GetPaymentMethods)
 		userRoutes.POST("/wallet/payment-methods", walletHandler.AddPaymentMethod)
 
+		// Payment Gateway APIs
+		userRoutes.POST("/payment/create-order", paymentHandler.CreatePaymentOrder)
+		userRoutes.POST("/payment/verify", paymentHandler.VerifyPayment)
+		userRoutes.GET("/payment/status/:transaction_id", paymentHandler.GetPaymentStatus)
+
 		// Notification endpoints (for users)
 		userRoutes.POST("/notify/send", notificationHandler.SendNotification)
 	}

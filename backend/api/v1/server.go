@@ -59,6 +59,9 @@ func (s *Server) setupRoutes() {
 	biService := services.NewBusinessIntelligenceService(s.db)
 	reportingService := services.NewReportingService(s.db)
 	
+	// Initialize payment service
+	paymentService := services.NewPaymentService(s.db)
+	
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(s.db, s.config, cdnClient)
 	userHandler := handlers.NewUserHandler(s.db, s.config, cdnClient)
@@ -70,6 +73,7 @@ func (s *Server) setupRoutes() {
 	tournamentHandler := handlers.NewTournamentHandler(s.db, s.config, cdnClient)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService, biService, reportingService)
 	notificationHandler := handlers.NewNotificationHandler(s.db, s.config)
+	paymentHandler := handlers.NewPaymentHandler(s.db, s.config, paymentService)
 
 	// Health check
 	s.router.GET("/health", func(c *gin.Context) {

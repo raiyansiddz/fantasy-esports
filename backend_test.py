@@ -85,12 +85,9 @@ class PaymentGatewayTester:
             return False
 
     def authenticate_user(self) -> bool:
-        """Authenticate as regular user (mock for testing)"""
+        """Authenticate as regular user with complete registration flow"""
         try:
-            # For testing purposes, we'll create a mock user token
-            # In real scenario, this would involve proper user registration/login
-            
-            # Try to verify a mobile number first
+            # Step 1: Verify mobile number
             mobile_data = {
                 "mobile": "+919876543210",
                 "referral_code": ""
@@ -99,29 +96,56 @@ class PaymentGatewayTester:
             response = self.session.post(f"{self.base_url}/api/v1/auth/verify-mobile", json=mobile_data)
             
             if response.status_code == 200:
-                # Try to verify OTP (this might fail but we'll try)
+                data = response.json()
+                session_id = data.get("session_id")
+                is_new_user = data.get("is_new_user", False)
+                
+                # Step 2: Verify OTP with profile data if new user
                 otp_data = {
+                    "session_id": session_id,
                     "mobile": "+919876543210",
                     "otp": "123456",
                     "referral_code": ""
                 }
                 
+                # Add profile data if it's a new user
+                if is_new_user:
+                    otp_data["profile_data"] = {
+                        "first_name": "Test",
+                        "last_name": "User",
+                        "email": "testuser@example.com",
+                        "date_of_birth": "1990-01-01",
+                        "state": "Maharashtra"
+                    }
+                
                 otp_response = self.session.post(f"{self.base_url}/api/v1/auth/verify-otp", json=otp_data)
                 
                 if otp_response.status_code == 200:
-                    data = otp_response.json()
-                    if data.get("success") and "token" in data:
-                        self.user_token = data["token"]
-                        self.log_test("User Authentication", True, "Successfully authenticated as user")
+                    otp_result = otp_response.json()
+                    if otp_result.get("success") and "access_token" in otp_result:
+                        self.user_token = otp_result["access_token"]
+                        user_info = otp_result.get("user", {})
+                        self.log_test(
+                            "User Authentication", 
+                            True, 
+                            f"Successfully authenticated as user (ID: {user_info.get('id')}, New: {is_new_user})"
+                        )
                         return True
+                else:
+                    self.log_test(
+                        "User Authentication", 
+                        False, 
+                        f"OTP verification failed - Status: {otp_response.status_code}",
+                        otp_response.text[:200]
+                    )
+            else:
+                self.log_test(
+                    "User Authentication", 
+                    False, 
+                    f"Mobile verification failed - Status: {response.status_code}",
+                    response.text[:200]
+                )
             
-            # If normal auth fails, we'll note it but continue with admin token for testing
-            self.log_test(
-                "User Authentication", 
-                False, 
-                "User auth failed - will use admin token for payment testing",
-                f"Mobile verify status: {response.status_code}"
-            )
             return False
             
         except Exception as e:

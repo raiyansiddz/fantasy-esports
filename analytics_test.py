@@ -217,11 +217,11 @@ class AnalyticsDashboardTester:
             for report_type in valid_report_types:
                 report_data = {
                     "report_type": report_type,
-                    "title": f"Test {report_type.title()} Report",
+                    "format": "json",
+                    "date_from": "2024-08-01T00:00:00Z",
+                    "date_to": "2024-08-31T23:59:59Z",
                     "description": f"Automated test report for {report_type} analytics",
-                    "date_from": "2024-01-01",
-                    "date_to": "2024-12-31",
-                    "format": "json"
+                    "filters": {}
                 }
                 
                 response = self.session.post(

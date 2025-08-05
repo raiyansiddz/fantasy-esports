@@ -61,7 +61,7 @@ func (s *Server) setupRoutes() {
 	reportingService := services.NewReportingService(s.db)
 	
 	// Initialize payment service
-	paymentService := internal_services.NewPaymentService(s.db)
+	paymentService := internal.NewPaymentService(s.db)
 	
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(s.db, s.config, cdnClient)

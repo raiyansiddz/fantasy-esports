@@ -66,8 +66,8 @@ class PaymentGatewayTester:
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get("success") and "token" in data:
-                    self.admin_token = data["token"]
+                if data.get("success") and "access_token" in data:
+                    self.admin_token = data["access_token"]
                     self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
                     self.log_test("Admin Authentication", True, "Successfully authenticated as admin")
                     return True

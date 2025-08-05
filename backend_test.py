@@ -675,12 +675,20 @@ class PaymentGatewayTester:
                 "currency": "INR"
             }
             
-            # Make request without authorization header
+            # Make request without authorization header by creating a new session or clearing headers
+            original_headers = self.session.headers.copy()
+            # Remove Authorization header if it exists
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
             response = self.session.post(
                 f"{self.base_url}/api/v1/payment/create-order", 
                 json=valid_data
-                # No headers
             )
+            
+            # Restore original headers
+            self.session.headers.clear()
+            self.session.headers.update(original_headers)
             
             if response.status_code == 401:
                 error_tests_passed += 1

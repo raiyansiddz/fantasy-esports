@@ -373,6 +373,124 @@ CREATE INDEX IF NOT EXISTS idx_payment_transactions_gateway_txn ON payment_trans
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_transaction_id ON payment_transactions(transaction_id);
 `
 
+const createPaymentGatewayConfigsTable = `
+CREATE TABLE IF NOT EXISTS payment_gateway_configs (
+    id BIGSERIAL PRIMARY KEY,
+    gateway VARCHAR(50) UNIQUE NOT NULL,
+    key1 VARCHAR(200) NOT NULL,
+    key2 VARCHAR(200) NOT NULL,
+    client_version VARCHAR(10),
+    is_live BOOLEAN DEFAULT FALSE,
+    enabled BOOLEAN DEFAULT FALSE,
+    currency VARCHAR(3) DEFAULT 'INR',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_gateway_configs_gateway ON payment_gateway_configs(gateway);
+CREATE INDEX IF NOT EXISTS idx_payment_gateway_configs_enabled ON payment_gateway_configs(enabled);
+`
+
+const createWebhookLogsTable = `
+CREATE TABLE IF NOT EXISTS webhook_logs (
+    id BIGSERIAL PRIMARY KEY,
+    gateway VARCHAR(50) NOT NULL,
+    event_type VARCHAR(100),
+    transaction_id VARCHAR(100),
+    payload JSONB NOT NULL,
+    processing_status VARCHAR(20) DEFAULT 'pending',
+    processing_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_gateway_event ON webhook_logs(gateway, event_type);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_transaction_id ON webhook_logs(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_status ON webhook_logs(processing_status);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_created_at ON webhook_logs(created_at DESC);
+`
+
+const createPaymentMethodsTable = `
+CREATE TABLE IF NOT EXISTS payment_methods (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    gateway VARCHAR(50) NOT NULL,
+    method_type VARCHAR(50) NOT NULL,
+    method_data JSONB NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_methods_user_id ON payment_methods(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_gateway ON payment_methods(gateway);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_is_default ON payment_methods(user_id, is_default);
+`
+
+const createRefundTransactionsTable = `
+CREATE TABLE IF NOT EXISTS refund_transactions (
+    id BIGSERIAL PRIMARY KEY,
+    payment_transaction_id BIGINT NOT NULL,
+    refund_transaction_id VARCHAR(100) UNIQUE NOT NULL,
+    gateway_refund_id VARCHAR(200),
+    amount DECIMAL(12,2) NOT NULL,
+    reason TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    gateway_response JSONB,
+    processed_by BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    FOREIGN KEY (payment_transaction_id) REFERENCES payment_transactions(id),
+    FOREIGN KEY (processed_by) REFERENCES admin_users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_refund_transactions_payment_id ON refund_transactions(payment_transaction_id);
+CREATE INDEX IF NOT EXISTS idx_refund_transactions_status ON refund_transactions(status);
+CREATE INDEX IF NOT EXISTS idx_refund_transactions_created_at ON refund_transactions(created_at DESC);
+`
+
+const createPaymentAnalyticsTable = `
+CREATE TABLE IF NOT EXISTS payment_analytics (
+    id BIGSERIAL PRIMARY KEY,
+    date DATE NOT NULL,
+    gateway VARCHAR(50) NOT NULL,
+    total_transactions BIGINT DEFAULT 0,
+    successful_transactions BIGINT DEFAULT 0,
+    failed_transactions BIGINT DEFAULT 0,
+    total_amount DECIMAL(15,2) DEFAULT 0,
+    successful_amount DECIMAL(15,2) DEFAULT 0,
+    average_amount DECIMAL(10,2) DEFAULT 0,
+    success_rate DECIMAL(5,2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(date, gateway)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_analytics_date_gateway ON payment_analytics(date, gateway);
+CREATE INDEX IF NOT EXISTS idx_payment_analytics_date ON payment_analytics(date DESC);
+`
+
+const createAdminPaymentConfigTable = `
+CREATE TABLE IF NOT EXISTS admin_payment_config (
+    id BIGSERIAL PRIMARY KEY,
+    min_deposit_amount DECIMAL(10,2) DEFAULT 100,
+    max_deposit_amount DECIMAL(10,2) DEFAULT 100000,
+    min_withdraw_amount DECIMAL(10,2) DEFAULT 200,
+    max_withdraw_amount DECIMAL(10,2) DEFAULT 200000,
+    daily_deposit_limit DECIMAL(12,2) DEFAULT 500000,
+    daily_withdraw_limit DECIMAL(12,2) DEFAULT 1000000,
+    transaction_fee_percent DECIMAL(5,2) DEFAULT 0,
+    maintenance_mode BOOLEAN DEFAULT FALSE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT,
+    FOREIGN KEY (updated_by) REFERENCES admin_users(id)
+);
+
+-- Insert default config
+INSERT INTO admin_payment_config (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+`
+
 const createReferralsTable = `
 CREATE TABLE IF NOT EXISTS referrals (
     id BIGSERIAL PRIMARY KEY,

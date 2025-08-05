@@ -56,13 +56,24 @@ func main() {
 		log.Fatal("Failed to initialize gateway configs:", err)
 	}
 	
+	// Initialize test user for payment testing
+	log.Println("Initializing test user for payment testing...")
+	
+	if err := initializeTestUser(database); err != nil {
+		log.Printf("Warning: Failed to initialize test user: %v", err)
+	} else {
+		log.Println("✅ Test user initialized successfully!")
+	}
+	
 	log.Println("✅ Payment gateway configurations initialized successfully!")
 	log.Println("Default configurations:")
 	log.Println("- Razorpay: TEST environment with test credentials")
 	log.Println("- PhonePe: TEST environment with test credentials")
+	log.Println("- Test User: +919876543210 (for payment testing)")
 	log.Println("")
 	log.Println("You can now:")
 	log.Println("1. Update configurations via Admin APIs")
 	log.Println("2. Switch to production credentials when ready")
 	log.Println("3. Enable/disable gateways as needed")
+	log.Println("4. Test payments using mobile +919876543210 with OTP 123456")
 }

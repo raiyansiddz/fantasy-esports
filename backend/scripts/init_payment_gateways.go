@@ -11,7 +11,7 @@ import (
 func initializeTestUser(database *sql.DB) error {
 	// Check if test user already exists
 	var exists bool
-	err := database.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE mobile = ?)", "+919876543210").Scan(&exists)
+	err := database.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE mobile = $1)", "+919876543210").Scan(&exists)
 	if err != nil {
 		return err
 	}
@@ -21,18 +21,38 @@ func initializeTestUser(database *sql.DB) error {
 		return nil
 	}
 	
-	// Create test user
-	query := `
-		INSERT INTO users (mobile, name, email, is_verified, created_at, updated_at) 
-		VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+	// Create test user with referral code and wallet
+	tx, err := database.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	
+	// Insert user
+	var userID int64
+	userQuery := `
+		INSERT INTO users (mobile, first_name, last_name, email, is_verified, referral_code, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+		RETURNING id
 	`
 	
-	_, err = database.Exec(query, "+919876543210", "Test User", "test@example.com", true)
+	err = tx.QueryRow(userQuery, "+919876543210", "Test", "User", "test@example.com", true, "TEST123").Scan(&userID)
 	if err != nil {
 		return err
 	}
 	
-	return nil
+	// Create user wallet
+	walletQuery := `
+		INSERT INTO user_wallets (user_id, bonus_balance, deposit_balance, winning_balance, total_balance, updated_at)
+		VALUES ($1, 0.0, 0.0, 0.0, 0.0, NOW())
+	`
+	
+	_, err = tx.Exec(walletQuery, userID)
+	if err != nil {
+		return err
+	}
+	
+	return tx.Commit()
 }
 
 func main() {

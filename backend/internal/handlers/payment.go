@@ -3,7 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"fantasy-esports-backend/config"
-	"fantasy-esports-backend/internal/services"
+	internal_services "fantasy-esports-backend/internal/services"
 	"fantasy-esports-backend/models"
 	"net/http"
 	"strconv"

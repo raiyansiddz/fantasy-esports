@@ -28,9 +28,6 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 	
-	// Initialize logger
-	logger.Init()
-	
 	// Initialize database
 	database, err := db.Initialize(cfg.DatabaseURL)
 	if err != nil {

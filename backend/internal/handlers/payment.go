@@ -14,7 +14,7 @@ import (
 type PaymentHandler struct {
 	db             *sql.DB
 	config         *config.Config
-	paymentService *services.PaymentService
+	paymentService *internal_services.PaymentService
 }
 
 func NewPaymentHandler(db *sql.DB, config *config.Config, paymentService *services.PaymentService) *PaymentHandler {

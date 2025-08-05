@@ -195,7 +195,14 @@ func (h *PaymentHandler) UpdateGatewayConfig(c *gin.Context) {
 		return
 	}
 
-	err := h.paymentService.UpdateGatewayConfig(gateway, &req)
+	configReq := &internal_services.UpdateGatewayConfigRequest{
+		Key1:     req.Key1,
+		Key2:     req.Key2,
+		IsLive:   req.IsLive,
+		Enabled:  req.Enabled,
+		Currency: req.Currency,
+	}
+	err := h.paymentService.UpdateGatewayConfig(gateway, configReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update gateway config", "details": err.Error()})
 		return

@@ -19,7 +19,6 @@ import (
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/db"
 	"fantasy-esports-backend/api/v1"
-	"fantasy-esports-backend/pkg/logger"
 	_ "fantasy-esports-backend/docs"
 	"log"
 )

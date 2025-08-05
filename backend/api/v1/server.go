@@ -277,6 +277,12 @@ func (s *Server) setupRoutes() {
 		// Statistics
 		adminRoutes.GET("/stats/notifications", notificationHandler.GetNotificationStats)
 		adminRoutes.GET("/stats/channels", notificationHandler.GetChannelStats)
+
+		// Payment Gateway Management
+		adminRoutes.GET("/payment/gateways", paymentHandler.GetGatewayConfigs)
+		adminRoutes.PUT("/payment/gateways/:gateway", paymentHandler.UpdateGatewayConfig)
+		adminRoutes.PUT("/payment/gateways/:gateway/toggle", paymentHandler.ToggleGatewayStatus)
+		adminRoutes.GET("/payment/transactions", paymentHandler.GetTransactionLogs)
 	}
 
 	// WebSocket routes for real-time updates

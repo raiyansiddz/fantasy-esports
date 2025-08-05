@@ -58,7 +58,7 @@ class PaymentGatewayTester:
         try:
             # Try to authenticate as admin
             login_data = {
-                "email": "admin@fantasyesports.com",
+                "username": "admin",
                 "password": "admin123"
             }
             

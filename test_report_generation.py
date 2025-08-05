@@ -36,8 +36,8 @@ def test_report_generation():
     report_data = {
         "report_type": "user",
         "format": "json",
-        "date_from": "2024-01-01T00:00:00Z",
-        "date_to": "2024-12-31T23:59:59Z",
+        "date_from": "2024-08-01T00:00:00Z",
+        "date_to": "2024-08-31T23:59:59Z",
         "description": "Test user report for analytics dashboard testing",
         "filters": {
             "kyc_status": "verified"

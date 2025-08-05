@@ -17,7 +17,7 @@ type PaymentHandler struct {
 	paymentService *internal_services.PaymentService
 }
 
-func NewPaymentHandler(db *sql.DB, config *config.Config, paymentService *services.PaymentService) *PaymentHandler {
+func NewPaymentHandler(db *sql.DB, config *config.Config, paymentService *internal_services.PaymentService) *PaymentHandler {
 	return &PaymentHandler{
 		db:             db,
 		config:         config,

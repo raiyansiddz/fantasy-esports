@@ -101,7 +101,12 @@ func (h *PaymentHandler) VerifyPayment(c *gin.Context) {
 	}
 
 	// Verify payment
-	response, err := h.paymentService.VerifyPayment(userID.(int64), &req)
+	verifyReq := &internal_services.VerifyPaymentRequest{
+		TransactionID: req.TransactionID,
+		Gateway:       req.Gateway,
+		GatewayData:   req.GatewayData,
+	}
+	response, err := h.paymentService.VerifyPayment(userID.(int64), verifyReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify payment", "details": err.Error()})
 		return

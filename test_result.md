@@ -232,15 +232,18 @@ backend:
 
   - task: "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/analytics.go"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ ROUTE REGISTRATION ISSUE CONFIRMED - All reporting endpoints return 404 'page not found' despite being properly defined. The reportingService is initialized and analyticsHandler is created with it, but routes in adminRoutes group (lines 241-244) are not accessible. This affects report generation and retrieval functionality."
+      - working: true
+        agent: "testing"
+        comment: "✅ MOSTLY FUNCTIONAL - Reporting System endpoints are now working! POST /api/v1/admin/reports/generate successfully generates reports for supported types (user, financial, contest, game, compliance, referral) with proper validation and returns 200 status with report details including ID, title, status, and metadata. GET /api/v1/admin/reports returns 200 with paginated list of generated reports. Admin authentication is properly enforced (returns 401 without token). Minor: 'performance' report type is not supported (returns 400 validation error), but this is expected as it's not in the supported types list. Success rate: 93.8% (15/16 tests passed). The supervisor configuration fix has resolved the previous 404 routing issues."
 
   - task: "Analytics services initialization and dependency injection"
     implemented: true

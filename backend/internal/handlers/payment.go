@@ -60,7 +60,12 @@ func (h *PaymentHandler) CreatePaymentOrder(c *gin.Context) {
 	}
 
 	// Create payment order
-	response, err := h.paymentService.CreatePaymentOrder(userID.(int64), &req)
+	orderReq := &internal_services.CreateOrderRequest{
+		Amount:   req.Amount,
+		Gateway:  req.Gateway,
+		Currency: req.Currency,
+	}
+	response, err := h.paymentService.CreatePaymentOrder(userID.(int64), orderReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create payment order", "details": err.Error()})
 		return

@@ -5,6 +5,7 @@ import (
 	"fantasy-esports-backend/api/v1/handlers"
 	"fantasy-esports-backend/api/v1/middleware"
 	"fantasy-esports-backend/config"
+	internal_handlers "fantasy-esports-backend/internal/handlers"
 	internal_services "fantasy-esports-backend/internal/services"
 	"fantasy-esports-backend/pkg/cdn"
 	"fantasy-esports-backend/services"

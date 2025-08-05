@@ -377,13 +377,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Analytics Dashboard endpoint (GET /admin/analytics/dashboard)"
-    - "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
-    - "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
+    []
   stuck_tasks:
-    - "Analytics Dashboard endpoint (GET /admin/analytics/dashboard)"
-    - "Business Intelligence Dashboard endpoint (GET /admin/bi/dashboard)"
-    - "Reporting System endpoints (POST /admin/reports/generate, GET /admin/reports)"
+    []
   test_all: false
   test_priority: "high_first"
 

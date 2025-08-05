@@ -8,6 +8,33 @@ import (
 	"log"
 )
 
+func initializeTestUser(database *sql.DB) error {
+	// Check if test user already exists
+	var exists bool
+	err := database.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE mobile = ?)", "+919876543210").Scan(&exists)
+	if err != nil {
+		return err
+	}
+	
+	if exists {
+		log.Println("Test user already exists, skipping creation")
+		return nil
+	}
+	
+	// Create test user
+	query := `
+		INSERT INTO users (mobile, name, email, is_verified, created_at, updated_at) 
+		VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+	`
+	
+	_, err = database.Exec(query, "+919876543210", "Test User", "test@example.com", true)
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}
+
 func main() {
 	// Load configuration
 	cfg := config.Load()

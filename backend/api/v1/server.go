@@ -122,6 +122,23 @@ func (s *Server) setupRoutes() {
 		v1.GET("/matches/:id/live-stream", tournamentHandler.GetMatchLiveStream)
 		v1.GET("/live-streams/active", tournamentHandler.GetActiveLiveStreams)
 
+		// Content Management - Public Routes
+		// Banners (public access)
+		v1.GET("/banners/active", contentHandler.GetActiveBanners)
+		v1.POST("/banners/:id/click", contentHandler.TrackBannerClick)
+		
+		// SEO Content (public access)
+		v1.GET("/seo/:slug", contentHandler.GetSEOContentBySlug)
+		
+		// FAQ (public access)
+		v1.GET("/faq/sections", contentHandler.ListFAQSections)
+		v1.GET("/faq/items", contentHandler.ListFAQItems)
+		v1.POST("/faq/items/:id/view", contentHandler.TrackFAQView)
+		v1.POST("/faq/items/:id/like", contentHandler.TrackFAQLike)
+		
+		// Legal Documents (public access)
+		v1.GET("/legal/:type", contentHandler.GetActiveLegalDocument)
+
 		// Admin login (public)
 		v1.POST("/admin/login", adminHandler.Login)
 	}

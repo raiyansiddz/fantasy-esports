@@ -286,6 +286,46 @@ func (s *Server) setupRoutes() {
 		adminRoutes.PUT("/payment/gateways/:gateway", paymentHandler.UpdateGatewayConfig)
 		adminRoutes.PUT("/payment/gateways/:gateway/toggle", paymentHandler.ToggleGatewayStatus)
 		adminRoutes.GET("/payment/transactions", paymentHandler.GetTransactionLogs)
+
+		// Content Management - Banner Management
+		adminRoutes.POST("/content/banners", contentHandler.CreateBanner)
+		adminRoutes.GET("/content/banners", contentHandler.ListBanners)
+		adminRoutes.GET("/content/banners/:id", contentHandler.GetBanner)
+		adminRoutes.PUT("/content/banners/:id", contentHandler.UpdateBanner)
+		adminRoutes.DELETE("/content/banners/:id", contentHandler.DeleteBanner)
+		adminRoutes.PATCH("/content/banners/:id/toggle", contentHandler.ToggleBannerStatus)
+
+		// Content Management - Email Templates
+		adminRoutes.POST("/content/email-templates", contentHandler.CreateEmailTemplate)
+		adminRoutes.GET("/content/email-templates", contentHandler.ListEmailTemplates)
+
+		// Content Management - Marketing Campaigns
+		adminRoutes.POST("/content/campaigns", contentHandler.CreateMarketingCampaign)
+		adminRoutes.GET("/content/campaigns", contentHandler.ListMarketingCampaigns)
+		adminRoutes.PATCH("/content/campaigns/:id/status", contentHandler.UpdateCampaignStatus)
+
+		// Content Management - SEO Content
+		adminRoutes.POST("/content/seo", contentHandler.CreateSEOContent)
+		adminRoutes.GET("/content/seo", contentHandler.ListSEOContent)
+		adminRoutes.GET("/content/seo/:id", contentHandler.GetSEOContent)
+		adminRoutes.PUT("/content/seo/:id", contentHandler.UpdateSEOContent)
+		adminRoutes.DELETE("/content/seo/:id", contentHandler.DeleteSEOContent)
+
+		// Content Management - FAQ Management
+		adminRoutes.POST("/content/faq/sections", contentHandler.CreateFAQSection)
+		adminRoutes.PUT("/content/faq/sections/:id", contentHandler.UpdateFAQSection)
+		adminRoutes.POST("/content/faq/items", contentHandler.CreateFAQItem)
+		adminRoutes.PUT("/content/faq/items/:id", contentHandler.UpdateFAQItem)
+
+		// Content Management - Legal Documents
+		adminRoutes.POST("/content/legal", contentHandler.CreateLegalDocument)
+		adminRoutes.GET("/content/legal", contentHandler.ListLegalDocuments)
+		adminRoutes.PUT("/content/legal/:id", contentHandler.UpdateLegalDocument)
+		adminRoutes.PATCH("/content/legal/:id/publish", contentHandler.PublishLegalDocument)
+		adminRoutes.DELETE("/content/legal/:id", contentHandler.DeleteLegalDocument)
+
+		// Content Management - Analytics
+		adminRoutes.GET("/content/analytics/:content_type/:content_id", contentHandler.GetContentAnalytics)
 	}
 
 	// WebSocket routes for real-time updates

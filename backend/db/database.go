@@ -54,6 +54,7 @@ func RunMigrations(db *sql.DB) error {
 		createAdminUsersTable,
 		createSystemConfigTable,
 		createNotificationTablesSQL, // Add notification migrations
+		createContentManagementTables, // Add content management migrations
 		insertDefaultConfigs,
 		insertSampleData,
 	}

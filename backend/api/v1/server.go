@@ -357,6 +357,7 @@ func (s *Server) setupRoutes() {
 		// Achievement Management
 		adminRoutes.POST("/achievements", achievementHandler.CreateAchievement)
 		adminRoutes.GET("/achievements", achievementHandler.GetAchievements)
+		adminRoutes.GET("/achievements/stats", achievementHandler.GetAchievementStats)
 		adminRoutes.PUT("/achievements/:id", achievementHandler.UpdateAchievement)
 		adminRoutes.DELETE("/achievements/:id", achievementHandler.DeleteAchievement)
 

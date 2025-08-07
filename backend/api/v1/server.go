@@ -141,6 +141,10 @@ func (s *Server) setupRoutes() {
 
 		// Admin login (public)
 		v1.POST("/admin/login", adminHandler.Login)
+
+		// Public fraud reporting
+		v1.POST("/fraud/report", fraudDetectionHandler.ReportSuspiciousActivity)
+		v1.POST("/fraud/webhook", fraudDetectionHandler.FraudWebhook)
 	}
 
 	// Protected user routes (require user authentication)

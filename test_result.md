@@ -563,11 +563,14 @@ test_plan:
     file: "/app/backend/api/v1/handlers/"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
         comment: "🎯 COMPREHENSIVE TESTING COMPLETED - MIXED RESULTS (30.6% success rate): ✅ WORKING SYSTEMS (3/7): Achievement System & Badge Management (fully functional with 2000+ achievements, admin/user endpoints working), Tournament Brackets (all 4 types: single/double elimination, round robin, swiss system), Social Sharing Analytics (admin endpoints accessible). ❌ ISSUES FOUND (4/7): Friend System (self-referral validation preventing friend addition), Social Sharing (data validation issues), Advanced Game Analytics (400 errors on all endpoints), Player Predictions (invalid match ID errors), Fraud Detection (admin auth issues). KEY FINDINGS: Backend running correctly, admin auth works for most systems, database integration confirmed, extensive data exists. Issues are primarily in request validation and data structure requirements. Core infrastructure is production-ready with targeted fixes needed."
+      - working: "pending"
+        agent: "main_agent"
+        comment: "🔄 RE-TESTING INITIATED - Main agent preparing to re-test all 7 Advanced Gaming Features after implementing 5 specific fixes. Previous success rate: 30.6% (11/36 tests). Target improvement: >70% success rate. Fixes implemented: 1) Friend System AddFriendRequest model enhanced for username/mobile lookup, 2) Social Sharing validation enhanced with detailed error messages, 3) Advanced Game Analytics enhanced game ID validation with existence checking, 4) Player Performance Predictions fixed parameter mismatch (:match_id to :id), 5) Advanced Fraud Detection fixed context key mismatch (admin_user_id to admin_id). Backend successfully restarted with Go binary on http://localhost:8001. Ready for comprehensive re-testing to verify improvements."
   - agent: "testing"
     message: "🎉 COMPREHENSIVE REFERRAL SYSTEM TESTING COMPLETED SUCCESSFULLY! All core functionality is working perfectly. The GoLang Fantasy Esports backend has a fully functional referral system with: ✅ User registration with referral codes ✅ Referral code application and validation ✅ Automatic referral completion on deposits/contests ✅ Tier-based reward system (Bronze to Diamond) ✅ Complete statistics and history tracking ✅ Leaderboard functionality ✅ Proper database schema with indexing ✅ Security and authentication ✅ Edge case handling. Database shows 5 completed referrals and 13 users with referral codes. System is production-ready with 100% test success rate across 36 test cases. No critical issues found."
   - agent: "main_agent"

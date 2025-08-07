@@ -17,7 +17,7 @@ type ContentHandler struct {
 	contentService *services.ContentService
 	db             *sql.DB
 	config         *config.Config
-	cdnClient      cdn.Client
+	cdnClient      *cdn.CloudinaryClient
 }
 
 func NewContentHandler(db *sql.DB, cfg *config.Config, cdnClient cdn.Client) *ContentHandler {

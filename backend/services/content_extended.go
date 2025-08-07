@@ -71,8 +71,10 @@ func (s *ContentService) UpdateSEOContent(id int64, req *models.SEOContentCreate
 func (s *ContentService) GetSEOContent(id int64) (*models.SEOContentResponse, error) {
 	query := `
 		SELECT s.id, s.page_type, s.page_slug, s.meta_title, s.meta_description, s.keywords,
-			s.og_title, s.og_description, s.og_image, s.twitter_card, s.structured_data,
-			s.content, s.is_active, s.created_by, s.created_at, s.updated_at,
+			COALESCE(s.og_title, '') as og_title, COALESCE(s.og_description, '') as og_description, 
+			COALESCE(s.og_image, '') as og_image, COALESCE(s.twitter_card, '') as twitter_card, 
+			s.structured_data, COALESCE(s.content, '') as content, s.is_active, s.created_by, 
+			s.created_at, s.updated_at,
 			COALESCE(au.full_name, au.username) as creator_name
 		FROM seo_content s
 		LEFT JOIN admin_users au ON s.created_by = au.id

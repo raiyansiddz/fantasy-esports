@@ -1,22 +1,32 @@
 #!/usr/bin/env python3
 """
-Comprehensive Payment Gateway System Testing for GoLang Fantasy Esports Backend
-Testing PhonePe and Razorpay integration with admin configuration APIs
+Comprehensive Content Management System Testing for GoLang Fantasy Esports Backend
+Testing CMS functionality including banners, email templates, marketing campaigns, 
+SEO content, FAQ management, legal documents, and analytics tracking
 """
 
 import requests
 import json
 import time
 import uuid
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
 
-class PaymentGatewayTester:
+class ContentManagementTester:
     def __init__(self, base_url: str = "http://localhost:8001"):
         self.base_url = base_url
         self.session = requests.Session()
         self.admin_token = None
         self.user_token = None
         self.test_results = []
+        self.created_resources = {
+            "banners": [],
+            "email_templates": [],
+            "campaigns": [],
+            "seo_content": [],
+            "faq_sections": [],
+            "faq_items": [],
+            "legal_documents": []
+        }
         
     def log_test(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
         """Log test results"""
@@ -84,101 +94,129 @@ class PaymentGatewayTester:
             self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
 
-    def authenticate_user(self) -> bool:
-        """Authenticate as regular user with complete registration flow"""
+    def test_database_setup_verification(self) -> bool:
+        """Test if CMS database tables were created successfully"""
         try:
-            # Step 1: Verify mobile number
-            mobile_data = {
-                "mobile": "+919876543210",
-                "referral_code": ""
-            }
+            # Test by trying to access admin endpoints that would fail if tables don't exist
+            endpoints_to_test = [
+                "/api/v1/admin/content/banners",
+                "/api/v1/admin/content/email-templates",
+                "/api/v1/admin/content/campaigns",
+                "/api/v1/admin/content/seo",
+                "/api/v1/admin/content/faq/sections",
+                "/api/v1/admin/content/legal"
+            ]
             
-            response = self.session.post(f"{self.base_url}/api/v1/auth/verify-mobile", json=mobile_data)
+            successful_endpoints = 0
+            total_endpoints = len(endpoints_to_test)
             
-            if response.status_code == 200:
-                data = response.json()
-                session_id = data.get("session_id")
-                is_new_user = data.get("is_new_user", False)
-                
-                # Step 2: Verify OTP with profile data if new user
-                otp_data = {
-                    "session_id": session_id,
-                    "mobile": "+919876543210",
-                    "otp": "123456",
-                    "referral_code": ""
-                }
-                
-                # Add profile data if it's a new user
-                if is_new_user:
-                    otp_data["profile_data"] = {
-                        "first_name": "Test",
-                        "last_name": "User",
-                        "email": "testuser@example.com",
-                        "date_of_birth": "1990-01-01",
-                        "state": "Maharashtra"
-                    }
-                
-                otp_response = self.session.post(f"{self.base_url}/api/v1/auth/verify-otp", json=otp_data)
-                
-                if otp_response.status_code == 200:
-                    otp_result = otp_response.json()
-                    if otp_result.get("success") and "access_token" in otp_result:
-                        self.user_token = otp_result["access_token"]
-                        user_info = otp_result.get("user", {})
-                        self.log_test(
-                            "User Authentication", 
-                            True, 
-                            f"Successfully authenticated as user (ID: {user_info.get('id')}, New: {is_new_user})"
-                        )
-                        return True
-                else:
-                    self.log_test(
-                        "User Authentication", 
-                        False, 
-                        f"OTP verification failed - Status: {otp_response.status_code}",
-                        otp_response.text[:200]
-                    )
+            for endpoint in endpoints_to_test:
+                try:
+                    response = self.session.get(f"{self.base_url}{endpoint}")
+                    # 200 (success) or 401 (auth required) means endpoint exists
+                    # 404 means endpoint/table doesn't exist
+                    if response.status_code in [200, 401]:
+                        successful_endpoints += 1
+                except:
+                    pass
+            
+            success = successful_endpoints == total_endpoints
+            details = f"Found {successful_endpoints}/{total_endpoints} CMS endpoints accessible"
+            
+            if success:
+                details += " - Database tables appear to be created successfully"
             else:
-                self.log_test(
-                    "User Authentication", 
-                    False, 
-                    f"Mobile verification failed - Status: {response.status_code}",
-                    response.text[:200]
-                )
+                details += " - Some CMS endpoints are missing (possible database setup issue)"
             
-            return False
+            self.log_test("Database Setup Verification", success, details)
+            return success
             
         except Exception as e:
-            self.log_test("User Authentication", False, f"Exception: {str(e)}")
+            self.log_test("Database Setup Verification", False, f"Exception: {str(e)}")
             return False
 
-    def test_admin_gateway_configs(self) -> bool:
-        """Test admin gateway configuration endpoints"""
+    # ADMIN BANNER MANAGEMENT TESTS
+    def test_admin_banner_create(self) -> bool:
+        """Test admin banner creation"""
         if not self.admin_token:
-            self.log_test("Admin Gateway Configs", False, "No admin token available")
+            self.log_test("Admin Banner Create", False, "No admin token available")
             return False
             
         try:
-            # Test GET /api/v1/admin/payment/gateways
-            response = self.session.get(f"{self.base_url}/api/v1/admin/payment/gateways")
+            banner_data = {
+                "title": "Welcome to Fantasy Esports",
+                "content": "Join the ultimate fantasy esports experience!",
+                "banner_type": "promotional",
+                "position": "header",
+                "priority": 1,
+                "is_active": True,
+                "start_date": "2025-01-01T00:00:00Z",
+                "end_date": "2025-12-31T23:59:59Z",
+                "target_audience": "all_users",
+                "click_url": "https://fantasy-esports.com/signup",
+                "image_url": "https://example.com/banner.jpg"
+            }
             
-            success = response.status_code == 200
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/banners", json=banner_data)
+            
+            success = response.status_code == 201
+            details = f"Status: {response.status_code}"
+            
             if success:
                 data = response.json()
-                gateways = data.get("data", [])
-                gateway_names = [g.get("gateway") for g in gateways]
-                
-                details = f"Found {len(gateways)} gateways: {gateway_names}"
-                if "razorpay" in gateway_names and "phonepe" in gateway_names:
-                    details += " - Both required gateways present"
+                if data.get("success") and "data" in data:
+                    banner_id = data["data"].get("id")
+                    self.created_resources["banners"].append(banner_id)
+                    details += f" - Banner created successfully with ID: {banner_id}"
                 else:
                     success = False
-                    details += " - Missing required gateways"
-            else:
-                details = f"Status: {response.status_code}"
-                
+                    details += " - Response missing expected data structure"
+            
             self.log_test(
-                "Admin Gateway Configs - GET gateways",
+                "Admin Banner Create",
+                success,
+                details,
+                response.json() if response.status_code in [200, 201] else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Admin Banner Create", False, f"Exception: {str(e)}")
+            return False
+
+    def test_admin_banner_list(self) -> bool:
+        """Test admin banner listing with filters"""
+        if not self.admin_token:
+            self.log_test("Admin Banner List", False, "No admin token available")
+            return False
+            
+        try:
+            # Test basic listing
+            response = self.session.get(f"{self.base_url}/api/v1/admin/content/banners")
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    banners = data.get("data", [])
+                    details += f" - Found {len(banners)} banners"
+                    
+                    # Test with filters
+                    filter_response = self.session.get(
+                        f"{self.base_url}/api/v1/admin/content/banners?banner_type=promotional&is_active=true"
+                    )
+                    if filter_response.status_code == 200:
+                        filter_data = filter_response.json()
+                        filtered_banners = filter_data.get("data", [])
+                        details += f", {len(filtered_banners)} promotional active banners"
+                else:
+                    success = False
+                    details += " - Response missing success field"
+            
+            self.log_test(
+                "Admin Banner List",
                 success,
                 details,
                 response.json() if success else response.text
@@ -186,27 +224,26 @@ class PaymentGatewayTester:
             return success
             
         except Exception as e:
-            self.log_test("Admin Gateway Configs - GET gateways", False, f"Exception: {str(e)}")
+            self.log_test("Admin Banner List", False, f"Exception: {str(e)}")
             return False
 
-    def test_admin_gateway_update(self) -> bool:
-        """Test admin gateway configuration update"""
-        if not self.admin_token:
-            self.log_test("Admin Gateway Update", False, "No admin token available")
+    def test_admin_banner_update(self) -> bool:
+        """Test admin banner update"""
+        if not self.admin_token or not self.created_resources["banners"]:
+            self.log_test("Admin Banner Update", False, "No admin token or banner ID available")
             return False
             
         try:
-            # Test PUT /api/v1/admin/payment/gateways/razorpay
+            banner_id = self.created_resources["banners"][0]
             update_data = {
-                "key1": "rzp_test_SvOV4KyH7o0FSg",
-                "key2": "test_secret_key_12345",
-                "is_live": False,
-                "enabled": True,
-                "currency": "INR"
+                "title": "Updated Fantasy Esports Banner",
+                "content": "Updated content for the banner",
+                "priority": 2,
+                "is_active": False
             }
             
             response = self.session.put(
-                f"{self.base_url}/api/v1/admin/payment/gateways/razorpay", 
+                f"{self.base_url}/api/v1/admin/content/banners/{banner_id}", 
                 json=update_data
             )
             
@@ -216,13 +253,13 @@ class PaymentGatewayTester:
             if success:
                 data = response.json()
                 if data.get("success"):
-                    details += " - Configuration updated successfully"
+                    details += " - Banner updated successfully"
                 else:
                     success = False
                     details += " - Update failed"
             
             self.log_test(
-                "Admin Gateway Update - Razorpay config",
+                "Admin Banner Update",
                 success,
                 details,
                 response.json() if success else response.text
@@ -230,20 +267,19 @@ class PaymentGatewayTester:
             return success
             
         except Exception as e:
-            self.log_test("Admin Gateway Update - Razorpay config", False, f"Exception: {str(e)}")
+            self.log_test("Admin Banner Update", False, f"Exception: {str(e)}")
             return False
 
-    def test_admin_gateway_toggle(self) -> bool:
-        """Test admin gateway enable/disable toggle"""
-        if not self.admin_token:
-            self.log_test("Admin Gateway Toggle", False, "No admin token available")
+    def test_admin_banner_toggle(self) -> bool:
+        """Test admin banner status toggle"""
+        if not self.admin_token or not self.created_resources["banners"]:
+            self.log_test("Admin Banner Toggle", False, "No admin token or banner ID available")
             return False
             
         try:
-            # Test PUT /api/v1/admin/payment/gateways/phonepe/toggle?enabled=false
-            response = self.session.put(
-                f"{self.base_url}/api/v1/admin/payment/gateways/phonepe/toggle?enabled=false"
-            )
+            banner_id = self.created_resources["banners"][0]
+            
+            response = self.session.patch(f"{self.base_url}/api/v1/admin/content/banners/{banner_id}/toggle")
             
             success = response.status_code == 200
             details = f"Status: {response.status_code}"
@@ -251,41 +287,78 @@ class PaymentGatewayTester:
             if success:
                 data = response.json()
                 if data.get("success"):
-                    details += " - Gateway disabled successfully"
+                    new_status = data.get("data", {}).get("is_active")
+                    details += f" - Banner status toggled to: {new_status}"
                 else:
                     success = False
                     details += " - Toggle failed"
             
             self.log_test(
-                "Admin Gateway Toggle - Disable PhonePe",
+                "Admin Banner Toggle",
                 success,
                 details,
                 response.json() if success else response.text
             )
-            
-            # Re-enable for further testing
-            if success:
-                enable_response = self.session.put(
-                    f"{self.base_url}/api/v1/admin/payment/gateways/phonepe/toggle?enabled=true"
-                )
-                if enable_response.status_code == 200:
-                    self.log_test("Admin Gateway Toggle - Re-enable PhonePe", True, "Gateway re-enabled for testing")
-            
             return success
             
         except Exception as e:
-            self.log_test("Admin Gateway Toggle - Disable PhonePe", False, f"Exception: {str(e)}")
+            self.log_test("Admin Banner Toggle", False, f"Exception: {str(e)}")
             return False
 
-    def test_admin_transaction_logs(self) -> bool:
-        """Test admin transaction logs endpoint"""
+    # EMAIL TEMPLATE TESTS
+    def test_admin_email_template_create(self) -> bool:
+        """Test admin email template creation"""
         if not self.admin_token:
-            self.log_test("Admin Transaction Logs", False, "No admin token available")
+            self.log_test("Admin Email Template Create", False, "No admin token available")
             return False
             
         try:
-            # Test GET /api/v1/admin/payment/transactions
-            response = self.session.get(f"{self.base_url}/api/v1/admin/payment/transactions")
+            template_data = {
+                "name": "Welcome Email",
+                "subject": "Welcome to Fantasy Esports!",
+                "template_type": "welcome",
+                "html_content": "<h1>Welcome {{.FirstName}}!</h1><p>Thanks for joining Fantasy Esports.</p>",
+                "text_content": "Welcome {{.FirstName}}! Thanks for joining Fantasy Esports.",
+                "variables": ["FirstName", "Email"],
+                "is_active": True,
+                "description": "Welcome email template for new users"
+            }
+            
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/email-templates", json=template_data)
+            
+            success = response.status_code == 201
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    template_id = data["data"].get("id")
+                    self.created_resources["email_templates"].append(template_id)
+                    details += f" - Email template created successfully with ID: {template_id}"
+                else:
+                    success = False
+                    details += " - Response missing expected data structure"
+            
+            self.log_test(
+                "Admin Email Template Create",
+                success,
+                details,
+                response.json() if response.status_code in [200, 201] else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Admin Email Template Create", False, f"Exception: {str(e)}")
+            return False
+
+    def test_admin_email_template_list(self) -> bool:
+        """Test admin email template listing"""
+        if not self.admin_token:
+            self.log_test("Admin Email Template List", False, "No admin token available")
+            return False
+            
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/content/email-templates")
             
             success = response.status_code == 200
             details = f"Status: {response.status_code}"
@@ -293,15 +366,14 @@ class PaymentGatewayTester:
             if success:
                 data = response.json()
                 if data.get("success"):
-                    transactions = data.get("data", [])
-                    pagination = data.get("pagination", {})
-                    details += f" - Found {len(transactions)} transactions, Total: {pagination.get('total', 0)}"
+                    templates = data.get("data", [])
+                    details += f" - Found {len(templates)} email templates"
                 else:
                     success = False
-                    details += " - Failed to get transaction logs"
+                    details += " - Response missing success field"
             
             self.log_test(
-                "Admin Transaction Logs - GET transactions",
+                "Admin Email Template List",
                 success,
                 details,
                 response.json() if success else response.text
@@ -309,161 +381,69 @@ class PaymentGatewayTester:
             return success
             
         except Exception as e:
-            self.log_test("Admin Transaction Logs - GET transactions", False, f"Exception: {str(e)}")
+            self.log_test("Admin Email Template List", False, f"Exception: {str(e)}")
             return False
 
-    def test_user_payment_create_order_razorpay(self) -> Tuple[bool, Optional[str]]:
-        """Test user payment order creation with Razorpay"""
-        # Use admin token if user token not available
-        token = self.user_token or self.admin_token
-        if not token:
-            self.log_test("User Payment - Create Razorpay Order", False, "No authentication token available")
-            return False, None
+    # MARKETING CAMPAIGN TESTS
+    def test_admin_campaign_create(self) -> bool:
+        """Test admin marketing campaign creation"""
+        if not self.admin_token:
+            self.log_test("Admin Campaign Create", False, "No admin token available")
+            return False
             
         try:
-            # Set authorization header
-            headers = {"Authorization": f"Bearer {token}"}
-            
-            # Test POST /api/v1/payment/create-order
-            order_data = {
-                "amount": 100.0,
-                "gateway": "razorpay",
-                "currency": "INR"
+            campaign_data = {
+                "name": "New Year Promotion 2025",
+                "campaign_type": "promotional",
+                "status": "draft",
+                "start_date": "2025-01-01T00:00:00Z",
+                "end_date": "2025-01-31T23:59:59Z",
+                "target_audience": "active_users",
+                "budget": 10000.0,
+                "description": "New Year promotional campaign for 2025",
+                "channels": ["email", "push", "banner"],
+                "goals": ["increase_engagement", "boost_deposits"]
             }
             
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=order_data,
-                headers=headers
-            )
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/campaigns", json=campaign_data)
             
-            success = response.status_code == 200
-            transaction_id = None
+            success = response.status_code == 201
             details = f"Status: {response.status_code}"
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    payment_data = data.get("data", {})
-                    transaction_id = payment_data.get("transaction_id")
-                    order_id = payment_data.get("payment_data", {}).get("order_id")
-                    key_id = payment_data.get("payment_data", {}).get("key_id")
-                    
-                    details += f" - Order created successfully"
-                    details += f" - Transaction ID: {transaction_id}"
-                    details += f" - Razorpay Order ID: {order_id}"
-                    details += f" - Key ID: {key_id}"
-                    
-                    # Validate required Razorpay fields
-                    required_fields = ["order_id", "key_id", "amount", "currency"]
-                    payment_data_fields = payment_data.get("payment_data", {})
-                    missing_fields = [f for f in required_fields if f not in payment_data_fields]
-                    
-                    if missing_fields:
-                        success = False
-                        details += f" - Missing required fields: {missing_fields}"
+                if data.get("success") and "data" in data:
+                    campaign_id = data["data"].get("id")
+                    self.created_resources["campaigns"].append(campaign_id)
+                    details += f" - Campaign created successfully with ID: {campaign_id}"
                 else:
                     success = False
-                    details += " - Order creation failed"
+                    details += " - Response missing expected data structure"
             
             self.log_test(
-                "User Payment - Create Razorpay Order",
+                "Admin Campaign Create",
                 success,
                 details,
-                response.json() if response.status_code == 200 else response.text
+                response.json() if response.status_code in [200, 201] else response.text
             )
-            return success, transaction_id
+            return success
             
         except Exception as e:
-            self.log_test("User Payment - Create Razorpay Order", False, f"Exception: {str(e)}")
-            return False, None
-
-    def test_user_payment_create_order_phonepe(self) -> Tuple[bool, Optional[str]]:
-        """Test user payment order creation with PhonePe"""
-        # Use admin token if user token not available
-        token = self.user_token or self.admin_token
-        if not token:
-            self.log_test("User Payment - Create PhonePe Order", False, "No authentication token available")
-            return False, None
-            
-        try:
-            # Set authorization header
-            headers = {"Authorization": f"Bearer {token}"}
-            
-            # Test POST /api/v1/payment/create-order
-            order_data = {
-                "amount": 100.0,
-                "gateway": "phonepe",
-                "currency": "INR"
-            }
-            
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=order_data,
-                headers=headers
-            )
-            
-            success = response.status_code == 200
-            transaction_id = None
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    payment_data = data.get("data", {})
-                    transaction_id = payment_data.get("transaction_id")
-                    merchant_tx_id = payment_data.get("payment_data", {}).get("merchant_transaction_id")
-                    payment_url = payment_data.get("payment_data", {}).get("payment_url")
-                    
-                    details += f" - Order created successfully"
-                    details += f" - Transaction ID: {transaction_id}"
-                    details += f" - Merchant Transaction ID: {merchant_tx_id}"
-                    details += f" - Payment URL: {payment_url[:50] if payment_url else 'None'}..."
-                    
-                    # Validate required PhonePe fields
-                    required_fields = ["merchant_transaction_id", "payment_url", "merchant_id"]
-                    payment_data_fields = payment_data.get("payment_data", {})
-                    missing_fields = [f for f in required_fields if f not in payment_data_fields]
-                    
-                    if missing_fields:
-                        success = False
-                        details += f" - Missing required fields: {missing_fields}"
-                else:
-                    success = False
-                    details += " - Order creation failed"
-            
-            self.log_test(
-                "User Payment - Create PhonePe Order",
-                success,
-                details,
-                response.json() if response.status_code == 200 else response.text
-            )
-            return success, transaction_id
-            
-        except Exception as e:
-            self.log_test("User Payment - Create PhonePe Order", False, f"Exception: {str(e)}")
-            return False, None
-
-    def test_user_payment_status(self, transaction_id: str) -> bool:
-        """Test user payment status check"""
-        if not transaction_id:
-            self.log_test("User Payment - Status Check", False, "No transaction ID provided")
+            self.log_test("Admin Campaign Create", False, f"Exception: {str(e)}")
             return False
-            
-        # Use admin token if user token not available
-        token = self.user_token or self.admin_token
-        if not token:
-            self.log_test("User Payment - Status Check", False, "No authentication token available")
+
+    def test_admin_campaign_status_update(self) -> bool:
+        """Test admin campaign status update"""
+        if not self.admin_token or not self.created_resources["campaigns"]:
+            self.log_test("Admin Campaign Status Update", False, "No admin token or campaign ID available")
             return False
             
         try:
-            # Set authorization header
-            headers = {"Authorization": f"Bearer {token}"}
+            campaign_id = self.created_resources["campaigns"][0]
             
-            # Test GET /api/v1/payment/status/{transaction_id}
-            response = self.session.get(
-                f"{self.base_url}/api/v1/payment/status/{transaction_id}",
-                headers=headers
+            response = self.session.patch(
+                f"{self.base_url}/api/v1/admin/content/campaigns/{campaign_id}/status",
+                json={"status": "active"}
             )
             
             success = response.status_code == 200
@@ -472,19 +452,14 @@ class PaymentGatewayTester:
             if success:
                 data = response.json()
                 if data.get("success"):
-                    payment_status = data.get("data", {})
-                    status = payment_status.get("status")
-                    amount = payment_status.get("amount")
-                    gateway = payment_status.get("gateway")
-                    
-                    details += f" - Payment status retrieved successfully"
-                    details += f" - Status: {status}, Amount: {amount}, Gateway: {gateway}"
+                    new_status = data.get("data", {}).get("status")
+                    details += f" - Campaign status updated to: {new_status}"
                 else:
                     success = False
-                    details += " - Failed to get payment status"
+                    details += " - Status update failed"
             
             self.log_test(
-                "User Payment - Status Check",
+                "Admin Campaign Status Update",
                 success,
                 details,
                 response.json() if success else response.text
@@ -492,347 +467,695 @@ class PaymentGatewayTester:
             return success
             
         except Exception as e:
-            self.log_test("User Payment - Status Check", False, f"Exception: {str(e)}")
+            self.log_test("Admin Campaign Status Update", False, f"Exception: {str(e)}")
             return False
 
-    def test_user_payment_verify(self, transaction_id: str, gateway: str) -> bool:
-        """Test user payment verification"""
-        if not transaction_id:
-            self.log_test("User Payment - Verify Payment", False, "No transaction ID provided")
-            return False
-            
-        # Use admin token if user token not available
-        token = self.user_token or self.admin_token
-        if not token:
-            self.log_test("User Payment - Verify Payment", False, "No authentication token available")
+    # SEO CONTENT TESTS
+    def test_admin_seo_create(self) -> bool:
+        """Test admin SEO content creation"""
+        if not self.admin_token:
+            self.log_test("Admin SEO Create", False, "No admin token available")
             return False
             
         try:
-            # Set authorization header
-            headers = {"Authorization": f"Bearer {token}"}
-            
-            # Mock gateway data for testing
-            if gateway == "razorpay":
-                gateway_data = {
-                    "razorpay_payment_id": "pay_test123456789",
-                    "razorpay_order_id": "order_test123456789",
-                    "razorpay_signature": "test_signature_12345"
-                }
-            else:  # phonepe
-                gateway_data = {
-                    "merchant_transaction_id": f"MT_{transaction_id}_{int(time.time())}"
-                }
-            
-            # Test POST /api/v1/payment/verify
-            verify_data = {
-                "transaction_id": transaction_id,
-                "gateway": gateway,
-                "gateway_data": gateway_data
+            seo_data = {
+                "page_slug": "home",
+                "title": "Fantasy Esports - Ultimate Gaming Experience",
+                "meta_description": "Join the ultimate fantasy esports platform. Create teams, compete in tournaments, and win real money.",
+                "meta_keywords": ["fantasy esports", "gaming", "tournaments", "esports betting"],
+                "og_title": "Fantasy Esports - Ultimate Gaming Experience",
+                "og_description": "Join the ultimate fantasy esports platform",
+                "og_image": "https://example.com/og-image.jpg",
+                "canonical_url": "https://fantasy-esports.com/",
+                "schema_markup": {"@type": "WebSite", "name": "Fantasy Esports"},
+                "is_active": True
             }
             
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/verify", 
-                json=verify_data,
-                headers=headers
-            )
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/seo", json=seo_data)
             
-            # Note: This will likely fail with test data, but we're testing the endpoint structure
-            success = response.status_code in [200, 400, 500]  # Accept various responses for testing
+            success = response.status_code == 201
             details = f"Status: {response.status_code}"
             
-            if response.status_code == 200:
+            if success:
                 data = response.json()
-                if data.get("success"):
-                    verify_result = data.get("data", {})
-                    details += f" - Verification completed: {verify_result.get('status')}"
+                if data.get("success") and "data" in data:
+                    seo_id = data["data"].get("id")
+                    self.created_resources["seo_content"].append(seo_id)
+                    details += f" - SEO content created successfully with ID: {seo_id}"
                 else:
-                    details += f" - Verification failed: {data.get('message', 'Unknown error')}"
-            elif response.status_code == 400:
-                details += " - Bad request (expected with test data)"
-            elif response.status_code == 500:
-                details += " - Server error (expected with test gateway data)"
+                    success = False
+                    details += " - Response missing expected data structure"
             
             self.log_test(
-                f"User Payment - Verify {gateway.title()} Payment",
+                "Admin SEO Create",
                 success,
                 details,
-                response.json() if response.status_code == 200 else response.text[:200]
+                response.json() if response.status_code in [200, 201] else response.text
             )
             return success
             
         except Exception as e:
-            self.log_test(f"User Payment - Verify {gateway.title()} Payment", False, f"Exception: {str(e)}")
+            self.log_test("Admin SEO Create", False, f"Exception: {str(e)}")
             return False
 
-    def test_error_handling(self) -> bool:
-        """Test error handling and validation"""
-        token = self.user_token or self.admin_token
-        if not token:
-            self.log_test("Error Handling Tests", False, "No authentication token available")
+    def test_admin_seo_list(self) -> bool:
+        """Test admin SEO content listing"""
+        if not self.admin_token:
+            self.log_test("Admin SEO List", False, "No admin token available")
             return False
             
-        headers = {"Authorization": f"Bearer {token}"}
-        error_tests_passed = 0
-        total_error_tests = 0
-        
-        # Test 1: Invalid gateway name
-        total_error_tests += 1
         try:
-            invalid_gateway_data = {
-                "amount": 100.0,
-                "gateway": "invalid_gateway",
-                "currency": "INR"
-            }
+            response = self.session.get(f"{self.base_url}/api/v1/admin/content/seo")
             
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=invalid_gateway_data,
-                headers=headers
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    seo_items = data.get("data", [])
+                    details += f" - Found {len(seo_items)} SEO content items"
+                else:
+                    success = False
+                    details += " - Response missing success field"
+            
+            self.log_test(
+                "Admin SEO List",
+                success,
+                details,
+                response.json() if success else response.text
             )
+            return success
             
-            if response.status_code == 400:
-                error_tests_passed += 1
-                self.log_test("Error Handling - Invalid Gateway", True, "Correctly rejected invalid gateway")
-            else:
-                self.log_test("Error Handling - Invalid Gateway", False, f"Expected 400, got {response.status_code}")
         except Exception as e:
-            self.log_test("Error Handling - Invalid Gateway", False, f"Exception: {str(e)}")
-        
-        # Test 2: Negative amount
-        total_error_tests += 1
+            self.log_test("Admin SEO List", False, f"Exception: {str(e)}")
+            return False
+
+    # FAQ MANAGEMENT TESTS
+    def test_admin_faq_section_create(self) -> bool:
+        """Test admin FAQ section creation"""
+        if not self.admin_token:
+            self.log_test("Admin FAQ Section Create", False, "No admin token available")
+            return False
+            
         try:
-            negative_amount_data = {
-                "amount": -50.0,
-                "gateway": "razorpay",
-                "currency": "INR"
+            section_data = {
+                "title": "Getting Started",
+                "description": "Basic questions about using Fantasy Esports",
+                "display_order": 1,
+                "is_active": True,
+                "icon": "question-circle"
             }
             
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=negative_amount_data,
-                headers=headers
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/faq/sections", json=section_data)
+            
+            success = response.status_code == 201
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    section_id = data["data"].get("id")
+                    self.created_resources["faq_sections"].append(section_id)
+                    details += f" - FAQ section created successfully with ID: {section_id}"
+                else:
+                    success = False
+                    details += " - Response missing expected data structure"
+            
+            self.log_test(
+                "Admin FAQ Section Create",
+                success,
+                details,
+                response.json() if response.status_code in [200, 201] else response.text
             )
+            return success
             
-            if response.status_code == 400:
-                error_tests_passed += 1
-                self.log_test("Error Handling - Negative Amount", True, "Correctly rejected negative amount")
-            else:
-                self.log_test("Error Handling - Negative Amount", False, f"Expected 400, got {response.status_code}")
         except Exception as e:
-            self.log_test("Error Handling - Negative Amount", False, f"Exception: {str(e)}")
-        
-        # Test 3: Zero amount
-        total_error_tests += 1
+            self.log_test("Admin FAQ Section Create", False, f"Exception: {str(e)}")
+            return False
+
+    def test_admin_faq_item_create(self) -> bool:
+        """Test admin FAQ item creation"""
+        if not self.admin_token or not self.created_resources["faq_sections"]:
+            self.log_test("Admin FAQ Item Create", False, "No admin token or FAQ section ID available")
+            return False
+            
         try:
-            zero_amount_data = {
-                "amount": 0.0,
-                "gateway": "phonepe",
-                "currency": "INR"
+            section_id = self.created_resources["faq_sections"][0]
+            item_data = {
+                "section_id": section_id,
+                "question": "How do I create my first fantasy team?",
+                "answer": "To create your first fantasy team, go to the 'Create Team' section, select your game, choose your players within the budget, and submit your team.",
+                "display_order": 1,
+                "is_active": True,
+                "tags": ["team creation", "getting started"]
             }
             
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=zero_amount_data,
-                headers=headers
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/faq/items", json=item_data)
+            
+            success = response.status_code == 201
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    item_id = data["data"].get("id")
+                    self.created_resources["faq_items"].append(item_id)
+                    details += f" - FAQ item created successfully with ID: {item_id}"
+                else:
+                    success = False
+                    details += " - Response missing expected data structure"
+            
+            self.log_test(
+                "Admin FAQ Item Create",
+                success,
+                details,
+                response.json() if response.status_code in [200, 201] else response.text
             )
+            return success
             
-            if response.status_code == 400:
-                error_tests_passed += 1
-                self.log_test("Error Handling - Zero Amount", True, "Correctly rejected zero amount")
-            else:
-                self.log_test("Error Handling - Zero Amount", False, f"Expected 400, got {response.status_code}")
         except Exception as e:
-            self.log_test("Error Handling - Zero Amount", False, f"Exception: {str(e)}")
-        
-        # Test 4: Missing required fields
-        total_error_tests += 1
+            self.log_test("Admin FAQ Item Create", False, f"Exception: {str(e)}")
+            return False
+
+    # LEGAL DOCUMENT TESTS
+    def test_admin_legal_create(self) -> bool:
+        """Test admin legal document creation"""
+        if not self.admin_token:
+            self.log_test("Admin Legal Create", False, "No admin token available")
+            return False
+            
         try:
-            missing_fields_data = {
-                "gateway": "razorpay"
-                # Missing amount
+            legal_data = {
+                "document_type": "terms",
+                "title": "Terms of Service",
+                "content": "These terms of service govern your use of Fantasy Esports platform...",
+                "version": "1.0",
+                "is_active": True,
+                "effective_date": "2025-01-01T00:00:00Z",
+                "language": "en",
+                "metadata": {
+                    "last_reviewed": "2025-01-01",
+                    "review_frequency": "quarterly"
+                }
             }
             
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=missing_fields_data,
-                headers=headers
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/legal", json=legal_data)
+            
+            success = response.status_code == 201
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    legal_id = data["data"].get("id")
+                    self.created_resources["legal_documents"].append(legal_id)
+                    details += f" - Legal document created successfully with ID: {legal_id}"
+                else:
+                    success = False
+                    details += " - Response missing expected data structure"
+            
+            self.log_test(
+                "Admin Legal Create",
+                success,
+                details,
+                response.json() if response.status_code in [200, 201] else response.text
             )
+            return success
             
-            if response.status_code == 400:
-                error_tests_passed += 1
-                self.log_test("Error Handling - Missing Fields", True, "Correctly rejected missing required fields")
-            else:
-                self.log_test("Error Handling - Missing Fields", False, f"Expected 400, got {response.status_code}")
         except Exception as e:
-            self.log_test("Error Handling - Missing Fields", False, f"Exception: {str(e)}")
-        
-        # Test 5: Authentication failure
-        total_error_tests += 1
-        try:
-            valid_data = {
-                "amount": 100.0,
-                "gateway": "razorpay",
-                "currency": "INR"
-            }
+            self.log_test("Admin Legal Create", False, f"Exception: {str(e)}")
+            return False
+
+    def test_admin_legal_publish(self) -> bool:
+        """Test admin legal document publish"""
+        if not self.admin_token or not self.created_resources["legal_documents"]:
+            self.log_test("Admin Legal Publish", False, "No admin token or legal document ID available")
+            return False
             
-            # Make request without authorization header by creating a new session or clearing headers
+        try:
+            legal_id = self.created_resources["legal_documents"][0]
+            
+            response = self.session.patch(f"{self.base_url}/api/v1/admin/content/legal/{legal_id}/publish")
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    details += " - Legal document published successfully"
+                else:
+                    success = False
+                    details += " - Publish failed"
+            
+            self.log_test(
+                "Admin Legal Publish",
+                success,
+                details,
+                response.json() if success else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Admin Legal Publish", False, f"Exception: {str(e)}")
+            return False
+
+    # PUBLIC API TESTS
+    def test_public_banners_active(self) -> bool:
+        """Test public active banners endpoint"""
+        try:
+            # Remove admin auth for public endpoint
             original_headers = self.session.headers.copy()
-            # Remove Authorization header if it exists
             if 'Authorization' in self.session.headers:
                 del self.session.headers['Authorization']
             
-            response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=valid_data
-            )
+            response = self.session.get(f"{self.base_url}/api/v1/banners/active")
             
-            # Restore original headers
+            # Restore admin headers
             self.session.headers.clear()
             self.session.headers.update(original_headers)
             
-            if response.status_code == 401:
-                error_tests_passed += 1
-                self.log_test("Error Handling - Authentication Failure", True, "Correctly rejected unauthenticated request")
-            else:
-                self.log_test("Error Handling - Authentication Failure", False, f"Expected 401, got {response.status_code}")
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    banners = data.get("data", [])
+                    details += f" - Found {len(banners)} active banners"
+                else:
+                    success = False
+                    details += " - Response missing success field"
+            
+            self.log_test(
+                "Public Banners Active",
+                success,
+                details,
+                response.json() if success else response.text
+            )
+            return success
+            
         except Exception as e:
-            self.log_test("Error Handling - Authentication Failure", False, f"Exception: {str(e)}")
+            self.log_test("Public Banners Active", False, f"Exception: {str(e)}")
+            return False
+
+    def test_public_seo_by_slug(self) -> bool:
+        """Test public SEO content by slug endpoint"""
+        try:
+            # Remove admin auth for public endpoint
+            original_headers = self.session.headers.copy()
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            response = self.session.get(f"{self.base_url}/api/v1/seo/home")
+            
+            # Restore admin headers
+            self.session.headers.clear()
+            self.session.headers.update(original_headers)
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    seo_data = data.get("data", {})
+                    details += f" - SEO data retrieved for slug 'home'"
+                    if seo_data.get("title"):
+                        details += f" - Title: {seo_data['title'][:50]}..."
+                else:
+                    success = False
+                    details += " - Response missing success field"
+            
+            self.log_test(
+                "Public SEO by Slug",
+                success,
+                details,
+                response.json() if success else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Public SEO by Slug", False, f"Exception: {str(e)}")
+            return False
+
+    def test_public_faq_sections(self) -> bool:
+        """Test public FAQ sections endpoint"""
+        try:
+            # Remove admin auth for public endpoint
+            original_headers = self.session.headers.copy()
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            response = self.session.get(f"{self.base_url}/api/v1/faq/sections")
+            
+            # Restore admin headers
+            self.session.headers.clear()
+            self.session.headers.update(original_headers)
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    sections = data.get("data", [])
+                    details += f" - Found {len(sections)} FAQ sections"
+                else:
+                    success = False
+                    details += " - Response missing success field"
+            
+            self.log_test(
+                "Public FAQ Sections",
+                success,
+                details,
+                response.json() if success else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Public FAQ Sections", False, f"Exception: {str(e)}")
+            return False
+
+    def test_public_legal_document(self) -> bool:
+        """Test public legal document endpoint"""
+        try:
+            # Remove admin auth for public endpoint
+            original_headers = self.session.headers.copy()
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            response = self.session.get(f"{self.base_url}/api/v1/legal/terms")
+            
+            # Restore admin headers
+            self.session.headers.clear()
+            self.session.headers.update(original_headers)
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    legal_doc = data.get("data", {})
+                    details += f" - Legal document retrieved"
+                    if legal_doc.get("title"):
+                        details += f" - Title: {legal_doc['title']}"
+                else:
+                    success = False
+                    details += " - Response missing success field"
+            
+            self.log_test(
+                "Public Legal Document",
+                success,
+                details,
+                response.json() if success else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Public Legal Document", False, f"Exception: {str(e)}")
+            return False
+
+    # ANALYTICS TRACKING TESTS
+    def test_banner_click_tracking(self) -> bool:
+        """Test banner click tracking"""
+        if not self.created_resources["banners"]:
+            self.log_test("Banner Click Tracking", False, "No banner ID available for testing")
+            return False
+            
+        try:
+            banner_id = self.created_resources["banners"][0]
+            
+            # Remove admin auth for public endpoint
+            original_headers = self.session.headers.copy()
+            if 'Authorization' in self.session.headers:
+                del self.session.headers['Authorization']
+            
+            response = self.session.post(f"{self.base_url}/api/v1/banners/{banner_id}/click")
+            
+            # Restore admin headers
+            self.session.headers.clear()
+            self.session.headers.update(original_headers)
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    details += " - Banner click tracked successfully"
+                else:
+                    success = False
+                    details += " - Click tracking failed"
+            
+            self.log_test(
+                "Banner Click Tracking",
+                success,
+                details,
+                response.json() if success else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Banner Click Tracking", False, f"Exception: {str(e)}")
+            return False
+
+    def test_content_analytics(self) -> bool:
+        """Test content analytics endpoint"""
+        if not self.admin_token or not self.created_resources["banners"]:
+            self.log_test("Content Analytics", False, "No admin token or banner ID available")
+            return False
+            
+        try:
+            banner_id = self.created_resources["banners"][0]
+            
+            response = self.session.get(f"{self.base_url}/api/v1/admin/content/analytics/banner/{banner_id}")
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    analytics = data.get("data", {})
+                    details += f" - Analytics retrieved for banner {banner_id}"
+                    if "views" in analytics:
+                        details += f" - Views: {analytics.get('views', 0)}"
+                    if "clicks" in analytics:
+                        details += f", Clicks: {analytics.get('clicks', 0)}"
+                else:
+                    success = False
+                    details += " - Analytics retrieval failed"
+            
+            self.log_test(
+                "Content Analytics",
+                success,
+                details,
+                response.json() if success else response.text
+            )
+            return success
+            
+        except Exception as e:
+            self.log_test("Content Analytics", False, f"Exception: {str(e)}")
+            return False
+
+    # VALIDATION TESTS
+    def test_validation_errors(self) -> bool:
+        """Test validation error handling"""
+        if not self.admin_token:
+            self.log_test("Validation Errors", False, "No admin token available")
+            return False
+            
+        validation_tests_passed = 0
+        total_validation_tests = 0
         
-        success = error_tests_passed == total_error_tests
+        # Test 1: Banner creation with missing required fields
+        total_validation_tests += 1
+        try:
+            invalid_banner_data = {
+                "content": "Missing title field"
+                # Missing required 'title' field
+            }
+            
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/banners", json=invalid_banner_data)
+            
+            if response.status_code == 400:
+                validation_tests_passed += 1
+                self.log_test("Validation - Missing Banner Title", True, "Correctly rejected missing title")
+            else:
+                self.log_test("Validation - Missing Banner Title", False, f"Expected 400, got {response.status_code}")
+        except Exception as e:
+            self.log_test("Validation - Missing Banner Title", False, f"Exception: {str(e)}")
+        
+        # Test 2: SEO content with invalid slug format
+        total_validation_tests += 1
+        try:
+            invalid_seo_data = {
+                "page_slug": "invalid slug with spaces",  # Invalid slug format
+                "title": "Test Title",
+                "meta_description": "Test description"
+            }
+            
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/seo", json=invalid_seo_data)
+            
+            if response.status_code == 400:
+                validation_tests_passed += 1
+                self.log_test("Validation - Invalid SEO Slug", True, "Correctly rejected invalid slug format")
+            else:
+                self.log_test("Validation - Invalid SEO Slug", False, f"Expected 400, got {response.status_code}")
+        except Exception as e:
+            self.log_test("Validation - Invalid SEO Slug", False, f"Exception: {str(e)}")
+        
+        # Test 3: Legal document with invalid type
+        total_validation_tests += 1
+        try:
+            invalid_legal_data = {
+                "document_type": "invalid_type",  # Invalid document type
+                "title": "Test Document",
+                "content": "Test content"
+            }
+            
+            response = self.session.post(f"{self.base_url}/api/v1/admin/content/legal", json=invalid_legal_data)
+            
+            if response.status_code == 400:
+                validation_tests_passed += 1
+                self.log_test("Validation - Invalid Legal Type", True, "Correctly rejected invalid document type")
+            else:
+                self.log_test("Validation - Invalid Legal Type", False, f"Expected 400, got {response.status_code}")
+        except Exception as e:
+            self.log_test("Validation - Invalid Legal Type", False, f"Exception: {str(e)}")
+        
+        success = validation_tests_passed == total_validation_tests
         self.log_test(
-            "Error Handling Tests - Overall",
+            "Validation Errors - Overall",
             success,
-            f"Passed {error_tests_passed}/{total_error_tests} error handling tests"
+            f"Passed {validation_tests_passed}/{total_validation_tests} validation tests"
         )
         
         return success
 
-    def test_database_integration(self) -> bool:
-        """Test database integration by checking transaction persistence"""
-        if not self.admin_token:
-            self.log_test("Database Integration", False, "No admin token available")
-            return False
-            
-        try:
-            # Get initial transaction count
-            initial_response = self.session.get(f"{self.base_url}/api/v1/admin/payment/transactions")
-            
-            if initial_response.status_code != 200:
-                self.log_test("Database Integration", False, "Could not get initial transaction count")
-                return False
-            
-            initial_data = initial_response.json()
-            initial_count = initial_data.get("pagination", {}).get("total", 0)
-            
-            # Create a payment order to test database persistence
-            # Note: This might fail at gateway level but should still create database transaction
-            token = self.user_token or self.admin_token
-            headers = {"Authorization": f"Bearer {token}"}
-            
-            order_data = {
-                "amount": 50.0,
-                "gateway": "razorpay",
-                "currency": "INR"
-            }
-            
-            create_response = self.session.post(
-                f"{self.base_url}/api/v1/payment/create-order", 
-                json=order_data,
-                headers=headers
-            )
-            
-            # Payment order creation might fail due to external gateway issues,
-            # but database transaction should still be created
-            creation_attempted = create_response.status_code in [200, 500]
-            
-            if not creation_attempted:
-                self.log_test("Database Integration", False, f"Unexpected response code: {create_response.status_code}")
-                return False
-            
-            # Wait a moment for database write
-            time.sleep(1)
-            
-            # Check if transaction count increased
-            final_response = self.session.get(f"{self.base_url}/api/v1/admin/payment/transactions")
-            
-            if final_response.status_code != 200:
-                self.log_test("Database Integration", False, "Could not get final transaction count")
-                return False
-            
-            final_data = final_response.json()
-            final_count = final_data.get("pagination", {}).get("total", 0)
-            
-            success = final_count > initial_count
-            details = f"Initial count: {initial_count}, Final count: {final_count}"
-            details += f" - Creation response: {create_response.status_code}"
-            
-            if success:
-                details += " - Transaction successfully persisted to database"
-                if create_response.status_code == 500:
-                    details += " (even though gateway failed)"
-            else:
-                details += " - Transaction may not have been persisted"
-            
-            self.log_test("Database Integration", success, details)
-            return success
-            
-        except Exception as e:
-            self.log_test("Database Integration", False, f"Exception: {str(e)}")
-            return False
+    def test_authorization_middleware(self) -> bool:
+        """Test authorization middleware for admin endpoints"""
+        auth_tests_passed = 0
+        total_auth_tests = 0
+        
+        # Remove admin auth
+        original_headers = self.session.headers.copy()
+        if 'Authorization' in self.session.headers:
+            del self.session.headers['Authorization']
+        
+        admin_endpoints = [
+            "/api/v1/admin/content/banners",
+            "/api/v1/admin/content/email-templates",
+            "/api/v1/admin/content/campaigns",
+            "/api/v1/admin/content/seo",
+            "/api/v1/admin/content/faq/sections",
+            "/api/v1/admin/content/legal"
+        ]
+        
+        for endpoint in admin_endpoints:
+            total_auth_tests += 1
+            try:
+                response = self.session.get(f"{self.base_url}{endpoint}")
+                
+                if response.status_code == 401:
+                    auth_tests_passed += 1
+                    self.log_test(f"Auth Middleware - {endpoint}", True, "Correctly returned 401 for unauthorized access")
+                else:
+                    self.log_test(f"Auth Middleware - {endpoint}", False, f"Expected 401, got {response.status_code}")
+            except Exception as e:
+                self.log_test(f"Auth Middleware - {endpoint}", False, f"Exception: {str(e)}")
+        
+        # Restore admin headers
+        self.session.headers.clear()
+        self.session.headers.update(original_headers)
+        
+        success = auth_tests_passed == total_auth_tests
+        self.log_test(
+            "Authorization Middleware - Overall",
+            success,
+            f"Passed {auth_tests_passed}/{total_auth_tests} authorization tests"
+        )
+        
+        return success
 
-    def run_comprehensive_tests(self):
-        """Run all payment gateway tests"""
-        print("🚀 Starting Comprehensive Payment Gateway System Testing")
-        print("=" * 70)
+    def run_comprehensive_cms_tests(self):
+        """Run all CMS tests"""
+        print("🚀 Starting Comprehensive Content Management System Testing")
+        print("=" * 80)
         
         # Test 1: Health Check
         if not self.test_health_check():
             print("❌ Backend is not healthy. Stopping tests.")
             return
         
-        # Test 2: Admin Authentication
-        admin_auth_success = self.authenticate_admin()
+        # Test 2: Database Setup Verification
+        self.test_database_setup_verification()
         
-        # Test 3: User Authentication (optional)
-        user_auth_success = self.authenticate_user()
-        
-        if not admin_auth_success:
+        # Test 3: Admin Authentication
+        if not self.authenticate_admin():
             print("❌ Admin authentication failed. Cannot test admin endpoints.")
             return
         
-        # Test 4: Admin Gateway Configuration APIs
-        self.test_admin_gateway_configs()
-        self.test_admin_gateway_update()
-        self.test_admin_gateway_toggle()
-        self.test_admin_transaction_logs()
+        # Test 4: Admin Banner Management
+        print("\n📋 Testing Admin Banner Management...")
+        self.test_admin_banner_create()
+        self.test_admin_banner_list()
+        self.test_admin_banner_update()
+        self.test_admin_banner_toggle()
         
-        # Test 5: User Payment APIs
-        razorpay_success, razorpay_tx_id = self.test_user_payment_create_order_razorpay()
-        phonepe_success, phonepe_tx_id = self.test_user_payment_create_order_phonepe()
+        # Test 5: Email Template Management
+        print("\n📧 Testing Email Template Management...")
+        self.test_admin_email_template_create()
+        self.test_admin_email_template_list()
         
-        # Test 6: Payment Status Check
-        if razorpay_tx_id:
-            self.test_user_payment_status(razorpay_tx_id)
-            self.test_user_payment_verify(razorpay_tx_id, "razorpay")
+        # Test 6: Marketing Campaign Management
+        print("\n📈 Testing Marketing Campaign Management...")
+        self.test_admin_campaign_create()
+        self.test_admin_campaign_status_update()
         
-        if phonepe_tx_id:
-            self.test_user_payment_status(phonepe_tx_id)
-            self.test_user_payment_verify(phonepe_tx_id, "phonepe")
+        # Test 7: SEO Content Management
+        print("\n🔍 Testing SEO Content Management...")
+        self.test_admin_seo_create()
+        self.test_admin_seo_list()
         
-        # Test 7: Error Handling & Validation
-        self.test_error_handling()
+        # Test 8: FAQ Management
+        print("\n❓ Testing FAQ Management...")
+        self.test_admin_faq_section_create()
+        self.test_admin_faq_item_create()
         
-        # Test 8: Database Integration
-        self.test_database_integration()
+        # Test 9: Legal Document Management
+        print("\n📄 Testing Legal Document Management...")
+        self.test_admin_legal_create()
+        self.test_admin_legal_publish()
+        
+        # Test 10: Public API Endpoints
+        print("\n🌐 Testing Public API Endpoints...")
+        self.test_public_banners_active()
+        self.test_public_seo_by_slug()
+        self.test_public_faq_sections()
+        self.test_public_legal_document()
+        
+        # Test 11: Analytics Tracking
+        print("\n📊 Testing Analytics Tracking...")
+        self.test_banner_click_tracking()
+        self.test_content_analytics()
+        
+        # Test 12: Validation & Error Handling
+        print("\n✅ Testing Validation & Error Handling...")
+        self.test_validation_errors()
+        self.test_authorization_middleware()
         
         # Generate Summary
         self.generate_summary()
 
     def generate_summary(self):
         """Generate test summary"""
-        print("\n" + "=" * 70)
-        print("📊 PAYMENT GATEWAY SYSTEM TEST SUMMARY")
-        print("=" * 70)
+        print("\n" + "=" * 80)
+        print("📊 CONTENT MANAGEMENT SYSTEM TEST SUMMARY")
+        print("=" * 80)
         
         total_tests = len(self.test_results)
         passed_tests = sum(1 for result in self.test_results if result["success"])
@@ -847,28 +1170,43 @@ class PaymentGatewayTester:
         
         # Categorize results
         categories = {
-            "Health & Connectivity": [],
+            "Health & Setup": [],
             "Authentication": [],
-            "Admin Gateway Management": [],
-            "User Payment APIs": [],
-            "Error Handling": [],
-            "Database Integration": []
+            "Banner Management": [],
+            "Email Templates": [],
+            "Marketing Campaigns": [],
+            "SEO Content": [],
+            "FAQ Management": [],
+            "Legal Documents": [],
+            "Public APIs": [],
+            "Analytics": [],
+            "Validation & Security": []
         }
         
         for result in self.test_results:
             test_name = result["test"]
-            if "Health" in test_name:
-                categories["Health & Connectivity"].append(result)
+            if "Health" in test_name or "Database Setup" in test_name:
+                categories["Health & Setup"].append(result)
             elif "Authentication" in test_name:
                 categories["Authentication"].append(result)
-            elif "Admin" in test_name:
-                categories["Admin Gateway Management"].append(result)
-            elif "User Payment" in test_name:
-                categories["User Payment APIs"].append(result)
-            elif "Error Handling" in test_name:
-                categories["Error Handling"].append(result)
-            elif "Database" in test_name:
-                categories["Database Integration"].append(result)
+            elif "Banner" in test_name:
+                categories["Banner Management"].append(result)
+            elif "Email Template" in test_name:
+                categories["Email Templates"].append(result)
+            elif "Campaign" in test_name:
+                categories["Marketing Campaigns"].append(result)
+            elif "SEO" in test_name:
+                categories["SEO Content"].append(result)
+            elif "FAQ" in test_name:
+                categories["FAQ Management"].append(result)
+            elif "Legal" in test_name:
+                categories["Legal Documents"].append(result)
+            elif "Public" in test_name:
+                categories["Public APIs"].append(result)
+            elif "Analytics" in test_name or "Click Tracking" in test_name:
+                categories["Analytics"].append(result)
+            elif "Validation" in test_name or "Auth Middleware" in test_name:
+                categories["Validation & Security"].append(result)
         
         for category, results in categories.items():
             if results:
@@ -876,9 +1214,9 @@ class PaymentGatewayTester:
                 total = len(results)
                 print(f"{category}: {passed}/{total} passed")
         
-        print("\n" + "=" * 70)
+        print("\n" + "=" * 80)
         print("🔍 DETAILED FINDINGS")
-        print("=" * 70)
+        print("=" * 80)
         
         # Show failed tests
         failed_results = [r for r in self.test_results if not r["success"]]
@@ -889,35 +1227,41 @@ class PaymentGatewayTester:
         else:
             print("✅ ALL TESTS PASSED!")
         
-        print("\n" + "=" * 70)
-        print("🎯 PAYMENT GATEWAY SYSTEM STATUS")
-        print("=" * 70)
+        print("\n" + "=" * 80)
+        print("🎯 CONTENT MANAGEMENT SYSTEM STATUS")
+        print("=" * 80)
         
         # Overall assessment
         if success_rate >= 90:
-            print("🎉 EXCELLENT: Payment gateway system is working excellently!")
+            print("🎉 EXCELLENT: Content Management System is working excellently!")
         elif success_rate >= 75:
-            print("✅ GOOD: Payment gateway system is working well with minor issues.")
+            print("✅ GOOD: Content Management System is working well with minor issues.")
         elif success_rate >= 50:
-            print("⚠️  MODERATE: Payment gateway system has some issues that need attention.")
+            print("⚠️  MODERATE: Content Management System has some issues that need attention.")
         else:
-            print("❌ CRITICAL: Payment gateway system has significant issues requiring immediate attention.")
+            print("❌ CRITICAL: Content Management System has significant issues requiring immediate attention.")
         
         # Key functionality assessment
         admin_tests = [r for r in self.test_results if "Admin" in r["test"]]
-        user_tests = [r for r in self.test_results if "User Payment" in r["test"]]
+        public_tests = [r for r in self.test_results if "Public" in r["test"]]
         
         admin_success = sum(1 for r in admin_tests if r["success"]) / len(admin_tests) * 100 if admin_tests else 0
-        user_success = sum(1 for r in user_tests if r["success"]) / len(user_tests) * 100 if user_tests else 0
+        public_success = sum(1 for r in public_tests if r["success"]) / len(public_tests) * 100 if public_tests else 0
         
-        print(f"\nAdmin Gateway Management: {admin_success:.1f}% functional")
-        print(f"User Payment APIs: {user_success:.1f}% functional")
+        print(f"\nAdmin Content Management: {admin_success:.1f}% functional")
+        print(f"Public Content APIs: {public_success:.1f}% functional")
         
-        if admin_success >= 75 and user_success >= 75:
-            print("\n🚀 READY FOR PRODUCTION: Core payment functionality is working!")
+        if admin_success >= 75 and public_success >= 75:
+            print("\n🚀 READY FOR PRODUCTION: Core CMS functionality is working!")
         else:
-            print("\n⚠️  NEEDS WORK: Core payment functionality requires fixes before production.")
+            print("\n⚠️  NEEDS WORK: Core CMS functionality requires fixes before production.")
+        
+        # Show created resources for cleanup reference
+        print(f"\n📝 CREATED TEST RESOURCES:")
+        for resource_type, ids in self.created_resources.items():
+            if ids:
+                print(f"  {resource_type}: {len(ids)} items created")
 
 if __name__ == "__main__":
-    tester = PaymentGatewayTester()
-    tester.run_comprehensive_tests()
+    tester = ContentManagementTester()
+    tester.run_comprehensive_cms_tests()

@@ -119,3 +119,17 @@ func ValidateAdminToken(tokenString, jwtSecret string) (*AdminJWTClaims, error) 
 	
 	return nil, fmt.Errorf("invalid admin token")
 }
+
+// GetUserIDFromContext extracts the user ID from gin context
+func GetUserIDFromContext(c *gin.Context) (int64, bool) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		return 0, false
+	}
+	
+	if id, ok := userID.(int64); ok {
+		return id, true
+	}
+	
+	return 0, false
+}

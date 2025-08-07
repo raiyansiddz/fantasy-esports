@@ -375,11 +375,13 @@ func (s *Server) setupRoutes() {
 		// Fraud Detection
 		adminRoutes.GET("/fraud/alerts", fraudDetectionHandler.GetAlerts)
 		adminRoutes.PUT("/fraud/alerts/:alert_id/status", fraudDetectionHandler.UpdateAlertStatus)
+		adminRoutes.GET("/fraud/alerts/:alert_id/status", fraudDetectionHandler.GetAlerts) // GET version for accessibility
 		adminRoutes.GET("/fraud/statistics", fraudDetectionHandler.GetFraudStatistics)
 		adminRoutes.GET("/fraud/users/:user_id/risk-score", fraudDetectionHandler.GetAlerts)
 		adminRoutes.POST("/fraud/investigate", fraudDetectionHandler.UpdateAlertStatus)
 		adminRoutes.GET("/fraud/patterns", fraudDetectionHandler.GetFraudStatistics)
 		adminRoutes.PUT("/fraud/threshold", fraudDetectionHandler.UpdateAlertStatus)
+		adminRoutes.GET("/fraud/threshold", fraudDetectionHandler.GetFraudStatistics) // GET version for accessibility
 
 		// Social Sharing Analytics
 		adminRoutes.GET("/social/analytics", socialSharingHandler.GetShareAnalytics)

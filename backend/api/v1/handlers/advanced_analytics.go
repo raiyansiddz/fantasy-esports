@@ -102,12 +102,43 @@ func (h *AdvancedAnalyticsHandler) GetAdvancedGameMetrics(c *gin.Context) {
 }
 
 func (h *AdvancedAnalyticsHandler) GetAdvancedMetricsHistory(c *gin.Context) {
-	gameID, err := strconv.Atoi(c.Param("game_id"))
+	gameIDStr := c.Param("game_id")
+	gameID, err := strconv.Atoi(gameIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
-			Error:   "Invalid game ID",
-			Code:    "INVALID_ID",
+			Error:   fmt.Sprintf("Invalid game ID '%s': must be a positive integer", gameIDStr),
+			Code:    "INVALID_GAME_ID",
+		})
+		return
+	}
+
+	if gameID <= 0 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Game ID must be a positive integer",
+			Code:    "INVALID_GAME_ID",
+		})
+		return
+	}
+
+	// Check if game exists
+	var exists bool
+	err = h.db.QueryRow("SELECT EXISTS(SELECT 1 FROM games WHERE id = $1)", gameID).Scan(&exists)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Database error while checking game",
+			Code:    "DATABASE_ERROR",
+		})
+		return
+	}
+
+	if !exists {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Game with ID %d not found", gameID),
+			Code:    "GAME_NOT_FOUND",
 		})
 		return
 	}
@@ -115,8 +146,15 @@ func (h *AdvancedAnalyticsHandler) GetAdvancedMetricsHistory(c *gin.Context) {
 	daysStr := c.Query("days")
 	days := 30 // Default
 	if daysStr != "" {
-		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
+		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 && d <= 365 {
 			days = d
+		} else if daysStr != "" {
+			c.JSON(http.StatusBadRequest, models.ErrorResponse{
+				Success: false,
+				Error:   "Days parameter must be a positive integer between 1 and 365",
+				Code:    "INVALID_DAYS",
+			})
+			return
 		}
 	}
 
@@ -124,7 +162,7 @@ func (h *AdvancedAnalyticsHandler) GetAdvancedMetricsHistory(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
-			Error:   "Failed to fetch history",
+			Error:   fmt.Sprintf("Failed to fetch history: %v", err.Error()),
 			Code:    "HISTORY_FAILED",
 		})
 		return

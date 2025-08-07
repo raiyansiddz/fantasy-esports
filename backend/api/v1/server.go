@@ -77,6 +77,7 @@ func (s *Server) setupRoutes() {
 	notificationHandler := handlers.NewNotificationHandler(s.db, s.config)
 	paymentHandler := internal_handlers.NewPaymentHandler(s.db, s.config, paymentService)
 	contentHandler := handlers.NewContentHandler(s.db, s.config, cdnClient)
+	fraudDetectionHandler := handlers.NewFraudDetectionHandler(s.db, s.config)
 
 	// Health check
 	s.router.GET("/health", func(c *gin.Context) {

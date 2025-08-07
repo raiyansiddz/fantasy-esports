@@ -3,7 +3,41 @@ package models
 import (
 	"time"
 	"encoding/json"
+	"strconv"
 )
+
+// ContentIDValue is a custom type that can handle both string and int64 for content_id
+type ContentIDValue struct {
+	Value *int64
+}
+
+// UnmarshalJSON implements custom JSON unmarshaling for content_id
+func (c *ContentIDValue) UnmarshalJSON(data []byte) error {
+	// Try to unmarshal as int64 first
+	var intVal int64
+	if err := json.Unmarshal(data, &intVal); err == nil {
+		c.Value = &intVal
+		return nil
+	}
+	
+	// Try to unmarshal as string and convert to int64
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		if strVal == "" {
+			c.Value = nil
+			return nil
+		}
+		
+		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+			c.Value = &intVal
+			return nil
+		}
+	}
+	
+	// If both fail, set as nil
+	c.Value = nil
+	return nil
+}
 
 type SocialShare struct {
 	ID         int64           `json:"id" db:"id"`

@@ -533,3 +533,28 @@ func (s *FriendService) determineWinner(challenge models.FriendChallenge) (int64
 	// Tie - return challenger as winner by default
 	return challenge.ChallengerID, nil
 }
+
+// Helper methods for user lookup
+func (s *FriendService) getUserByUsername(username string) (int64, error) {
+	var userID int64
+	err := s.db.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("user not found")
+		}
+		return 0, err
+	}
+	return userID, nil
+}
+
+func (s *FriendService) getUserByMobile(mobile string) (int64, error) {
+	var userID int64
+	err := s.db.QueryRow("SELECT id FROM users WHERE mobile = $1", mobile).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("user not found")
+		}
+		return 0, err
+	}
+	return userID, nil
+}

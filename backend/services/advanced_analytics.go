@@ -2,10 +2,10 @@ package services
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fantasy-esports-backend/models"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 )
 

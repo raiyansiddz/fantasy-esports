@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/models"
 	"fantasy-esports-backend/services"
+	"fmt"
 	"net/http"
 	"strconv"
 

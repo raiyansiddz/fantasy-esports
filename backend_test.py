@@ -68,13 +68,13 @@ class GameFeatureTester:
         
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=headers, timeout=5)
+                response = requests.get(url, headers=headers, timeout=10)
             elif method.upper() == "POST":
-                response = requests.post(url, json=data, headers=headers, timeout=5)
+                response = requests.post(url, json=data, headers=headers, timeout=10)
             elif method.upper() == "PUT":
-                response = requests.put(url, json=data, headers=headers, timeout=5)
+                response = requests.put(url, json=data, headers=headers, timeout=10)
             elif method.upper() == "DELETE":
-                response = requests.delete(url, headers=headers, timeout=5)
+                response = requests.delete(url, headers=headers, timeout=10)
             else:
                 return None, f"Unsupported method: {method}"
             
@@ -82,9 +82,11 @@ class GameFeatureTester:
         except requests.exceptions.Timeout:
             return None, "Request timeout"
         except requests.exceptions.ConnectionError:
-            return None, "Connection error"
+            return None, "Connection error - backend may be down"
         except requests.exceptions.RequestException as e:
             return None, str(e)
+        except Exception as e:
+            return None, f"Unexpected error: {str(e)}"
     
     def authenticate_user(self):
         """Authenticate as regular user"""

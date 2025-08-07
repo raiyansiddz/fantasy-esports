@@ -8,6 +8,7 @@ import (
 	"fantasy-esports-backend/utils"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )

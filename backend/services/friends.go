@@ -17,16 +17,36 @@ func NewFriendService(db *sql.DB) *FriendService {
 
 // Friend management
 func (s *FriendService) AddFriend(userID int64, req models.AddFriendRequest) error {
-	if userID == req.FriendID {
+	// Resolve friend ID from the request
+	var friendID int64
+	var err error
+	
+	if req.FriendID != nil {
+		friendID = *req.FriendID
+	} else if req.Username != nil {
+		friendID, err = s.getUserByUsername(*req.Username)
+		if err != nil {
+			return fmt.Errorf("user not found with username: %s", *req.Username)
+		}
+	} else if req.Mobile != nil {
+		friendID, err = s.getUserByMobile(*req.Mobile)
+		if err != nil {
+			return fmt.Errorf("user not found with mobile: %s", *req.Mobile)
+		}
+	} else {
+		return fmt.Errorf("must provide friend_id, username, or mobile")
+	}
+
+	if userID == friendID {
 		return fmt.Errorf("cannot add yourself as a friend")
 	}
 
 	// Check if friendship already exists
 	var count int
-	err := s.db.QueryRow(`
+	err = s.db.QueryRow(`
 		SELECT COUNT(*) FROM user_friends 
 		WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)
-	`, userID, req.FriendID).Scan(&count)
+	`, userID, friendID).Scan(&count)
 	if err != nil {
 		return err
 	}
@@ -44,7 +64,7 @@ func (s *FriendService) AddFriend(userID int64, req models.AddFriendRequest) err
 	_, err = tx.Exec(`
 		INSERT INTO user_friends (user_id, friend_id, status, requested_by)
 		VALUES ($1, $2, 'pending', $1)
-	`, userID, req.FriendID)
+	`, userID, friendID)
 	if err != nil {
 		return err
 	}
@@ -53,7 +73,7 @@ func (s *FriendService) AddFriend(userID int64, req models.AddFriendRequest) err
 	_, err = tx.Exec(`
 		INSERT INTO user_friends (user_id, friend_id, status, requested_by)
 		VALUES ($1, $2, 'pending', $3)
-	`, req.FriendID, userID, userID)
+	`, friendID, userID, userID)
 	if err != nil {
 		return err
 	}

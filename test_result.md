@@ -529,14 +529,8 @@ test_plan:
   current_focus:
     []
   stuck_tasks:
-    - "Content Management System - Database Setup and Sample Data"
-    - "Content Management System - Admin Banner Management APIs"
-    - "Content Management System - Email Template Management"
-    - "Content Management System - Marketing Campaign Management"
     - "Content Management System - SEO Content Management"
     - "Content Management System - FAQ Management"
-    - "Content Management System - Legal Document Management"
-    - "Content Management System - Analytics Tracking"
   test_all: false
   test_priority: "high_first"
 

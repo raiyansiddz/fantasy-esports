@@ -112,58 +112,63 @@ class GameFeatureTester:
         
         # 1. GET /api/v1/achievements (user achievements list)
         response, error = self.make_request("GET", "/achievements", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 401]:
-            if response.status_code == 401:
-                self.log_result("GET /achievements - User achievements list endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("GET /achievements - User achievements list", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("GET /achievements - User achievements list endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("GET /achievements - User achievements list endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code == 200:
+            self.log_result("GET /achievements - User achievements list", True, f"Status: {response.status_code}")
         else:
-            self.log_result("GET /achievements - User achievements list", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /achievements - User achievements list", False, f"Status: {response.status_code}")
         
         # 2. POST /api/v1/achievements/claim (claim achievement)
         claim_data = {"achievement_id": "123"}
         response, error = self.make_request("POST", "/achievements/claim", claim_data, auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 201, 400, 401]:
-            if response.status_code == 401:
-                self.log_result("POST /achievements/claim - Claim achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("POST /achievements/claim - Claim achievement", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("POST /achievements/claim - Claim achievement endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("POST /achievements/claim - Claim achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code in [200, 201, 400]:
+            self.log_result("POST /achievements/claim - Claim achievement", True, f"Status: {response.status_code}")
         else:
-            self.log_result("POST /achievements/claim - Claim achievement", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /achievements/claim - Claim achievement", False, f"Status: {response.status_code}")
         
         # 3. GET /api/v1/achievements/123 (achievement details)
         response, error = self.make_request("GET", "/achievements/123", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 400, 401, 404]:
-            if response.status_code == 401:
-                self.log_result("GET /achievements/123 - Achievement details endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            elif response.status_code == 404 and "page not found" in response.text.lower():
-                self.log_result("GET /achievements/123 - Achievement details endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
-            else:
-                self.log_result("GET /achievements/123 - Achievement details", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("GET /achievements/123 - Achievement details endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("GET /achievements/123 - Achievement details endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code == 404 and "page not found" in response.text.lower():
+            self.log_result("GET /achievements/123 - Achievement details endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+        elif response.status_code in [200, 400]:
+            self.log_result("GET /achievements/123 - Achievement details", True, f"Status: {response.status_code}")
         else:
-            self.log_result("GET /achievements/123 - Achievement details", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /achievements/123 - Achievement details", False, f"Status: {response.status_code}")
         
         # 4. GET /api/v1/achievements/categories (achievement categories)
         response, error = self.make_request("GET", "/achievements/categories", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 401]:
-            if response.status_code == 401:
-                self.log_result("GET /achievements/categories - Achievement categories endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            elif response.status_code == 404 and "page not found" in response.text.lower():
-                self.log_result("GET /achievements/categories - Achievement categories endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
-            else:
-                self.log_result("GET /achievements/categories - Achievement categories", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("GET /achievements/categories - Achievement categories endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("GET /achievements/categories - Achievement categories endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code == 404 and "page not found" in response.text.lower():
+            self.log_result("GET /achievements/categories - Achievement categories endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+        elif response.status_code == 200:
+            self.log_result("GET /achievements/categories - Achievement categories", True, f"Status: {response.status_code}")
         else:
-            self.log_result("GET /achievements/categories - Achievement categories", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /achievements/categories - Achievement categories", False, f"Status: {response.status_code}")
         
         # 5. GET /api/v1/admin/achievements (admin list)
         response, error = self.make_request("GET", "/admin/achievements", auth_token=ADMIN_TOKEN)
-        if response and response.status_code in [200, 401]:
-            if response.status_code == 401:
-                self.log_result("GET /admin/achievements - Admin list achievements endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("GET /admin/achievements - Admin list achievements", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("GET /admin/achievements - Admin list achievements endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("GET /admin/achievements - Admin list achievements endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code == 200:
+            self.log_result("GET /admin/achievements - Admin list achievements", True, f"Status: {response.status_code}")
         else:
-            self.log_result("GET /admin/achievements - Admin list achievements", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /admin/achievements - Admin list achievements", False, f"Status: {response.status_code}")
         
         # 6. POST /api/v1/admin/achievements (admin create)
         achievement_data = {
@@ -176,56 +181,61 @@ class GameFeatureTester:
             "icon_url": "https://example.com/icon.png"
         }
         response, error = self.make_request("POST", "/admin/achievements", achievement_data, auth_token=ADMIN_TOKEN)
-        if response and response.status_code in [200, 201, 400, 401]:
-            if response.status_code == 401:
-                self.log_result("POST /admin/achievements - Admin create achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("POST /admin/achievements - Admin create achievement", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("POST /admin/achievements - Admin create achievement endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("POST /admin/achievements - Admin create achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code in [200, 201, 400]:
+            self.log_result("POST /admin/achievements - Admin create achievement", True, f"Status: {response.status_code}")
         else:
-            self.log_result("POST /admin/achievements - Admin create achievement", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /admin/achievements - Admin create achievement", False, f"Status: {response.status_code}")
         
         # 7. PUT /api/v1/admin/achievements/123 (admin update)
         update_data = {"name": "Updated Achievement", "description": "Updated description"}
         response, error = self.make_request("PUT", "/admin/achievements/123", update_data, auth_token=ADMIN_TOKEN)
-        if response and response.status_code in [200, 400, 401]:
-            if response.status_code == 401:
-                self.log_result("PUT /admin/achievements/123 - Admin update achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("PUT /admin/achievements/123 - Admin update achievement", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("PUT /admin/achievements/123 - Admin update achievement endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("PUT /admin/achievements/123 - Admin update achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code in [200, 400]:
+            self.log_result("PUT /admin/achievements/123 - Admin update achievement", True, f"Status: {response.status_code}")
         else:
-            self.log_result("PUT /admin/achievements/123 - Admin update achievement", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("PUT /admin/achievements/123 - Admin update achievement", False, f"Status: {response.status_code}")
         
         # 8. DELETE /api/v1/admin/achievements/123 (admin delete)
         response, error = self.make_request("DELETE", "/admin/achievements/123", auth_token=ADMIN_TOKEN)
-        if response and response.status_code in [200, 204, 400, 401]:
-            if response.status_code == 401:
-                self.log_result("DELETE /admin/achievements/123 - Admin delete achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("DELETE /admin/achievements/123 - Admin delete achievement", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("DELETE /admin/achievements/123 - Admin delete achievement endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("DELETE /admin/achievements/123 - Admin delete achievement endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code in [200, 204, 400]:
+            self.log_result("DELETE /admin/achievements/123 - Admin delete achievement", True, f"Status: {response.status_code}")
         else:
-            self.log_result("DELETE /admin/achievements/123 - Admin delete achievement", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("DELETE /admin/achievements/123 - Admin delete achievement", False, f"Status: {response.status_code}")
         
         # 9. GET /api/v1/admin/achievements/stats (admin stats)
         response, error = self.make_request("GET", "/admin/achievements/stats", auth_token=ADMIN_TOKEN)
-        if response and response.status_code in [200, 401]:
-            if response.status_code == 401:
-                self.log_result("GET /admin/achievements/stats - Admin achievement stats endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            elif response.status_code == 404 and "page not found" in response.text.lower():
-                self.log_result("GET /admin/achievements/stats - Admin achievement stats endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
-            else:
-                self.log_result("GET /admin/achievements/stats - Admin achievement stats", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("GET /admin/achievements/stats - Admin achievement stats endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("GET /admin/achievements/stats - Admin achievement stats endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code == 404 and "page not found" in response.text.lower():
+            self.log_result("GET /admin/achievements/stats - Admin achievement stats endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+        elif response.status_code == 200:
+            self.log_result("GET /admin/achievements/stats - Admin achievement stats", True, f"Status: {response.status_code}")
         else:
-            self.log_result("GET /admin/achievements/stats - Admin achievement stats", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /admin/achievements/stats - Admin achievement stats", False, f"Status: {response.status_code}")
         
         # 10. GET /api/v1/achievements/leaderboard (leaderboard)
         response, error = self.make_request("GET", "/achievements/leaderboard", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 401]:
-            if response.status_code == 401:
-                self.log_result("GET /achievements/leaderboard - Achievement leaderboard endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("GET /achievements/leaderboard - Achievement leaderboard", True, f"Status: {response.status_code}")
+        if error:
+            self.log_result("GET /achievements/leaderboard - Achievement leaderboard endpoint accessible", False, f"Error: {error}")
+        elif response.status_code == 401:
+            self.log_result("GET /achievements/leaderboard - Achievement leaderboard endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+        elif response.status_code == 200:
+            self.log_result("GET /achievements/leaderboard - Achievement leaderboard", True, f"Status: {response.status_code}")
         else:
-            self.log_result("GET /achievements/leaderboard - Achievement leaderboard", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /achievements/leaderboard - Achievement leaderboard", False, f"Status: {response.status_code}")
 
     def test_friend_system(self):
         """Test Friend System & Challenges (12 endpoints)"""

@@ -27,6 +27,7 @@ func Load() *Config {
 		JWTSecret:     getEnv("JWT_SECRET", "default-secret-key"),
 		Port:         getEnv("PORT", "8080"),
 		GinMode:      getEnv("GIN_MODE", "debug"),
+		BaseURL:      getEnv("BASE_URL", "http://localhost:8080"),
 	}
 
 	if config.DatabaseURL == "" {

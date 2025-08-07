@@ -103,12 +103,14 @@ class GamingFeaturesTester:
                 self.log_test("User Mobile Verification", False, f"Mobile verification failed: {response.status_code}")
                 return False
             
+            data = response.json()
+            session_id = data.get('session_id')
+            
             # Step 2: Verify OTP
             otp_data = {
                 "mobile": "+919876543210",
                 "otp": "123456",
-                "name": "Test User",
-                "email": "testuser@example.com"
+                "session_id": session_id
             }
             
             response = self.session.post(
@@ -119,8 +121,8 @@ class GamingFeaturesTester:
             
             if response.status_code == 200:
                 data = response.json()
-                if 'token' in data:
-                    self.user_token = data['token']
+                if 'access_token' in data:
+                    self.user_token = data['access_token']
                     # Create a separate session for user requests
                     self.user_session = requests.Session()
                     self.user_session.headers.update({'Authorization': f'Bearer {self.user_token}'})

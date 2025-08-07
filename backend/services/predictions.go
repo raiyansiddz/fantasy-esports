@@ -557,5 +557,3 @@ func (s *PlayerPredictionService) getActualPoints(playerID, matchID int64) (floa
 	return actualPoints, err
 }
 
-// Required import for pq.Array
-import "github.com/lib/pq"

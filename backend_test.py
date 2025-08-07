@@ -52,13 +52,13 @@ class GameFeatureTester:
         
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=headers, timeout=10)
+                response = requests.get(url, headers=headers, timeout=5)
             elif method.upper() == "POST":
-                response = requests.post(url, json=data, headers=headers, timeout=10)
+                response = requests.post(url, json=data, headers=headers, timeout=5)
             elif method.upper() == "PUT":
-                response = requests.put(url, json=data, headers=headers, timeout=10)
+                response = requests.put(url, json=data, headers=headers, timeout=5)
             elif method.upper() == "DELETE":
-                response = requests.delete(url, headers=headers, timeout=10)
+                response = requests.delete(url, headers=headers, timeout=5)
             else:
                 return None, f"Unsupported method: {method}"
             

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type JWTClaims struct {

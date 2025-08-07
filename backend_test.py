@@ -726,62 +726,76 @@ class GameFeatureTester:
             self.log_result("PUT /admin/tournaments/1/brackets/123/reset - Reset bracket", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_fraud_detection(self):
-        """Test Advanced Fraud Detection"""
-        print("\n🛡️ TESTING ADVANCED FRAUD DETECTION")
+        """Test Advanced Fraud Detection (6 endpoints)"""
+        print("\n🛡️ TESTING ADVANCED FRAUD DETECTION (6 ENDPOINTS)")
         
-        # Test 1: User - Get risk score
-        response, error = self.make_request("GET", "/fraud/risk-score", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 401]:
-            if response.status_code == 401:
-                self.log_result("Fraud Detection - User risk score endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("Fraud Detection - User risk score", True, f"Status: {response.status_code}")
-        else:
-            self.log_result("Fraud Detection - User risk score", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
-        
-        # Test 2: Admin - Get fraud alerts
+        # 1. GET /api/v1/admin/fraud/alerts (fraud alerts)
         response, error = self.make_request("GET", "/admin/fraud/alerts", auth_token=ADMIN_TOKEN)
         if response and response.status_code in [200, 401]:
             if response.status_code == 401:
-                self.log_result("Fraud Detection - Admin alerts endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /admin/fraud/alerts - Fraud alerts endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Fraud Detection - Admin alerts", True, f"Status: {response.status_code}")
+                self.log_result("GET /admin/fraud/alerts - Fraud alerts", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Fraud Detection - Admin alerts", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /admin/fraud/alerts - Fraud alerts", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 3: Admin - Get fraud statistics
+        # 2. GET /api/v1/admin/fraud/statistics (fraud stats)
         response, error = self.make_request("GET", "/admin/fraud/statistics", auth_token=ADMIN_TOKEN)
         if response and response.status_code in [200, 401]:
             if response.status_code == 401:
-                self.log_result("Fraud Detection - Admin statistics endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /admin/fraud/statistics - Fraud statistics endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Fraud Detection - Admin statistics", True, f"Status: {response.status_code}")
+                self.log_result("GET /admin/fraud/statistics - Fraud statistics", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Fraud Detection - Admin statistics", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /admin/fraud/statistics - Fraud statistics", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 4: Admin - Get user risk score
-        response, error = self.make_request("GET", "/admin/fraud/users/123/risk-score", auth_token=ADMIN_TOKEN)
+        # 3. POST /api/v1/admin/fraud/investigate (investigate)
+        investigate_data = {
+            "user_id": "123",
+            "alert_id": "456",
+            "investigation_type": "manual_review"
+        }
+        response, error = self.make_request("POST", "/admin/fraud/investigate", investigate_data, auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 201, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("POST /admin/fraud/investigate - Fraud investigate endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("POST /admin/fraud/investigate - Fraud investigate", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("POST /admin/fraud/investigate - Fraud investigate", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 4. GET /api/v1/fraud/my-reports (user reports)
+        response, error = self.make_request("GET", "/fraud/my-reports", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /fraud/my-reports - User fraud reports endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /fraud/my-reports - User fraud reports endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /fraud/my-reports - User fraud reports", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /fraud/my-reports - User fraud reports", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 5. PUT /api/v1/admin/fraud/alerts/123/status (update alert status)
+        status_data = {"status": "resolved", "resolution_notes": "False positive"}
+        response, error = self.make_request("PUT", "/admin/fraud/alerts/123/status", status_data, auth_token=ADMIN_TOKEN)
         if response and response.status_code in [200, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Fraud Detection - Admin user risk score endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("PUT /admin/fraud/alerts/123/status - Update alert status endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Fraud Detection - Admin user risk score", True, f"Status: {response.status_code}")
+                self.log_result("PUT /admin/fraud/alerts/123/status - Update alert status", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Fraud Detection - Admin user risk score", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("PUT /admin/fraud/alerts/123/status - Update alert status", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 5: Public fraud reporting
-        fraud_report = {
-            "user_id": "123",
-            "type": "suspicious_activity",
-            "description": "Unusual betting pattern",
-            "evidence": {"ip_address": "192.168.1.1"}
-        }
-        
-        response, error = self.make_request("POST", "/fraud/report", fraud_report)
-        if response and response.status_code in [200, 201, 400]:
-            self.log_result("Fraud Detection - Public fraud reporting", True, f"Status: {response.status_code}")
+        # 6. GET /api/v1/admin/fraud/threshold (fraud thresholds)
+        response, error = self.make_request("GET", "/admin/fraud/threshold", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /admin/fraud/threshold - Fraud thresholds endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("GET /admin/fraud/threshold - Fraud thresholds", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Fraud Detection - Public fraud reporting", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /admin/fraud/threshold - Fraud thresholds", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def run_comprehensive_test(self):
         """Run comprehensive test of all 7 gaming features"""

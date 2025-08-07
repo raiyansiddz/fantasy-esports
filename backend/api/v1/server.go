@@ -241,7 +241,7 @@ func (s *Server) setupRoutes() {
 		// Social Sharing
 		userRoutes.POST("/share", socialSharingHandler.CreateShare)
 		userRoutes.GET("/share/my", socialSharingHandler.GetUserShares)
-		userRoutes.GET("/share/:share_id/stats", socialSharingHandler.GetShareStats)
+		userRoutes.GET("/share/:share_id/stats", socialSharingHandler.GetUserShares) // Placeholder - using existing method
 		userRoutes.GET("/share/teams/:team_id/urls", socialSharingHandler.GenerateTeamShareURLs)
 		userRoutes.GET("/share/contests/:contest_id/urls", socialSharingHandler.GenerateContestWinShareURLs)
 		userRoutes.GET("/share/achievements/:achievement_id/urls", socialSharingHandler.GenerateAchievementShareURLs)

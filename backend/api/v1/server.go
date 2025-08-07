@@ -402,6 +402,9 @@ func (s *Server) setupRoutes() {
 
 		// Social Sharing Analytics
 		adminRoutes.GET("/social/analytics", socialSharingHandler.GetShareAnalytics)
+		adminRoutes.GET("/social/platforms/stats", socialSharingHandler.GetPlatformStats)
+		adminRoutes.GET("/social/trending", socialSharingHandler.GetTrendingContent)
+		adminRoutes.POST("/social/campaigns", socialSharingHandler.CreateCampaign)
 
 		// Notification Management
 		adminRoutes.POST("/notify/send", notificationHandler.SendNotification)

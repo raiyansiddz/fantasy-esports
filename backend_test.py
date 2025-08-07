@@ -226,82 +226,142 @@ class GameFeatureTester:
             self.log_result("GET /achievements/leaderboard - Achievement leaderboard", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_friend_system(self):
-        """Test Friend System & Challenges"""
-        print("\n👥 TESTING FRIEND SYSTEM & CHALLENGES")
+        """Test Friend System & Challenges (12 endpoints)"""
+        print("\n👥 TESTING FRIEND SYSTEM & CHALLENGES (12 ENDPOINTS)")
         
-        # Test 1: Add friend
-        friend_data = {
-            "username": "testfriend",
-            "mobile": "+919876543211"
-        }
-        
-        response, error = self.make_request("POST", "/friends", friend_data, auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 201, 400, 401]:
-            if response.status_code == 401:
-                self.log_result("Friend System - Add friend endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("Friend System - Add friend", True, f"Status: {response.status_code}")
-        else:
-            self.log_result("Friend System - Add friend", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
-        
-        # Test 2: Get friends list
+        # 1. GET /api/v1/friends (friends list)
         response, error = self.make_request("GET", "/friends", auth_token=USER_TOKEN)
         if response and response.status_code in [200, 401]:
             if response.status_code == 401:
-                self.log_result("Friend System - Friends list endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /friends - Friends list endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Friend System - Friends list", True, f"Status: {response.status_code}")
+                self.log_result("GET /friends - Friends list", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Friend System - Friends list", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /friends - Friends list", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 3: Accept friend request
-        response, error = self.make_request("POST", "/friends/123/accept", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 400, 401, 404]:
+        # 2. POST /api/v1/friends/add (add friend)
+        friend_data = {"username": "testfriend", "mobile": "+919876543211"}
+        response, error = self.make_request("POST", "/friends/add", friend_data, auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 201, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Friend System - Accept friend endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            elif response.status_code == 404 and "page not found" in response.text.lower():
-                self.log_result("Friend System - Accept friend endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+                self.log_result("POST /friends/add - Add friend endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Friend System - Accept friend", True, f"Status: {response.status_code}")
+                self.log_result("POST /friends/add - Add friend", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Friend System - Accept friend", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /friends/add - Add friend", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 4: Create challenge
+        # 3. DELETE /api/v1/friends/123 (remove friend)
+        response, error = self.make_request("DELETE", "/friends/123", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 204, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("DELETE /friends/123 - Remove friend endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("DELETE /friends/123 - Remove friend", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("DELETE /friends/123 - Remove friend", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 4. GET /api/v1/friends/requests (friend requests)
+        response, error = self.make_request("GET", "/friends/requests", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /friends/requests - Friend requests endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /friends/requests - Friend requests endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /friends/requests - Friend requests", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /friends/requests - Friend requests", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 5. POST /api/v1/friends/requests/123/accept (accept request)
+        response, error = self.make_request("POST", "/friends/requests/123/accept", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("POST /friends/requests/123/accept - Accept friend request endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("POST /friends/requests/123/accept - Accept friend request", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("POST /friends/requests/123/accept - Accept friend request", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 6. POST /api/v1/friends/requests/123/decline (decline request)
+        response, error = self.make_request("POST", "/friends/requests/123/decline", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("POST /friends/requests/123/decline - Decline friend request endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("POST /friends/requests/123/decline - Decline friend request", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("POST /friends/requests/123/decline - Decline friend request", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 7. GET /api/v1/challenges (challenges list)
+        response, error = self.make_request("GET", "/challenges", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /challenges - Challenges list endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("GET /challenges - Challenges list", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /challenges - Challenges list", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 8. POST /api/v1/challenges (create challenge)
         challenge_data = {
             "friend_id": "123",
             "contest_id": "456",
             "entry_fee": 100,
             "message": "Let's compete!"
         }
-        
         response, error = self.make_request("POST", "/challenges", challenge_data, auth_token=USER_TOKEN)
         if response and response.status_code in [200, 201, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Friend System - Create challenge endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("POST /challenges - Create challenge endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Friend System - Create challenge", True, f"Status: {response.status_code}")
+                self.log_result("POST /challenges - Create challenge", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Friend System - Create challenge", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /challenges - Create challenge", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 5: Get challenges
-        response, error = self.make_request("GET", "/challenges", auth_token=USER_TOKEN)
+        # 9. GET /api/v1/challenges/123/status (challenge status)
+        response, error = self.make_request("GET", "/challenges/123/status", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /challenges/123/status - Challenge status endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /challenges/123/status - Challenge status endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /challenges/123/status - Challenge status", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /challenges/123/status - Challenge status", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 10. POST /api/v1/challenges/123/accept (accept challenge)
+        response, error = self.make_request("POST", "/challenges/123/accept", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("POST /challenges/123/accept - Accept challenge endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("POST /challenges/123/accept - Accept challenge", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("POST /challenges/123/accept - Accept challenge", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 11. GET /api/v1/challenges/my (my challenges)
+        response, error = self.make_request("GET", "/challenges/my", auth_token=USER_TOKEN)
         if response and response.status_code in [200, 401]:
             if response.status_code == 401:
-                self.log_result("Friend System - Challenges list endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /challenges/my - My challenges endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /challenges/my - My challenges endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
             else:
-                self.log_result("Friend System - Challenges list", True, f"Status: {response.status_code}")
+                self.log_result("GET /challenges/my - My challenges", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Friend System - Challenges list", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /challenges/my - My challenges", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 6: Friend activities
-        response, error = self.make_request("GET", "/friends/activities", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 401]:
+        # 12. PUT /api/v1/challenges/123/resolve (resolve challenge)
+        resolve_data = {"winner_id": "123", "result": "completed"}
+        response, error = self.make_request("PUT", "/challenges/123/resolve", resolve_data, auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Friend System - Friend activities endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("PUT /challenges/123/resolve - Resolve challenge endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Friend System - Friend activities", True, f"Status: {response.status_code}")
+                self.log_result("PUT /challenges/123/resolve - Resolve challenge", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Friend System - Friend activities", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("PUT /challenges/123/resolve - Resolve challenge", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_social_sharing(self):
         """Test Social Sharing Integration"""

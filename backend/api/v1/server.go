@@ -157,6 +157,7 @@ func (s *Server) setupRoutes() {
 	// Protected user routes (require user authentication)
 	userRoutes := v1.Group("")
 	userRoutes.Use(middleware.AuthMiddleware(s.config.JWTSecret))
+	userRoutes.Use(fraudDetectionHandler.FraudDetectionMiddleware())
 	{
 		// User management
 		userRoutes.POST("/auth/logout", authHandler.Logout)

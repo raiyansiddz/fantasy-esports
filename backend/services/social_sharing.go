@@ -28,12 +28,12 @@ func (s *SocialSharingService) CreateShare(userID int64, req models.CreateShareR
 	}
 
 	// Enhanced content_id validation based on share_type
-	if err := s.validateContentID(req.ShareType, req.ContentID); err != nil {
+	if err := s.validateContentID(req.ShareType, req.ContentID.Value); err != nil {
 		return nil, fmt.Errorf("content validation failed: %v", err)
 	}
 
 	// Generate share URL based on content
-	shareURL := s.generateShareURL(req.ShareType, req.ContentID, userID)
+	shareURL := s.generateShareURL(req.ShareType, req.ContentID.Value, userID)
 
 	query := `
 		INSERT INTO social_shares (user_id, share_type, platform, content_id, share_data, share_url)
@@ -45,7 +45,7 @@ func (s *SocialSharingService) CreateShare(userID int64, req models.CreateShareR
 		UserID:    userID,
 		ShareType: req.ShareType,
 		Platform:  req.Platform,
-		ContentID: req.ContentID,
+		ContentID: req.ContentID.Value,
 		ShareData: shareData,
 		ShareURL:  &shareURL,
 	}

@@ -442,6 +442,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL ROUTING AND VALIDATION ISSUES - FAQ management has multiple problems: ❌ CREATE FAQ SECTION: 400 error due to missing required field - 'Name' field is required but 'title' was provided instead ❌ FAQ SECTIONS ENDPOINT: Returns 404 instead of 401 when unauthorized, indicating routing issue ❌ CREATE FAQ ITEM: Cannot test due to failed section creation ✅ PUBLIC FAQ SECTIONS: Working correctly (200 status) but returns empty array. Routing and validation both need fixes. Success rate: 33% (1/3 FAQ tests passed)."
+      - working: false
+        agent: "testing"
+        comment: "⚠️ PARTIALLY FIXED - FAQ section creation is now working but routing issue persists: ✅ CREATE FAQ SECTION: Successfully creates FAQ sections using correct field name 'name' instead of 'title' (Created section ID: 5) ✅ PUBLIC FAQ SECTIONS: Working correctly (200 status) ✅ VALIDATION: Proper field validation working (rejects missing required fields) ❌ ROUTING ISSUE: Admin FAQ sections endpoint still returns 404 instead of 401 for unauthorized access, indicating routing problem ❌ AUTHENTICATION: Cannot properly test auth middleware due to routing issue. The corrected field names have fixed creation but there's still a routing issue with the admin FAQ sections endpoint. Success rate: 75% (creation and public access work, admin routing fails)."
 
   - task: "Content Management System - Legal Document Management"
     implemented: true

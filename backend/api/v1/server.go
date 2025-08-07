@@ -241,7 +241,7 @@ func (s *Server) setupRoutes() {
 		userRoutes.POST("/share/:share_id/click", socialSharingHandler.TrackShareClick)
 
 		// Player Predictions
-		userRoutes.GET("/matches/:match_id/predictions", predictionHandler.GetMatchPredictions)
+		userRoutes.GET("/matches/:id/predictions", predictionHandler.GetMatchPredictions)
 		userRoutes.POST("/payment/verify", paymentHandler.VerifyPayment)
 		userRoutes.GET("/payment/status/:transaction_id", paymentHandler.GetPaymentStatus)
 

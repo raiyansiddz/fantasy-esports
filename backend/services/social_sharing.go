@@ -24,7 +24,12 @@ func NewSocialSharingService(db *sql.DB, baseURL string) *SocialSharingService {
 func (s *SocialSharingService) CreateShare(userID int64, req models.CreateShareRequest) (*models.SocialShare, error) {
 	shareData, err := json.Marshal(req.ShareData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal share data: %v", err)
+	}
+
+	// Enhanced content_id validation based on share_type
+	if err := s.validateContentID(req.ShareType, req.ContentID); err != nil {
+		return nil, fmt.Errorf("content validation failed: %v", err)
 	}
 
 	// Generate share URL based on content
@@ -49,7 +54,7 @@ func (s *SocialSharingService) CreateShare(userID int64, req models.CreateShareR
 		share.ContentID, share.ShareData, share.ShareURL).Scan(&share.ID, &share.CreatedAt)
 	
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create share record: %v", err)
 	}
 
 	return share, nil

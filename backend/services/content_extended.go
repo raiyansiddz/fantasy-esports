@@ -101,8 +101,10 @@ func (s *ContentService) GetSEOContent(id int64) (*models.SEOContentResponse, er
 func (s *ContentService) GetSEOContentBySlug(slug string) (*models.SEOContent, error) {
 	query := `
 		SELECT id, page_type, page_slug, meta_title, meta_description, keywords,
-			og_title, og_description, og_image, twitter_card, structured_data,
-			content, is_active, created_by, created_at, updated_at
+			COALESCE(og_title, '') as og_title, COALESCE(og_description, '') as og_description, 
+			COALESCE(og_image, '') as og_image, COALESCE(twitter_card, '') as twitter_card, 
+			structured_data, COALESCE(content, '') as content, is_active, created_by, 
+			created_at, updated_at
 		FROM seo_content
 		WHERE page_slug = $1 AND is_active = true`
 	

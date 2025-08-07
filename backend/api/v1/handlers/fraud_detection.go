@@ -144,7 +144,7 @@ func (h *FraudDetectionHandler) UpdateAlertStatus(c *gin.Context) {
 
 func (h *FraudDetectionHandler) GetFraudStatistics(c *gin.Context) {
 	// Verify admin access
-	_, exists := c.Get("admin_user_id")
+	_, exists := c.Get("admin_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
 			Success: false,

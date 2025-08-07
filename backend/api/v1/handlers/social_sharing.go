@@ -41,8 +41,72 @@ func (h *SocialSharingHandler) CreateShare(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
-			Error:   "Invalid request data",
+			Error:   fmt.Sprintf("Invalid request data: %v", err.Error()),
 			Code:    "INVALID_DATA",
+		})
+		return
+	}
+
+	// Validate required fields
+	if req.ShareType == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "share_type is required",
+			Code:    "MISSING_SHARE_TYPE",
+		})
+		return
+	}
+
+	if req.Platform == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "platform is required",
+			Code:    "MISSING_PLATFORM",
+		})
+		return
+	}
+
+	if req.ShareData == nil || len(req.ShareData) == 0 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "share_data is required and must not be empty",
+			Code:    "MISSING_SHARE_DATA",
+		})
+		return
+	}
+
+	// Validate share type
+	validShareTypes := []string{"team_composition", "contest_win", "achievement_unlock", "challenge_result"}
+	isValidType := false
+	for _, validType := range validShareTypes {
+		if req.ShareType == validType {
+			isValidType = true
+			break
+		}
+	}
+	if !isValidType {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid share_type. Must be one of: team_composition, contest_win, achievement_unlock, challenge_result",
+			Code:    "INVALID_SHARE_TYPE",
+		})
+		return
+	}
+
+	// Validate platform
+	validPlatforms := []string{"twitter", "facebook", "whatsapp", "instagram"}
+	isValidPlatform := false
+	for _, validPlatform := range validPlatforms {
+		if req.Platform == validPlatform {
+			isValidPlatform = true
+			break
+		}
+	}
+	if !isValidPlatform {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Invalid platform. Must be one of: twitter, facebook, whatsapp, instagram",
+			Code:    "INVALID_PLATFORM",
 		})
 		return
 	}
@@ -51,7 +115,7 @@ func (h *SocialSharingHandler) CreateShare(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
-			Error:   "Failed to create share",
+			Error:   fmt.Sprintf("Failed to create share: %v", err.Error()),
 			Code:    "CREATE_FAILED",
 		})
 		return

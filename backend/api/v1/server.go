@@ -308,6 +308,39 @@ func (s *Server) setupRoutes() {
 		adminRoutes.GET("/reports/:id", analyticsHandler.GetReport)
 		adminRoutes.DELETE("/reports/:id", analyticsHandler.DeleteReport)
 
+		// Achievement Management
+		adminRoutes.POST("/achievements", achievementHandler.CreateAchievement)
+		adminRoutes.GET("/achievements", achievementHandler.GetAchievements)
+		adminRoutes.PUT("/achievements/:id", achievementHandler.UpdateAchievement)
+		adminRoutes.DELETE("/achievements/:id", achievementHandler.DeleteAchievement)
+
+		// Advanced Analytics
+		adminRoutes.GET("/games/:game_id/advanced-metrics", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+		adminRoutes.GET("/games/:game_id/metrics-history", advancedAnalyticsHandler.GetAdvancedMetricsHistory)
+		adminRoutes.GET("/games/compare", advancedAnalyticsHandler.CompareGames)
+
+		// Player Predictions Management
+		adminRoutes.POST("/matches/:match_id/generate-predictions", predictionHandler.GenerateMatchPredictions)
+		adminRoutes.PUT("/matches/:match_id/update-accuracy", predictionHandler.UpdatePredictionAccuracy)
+		adminRoutes.GET("/predictions/analytics", predictionHandler.GetPredictionAnalytics)
+
+		// Tournament Brackets
+		adminRoutes.POST("/tournaments/brackets", tournamentBracketHandler.CreateBracket)
+		adminRoutes.GET("/tournaments/:tournament_id/brackets", tournamentBracketHandler.GetTournamentBrackets)
+		adminRoutes.GET("/brackets/:bracket_id", tournamentBracketHandler.GetBracket)
+		adminRoutes.PUT("/brackets/:bracket_id/advance", tournamentBracketHandler.AdvanceBracket)
+		adminRoutes.PUT("/brackets/:bracket_id/status", tournamentBracketHandler.UpdateBracketStatus)
+		adminRoutes.DELETE("/brackets/:bracket_id", tournamentBracketHandler.DeleteBracket)
+		adminRoutes.GET("/brackets/types", tournamentBracketHandler.GetBracketTypes)
+
+		// Fraud Detection
+		adminRoutes.GET("/fraud/alerts", fraudDetectionHandler.GetAlerts)
+		adminRoutes.PUT("/fraud/alerts/:alert_id/status", fraudDetectionHandler.UpdateAlertStatus)
+		adminRoutes.GET("/fraud/statistics", fraudDetectionHandler.GetFraudStatistics)
+
+		// Social Sharing Analytics
+		adminRoutes.GET("/social/analytics", socialSharingHandler.GetShareAnalytics)
+
 		// Notification Management
 		adminRoutes.POST("/notify/send", notificationHandler.SendNotification)
 		adminRoutes.POST("/notify/bulk", notificationHandler.SendBulkNotification)

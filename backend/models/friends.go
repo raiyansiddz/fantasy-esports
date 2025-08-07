@@ -58,7 +58,9 @@ type FriendActivity struct {
 }
 
 type AddFriendRequest struct {
-	FriendID int64   `json:"friend_id" validate:"required"`
+	FriendID *int64  `json:"friend_id"`
+	Username *string `json:"username"`
+	Mobile   *string `json:"mobile"`
 	Message  *string `json:"message"`
 }
 

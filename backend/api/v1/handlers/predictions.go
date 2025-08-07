@@ -5,6 +5,7 @@ import (
 	"fantasy-esports-backend/config"
 	"fantasy-esports-backend/models"
 	"fantasy-esports-backend/services"
+	"fmt"
 	"net/http"
 	"strconv"
 

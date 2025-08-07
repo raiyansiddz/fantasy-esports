@@ -393,11 +393,6 @@ func (s *TournamentBracketService) GetTournamentBrackets(tournamentID int64) ([]
 }
 
 // Helper methods
-type BracketTeam struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-	Seed int    `json:"seed"`
-}
 
 func (s *TournamentBracketService) getStageTeams(stageID int64) ([]BracketTeam, error) {
 	// This would typically get teams qualified for this stage

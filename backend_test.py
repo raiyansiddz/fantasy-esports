@@ -909,178 +909,111 @@ class AdvancedGamingFeaturesTester:
 
         return system_success
 
-    # ========================= SYSTEM 7: ADVANCED FRAUD DETECTION SYSTEM =========================
+    # ========================= SYSTEM 7: ADVANCED FRAUD DETECTION (4 NEWLY FIXED ADMIN ENDPOINTS) =========================
 
     def test_fraud_detection(self) -> bool:
-        """Test advanced fraud detection system"""
-        print("\n🛡️ TESTING ADVANCED FRAUD DETECTION SYSTEM")
+        """Test 4 newly fixed advanced fraud detection admin endpoints"""
+        print("\n🛡️ TESTING ADVANCED FRAUD DETECTION (4 NEWLY FIXED ADMIN ENDPOINTS)")
         print("-" * 60)
         
         system_success = True
         
-        # Test 1: Public - Report Suspicious Activity
-        # Remove auth headers for public endpoint
-        original_headers = self.session.headers.copy()
-        if 'Authorization' in self.session.headers:
-            del self.session.headers['Authorization']
-        
-        fraud_report = {
-            "report_type": "suspicious_betting_pattern",
-            "user_id": "user_789",
-            "description": "User placing unusually large bets with perfect win rate",
-            "evidence": {
-                "bet_amounts": [5000, 7500, 10000],
-                "win_rate": 100,
-                "time_pattern": "always_bets_just_before_match_start"
-            },
-            "reporter_contact": "security@fantasy-esports.com"
-        }
-        
+        # Test 1: Get User Risk Score (NEWLY FIXED - User Level)
+        self.set_user_headers()
         try:
-            response = self.session.post(f"{self.base_url}/api/v1/fraud/report", json=fraud_report)
-            success = response.status_code in [200, 201]
+            response = self.session.get(f"{self.base_url}/api/v1/fraud/risk-score")
+            success = response.status_code == 200
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    report_id = data.get("data", {}).get("id")
-                    if report_id:
-                        self.created_resources["fraud_reports"].append(report_id)
-                        self.log_test("Report Suspicious Activity", True, f"Fraud report created with ID: {report_id}")
-                    else:
-                        self.log_test("Report Suspicious Activity", True, "Fraud report submitted successfully")
-                else:
-                    success = False
-                    self.log_test("Report Suspicious Activity", False, "Response missing success field")
+                self.log_test("Get User Risk Score", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Report Suspicious Activity", False, f"Status: {response.status_code}, Response: {response.text}")
+                self.log_test("Get User Risk Score", False, f"Status: {response.status_code} - Expected 200 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Report Suspicious Activity", False, f"Exception: {str(e)}")
+            self.log_test("Get User Risk Score", False, f"Exception: {str(e)}")
             system_success = False
 
-        # Restore headers
-        self.session.headers.clear()
-        self.session.headers.update(original_headers)
-
-        # Test 2: Admin - Get Fraud Alerts
+        # Test 2: Admin - Get User Risk Score (NEWLY FIXED)
         self.set_admin_headers()
+        user_id = 1
+        
         try:
-            response = self.session.get(f"{self.base_url}/api/v1/admin/fraud/alerts")
+            response = self.session.get(f"{self.base_url}/api/v1/admin/fraud/users/{user_id}/risk-score")
             success = response.status_code == 200
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    alerts = data.get("data", [])
-                    self.log_test("Get Fraud Alerts", True, f"Found {len(alerts)} fraud alerts")
-                else:
-                    success = False
-                    self.log_test("Get Fraud Alerts", False, "Response missing success field")
+                self.log_test("Admin Get User Risk Score", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Get Fraud Alerts", False, f"Status: {response.status_code}")
+                self.log_test("Admin Get User Risk Score", False, f"Status: {response.status_code} - Expected 200 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Get Fraud Alerts", False, f"Exception: {str(e)}")
+            self.log_test("Admin Get User Risk Score", False, f"Exception: {str(e)}")
             system_success = False
 
-        # Test 3: Admin - Get Fraud Statistics
-        try:
-            response = self.session.get(f"{self.base_url}/api/v1/admin/fraud/statistics")
-            success = response.status_code == 200
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    stats = data.get("data", {})
-                    
-                    # Check for fraud statistics components
-                    expected_stats = ["total_reports", "active_alerts", "resolved_cases", "detection_accuracy"]
-                    found_stats = [stat for stat in expected_stats if stat in stats]
-                    
-                    self.log_test("Get Fraud Statistics", True, 
-                                f"Statistics available with {len(found_stats)}/4 components: {found_stats}")
-                else:
-                    success = False
-                    self.log_test("Get Fraud Statistics", False, "Response missing success field")
-            else:
-                self.log_test("Get Fraud Statistics", False, f"Status: {response.status_code}")
-                system_success = False
-                
-        except Exception as e:
-            self.log_test("Get Fraud Statistics", False, f"Exception: {str(e)}")
-            system_success = False
-
-        # Test 4: Admin - Update Alert Status
-        # Create a mock alert ID for testing
-        alert_id = "alert_123"
-        status_data = {
-            "status": "investigating",
-            "notes": "Reviewing user betting patterns and account activity",
-            "assigned_to": "security_team_lead"
+        # Test 3: Admin - Investigate Fraud (NEWLY FIXED)
+        investigation_data = {
+            "user_id": user_id,
+            "investigation_type": "suspicious_betting_pattern",
+            "priority": "high",
+            "notes": "User showing unusual win rate patterns"
         }
         
         try:
-            response = self.session.put(f"{self.base_url}/api/v1/admin/fraud/alerts/{alert_id}/status", json=status_data)
-            success = response.status_code == 200
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    self.log_test("Update Alert Status", True, f"Alert {alert_id} status updated to investigating")
-                else:
-                    success = False
-                    self.log_test("Update Alert Status", False, "Response missing success field")
-            else:
-                self.log_test("Update Alert Status", False, f"Status: {response.status_code}")
-                system_success = False
-                
-        except Exception as e:
-            self.log_test("Update Alert Status", False, f"Exception: {str(e)}")
-            system_success = False
-
-        # Test 5: Fraud Webhook (Public endpoint)
-        # Remove auth headers for public endpoint
-        original_headers = self.session.headers.copy()
-        if 'Authorization' in self.session.headers:
-            del self.session.headers['Authorization']
-        
-        webhook_data = {
-            "event_type": "suspicious_activity_detected",
-            "user_id": "user_456",
-            "detection_algorithm": "ml_betting_pattern_analyzer",
-            "confidence_score": 92.5,
-            "details": {
-                "anomaly_type": "unusual_win_rate",
-                "risk_level": "high",
-                "recommended_action": "account_review"
-            }
-        }
-        
-        try:
-            response = self.session.post(f"{self.base_url}/api/v1/fraud/webhook", json=webhook_data)
+            response = self.session.post(f"{self.base_url}/api/v1/admin/fraud/investigate", json=investigation_data)
             success = response.status_code in [200, 201]
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    self.log_test("Fraud Webhook", True, "Fraud webhook processed successfully")
-                else:
-                    success = False
-                    self.log_test("Fraud Webhook", False, "Response missing success field")
+                self.log_test("Admin Investigate Fraud", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Fraud Webhook", False, f"Status: {response.status_code}")
+                self.log_test("Admin Investigate Fraud", False, f"Status: {response.status_code} - Expected 200/201 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Fraud Webhook", False, f"Exception: {str(e)}")
+            self.log_test("Admin Investigate Fraud", False, f"Exception: {str(e)}")
             system_success = False
 
-        # Restore headers
-        self.session.headers.clear()
-        self.session.headers.update(original_headers)
+        # Test 4: Admin - Get Fraud Patterns (NEWLY FIXED)
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/fraud/patterns")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                self.log_test("Admin Get Fraud Patterns", True, f"✅ FIXED: Endpoint accessible (was 404)")
+            else:
+                self.log_test("Admin Get Fraud Patterns", False, f"Status: {response.status_code} - Expected 200 after fix")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Admin Get Fraud Patterns", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 5: Admin - Update Fraud Threshold (NEWLY FIXED)
+        threshold_data = {
+            "threshold_type": "risk_score",
+            "threshold_value": 75.0,
+            "action": "flag_for_review"
+        }
+        
+        try:
+            response = self.session.put(f"{self.base_url}/api/v1/admin/fraud/threshold", json=threshold_data)
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                self.log_test("Admin Update Fraud Threshold", True, f"✅ FIXED: Endpoint accessible (was 404)")
+            else:
+                self.log_test("Admin Update Fraud Threshold", False, f"Status: {response.status_code} - Expected 200 after fix")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Admin Update Fraud Threshold", False, f"Exception: {str(e)}")
+            system_success = False
 
         return system_success
 

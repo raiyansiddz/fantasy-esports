@@ -373,6 +373,10 @@ func (s *Server) setupRoutes() {
 		adminRoutes.PUT("/matches/:id/update-accuracy", predictionHandler.UpdatePredictionAccuracy)
 		adminRoutes.GET("/matches/:id/update-accuracy", predictionHandler.GetPredictionAnalytics) // GET version for accessibility
 		adminRoutes.GET("/predictions/analytics", predictionHandler.GetPredictionAnalytics)
+		adminRoutes.GET("/predictions/accuracy/global", predictionHandler.GetGlobalPredictionAccuracy)
+		adminRoutes.GET("/predictions/models/performance", predictionHandler.GetModelsPerformance)
+		adminRoutes.PUT("/predictions/models/:id/update", predictionHandler.UpdatePredictionModel)
+		adminRoutes.GET("/predictions/leaderboard", predictionHandler.GetPredictionLeaderboard)
 
 		// Tournament Brackets
 		adminRoutes.POST("/tournaments/brackets", tournamentBracketHandler.CreateBracket)

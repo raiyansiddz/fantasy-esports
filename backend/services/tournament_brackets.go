@@ -416,7 +416,7 @@ func (s *TournamentBracketService) getStageTeams(stageID int64) ([]BracketTeam, 
 	var teams []BracketTeam
 	for rows.Next() {
 		var team BracketTeam
-		err := rows.Scan(&team.ID, &team.Name, &team.Seed)
+		err := rows.Scan(&team.TeamID, &team.Name, &team.Seed)
 		if err != nil {
 			continue
 		}

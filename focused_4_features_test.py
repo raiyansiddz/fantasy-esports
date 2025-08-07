@@ -86,13 +86,17 @@ class FocusedGamingFeaturesTester:
                 self.log_test("User Authentication - Mobile Verify", False, f"Mobile verification failed: {response.status_code}")
                 return False
             
-            # Step 2: Verify OTP
+            data = response.json()
+            session_id = data.get("session_id")
+            if not session_id:
+                self.log_test("User Authentication - Mobile Verify", False, "No session_id received")
+                return False
+            
+            # Step 2: Verify OTP with session_id
             otp_data = {
                 "mobile": "+919876543210",
                 "otp": "123456",
-                "name": "Arjun Sharma",
-                "email": "arjun.sharma@gmail.com",
-                "referral_code": ""
+                "session_id": session_id
             }
             response = self.session.post(f"{self.base_url}/api/v1/auth/verify-otp", json=otp_data)
             

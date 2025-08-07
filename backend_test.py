@@ -531,54 +531,128 @@ class GameFeatureTester:
             self.log_result("GET /analytics/compare/games/1/2 - Game comparison", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_player_predictions(self):
-        """Test Player Performance Predictions"""
-        print("\n🔮 TESTING PLAYER PERFORMANCE PREDICTIONS")
+        """Test Player Performance Predictions (10 endpoints)"""
+        print("\n🔮 TESTING PLAYER PERFORMANCE PREDICTIONS (10 ENDPOINTS)")
         
-        # Test 1: Get match predictions
+        # 1. GET /api/v1/matches/1/predictions (match predictions)
         response, error = self.make_request("GET", "/matches/1/predictions", auth_token=USER_TOKEN)
         if response and response.status_code in [200, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Player Predictions - Match predictions endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /matches/1/predictions - Match predictions endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Player Predictions - Match predictions", True, f"Status: {response.status_code}")
+                self.log_result("GET /matches/1/predictions - Match predictions", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Player Predictions - Match predictions", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /matches/1/predictions - Match predictions", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 2: Get player match predictions
-        response, error = self.make_request("GET", "/predictions/players/123/match/1", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 400, 401]:
-            if response.status_code == 401:
-                self.log_result("Player Predictions - Player match predictions endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("Player Predictions - Player match predictions", True, f"Status: {response.status_code}")
-        else:
-            self.log_result("Player Predictions - Player match predictions", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
-        
-        # Test 3: Calculate predictions
+        # 2. POST /api/v1/predictions (create prediction)
         prediction_data = {
             "match_id": "1",
-            "players": ["123", "456"],
-            "factors": ["recent_form", "head_to_head"]
+            "player_id": "123",
+            "predicted_score": 85.5,
+            "confidence": 0.8
         }
-        
-        response, error = self.make_request("POST", "/predictions/calculate", prediction_data, auth_token=USER_TOKEN)
+        response, error = self.make_request("POST", "/predictions", prediction_data, auth_token=USER_TOKEN)
         if response and response.status_code in [200, 201, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Player Predictions - Calculate predictions endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("POST /predictions - Create prediction endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Player Predictions - Calculate predictions", True, f"Status: {response.status_code}")
+                self.log_result("POST /predictions - Create prediction", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Player Predictions - Calculate predictions", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /predictions - Create prediction", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 4: Admin - Generate match predictions
-        response, error = self.make_request("POST", "/admin/matches/1/generate-predictions", auth_token=ADMIN_TOKEN)
+        # 3. GET /api/v1/predictions/accuracy/my (my accuracy)
+        response, error = self.make_request("GET", "/predictions/accuracy/my", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /predictions/accuracy/my - My prediction accuracy endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /predictions/accuracy/my - My prediction accuracy endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /predictions/accuracy/my - My prediction accuracy", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /predictions/accuracy/my - My prediction accuracy", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 4. GET /api/v1/predictions/my (my predictions)
+        response, error = self.make_request("GET", "/predictions/my", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /predictions/my - My predictions endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /predictions/my - My predictions endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /predictions/my - My predictions", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /predictions/my - My predictions", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 5. GET /api/v1/admin/predictions/accuracy/global (global accuracy)
+        response, error = self.make_request("GET", "/admin/predictions/accuracy/global", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /admin/predictions/accuracy/global - Global prediction accuracy endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /admin/predictions/accuracy/global - Global prediction accuracy endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /admin/predictions/accuracy/global - Global prediction accuracy", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /admin/predictions/accuracy/global - Global prediction accuracy", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 6. GET /api/v1/admin/predictions/models/performance (models performance)
+        response, error = self.make_request("GET", "/admin/predictions/models/performance", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /admin/predictions/models/performance - Models performance endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /admin/predictions/models/performance - Models performance endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /admin/predictions/models/performance - Models performance", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /admin/predictions/models/performance - Models performance", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 7. PUT /api/v1/admin/predictions/models/123/update (update model)
+        model_data = {"name": "Updated Model", "parameters": {"learning_rate": 0.01}}
+        response, error = self.make_request("PUT", "/admin/predictions/models/123/update", model_data, auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("PUT /admin/predictions/models/123/update - Update model endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("PUT /admin/predictions/models/123/update - Update model endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("PUT /admin/predictions/models/123/update - Update model", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("PUT /admin/predictions/models/123/update - Update model", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 8. GET /api/v1/admin/predictions/leaderboard (prediction leaderboard)
+        response, error = self.make_request("GET", "/admin/predictions/leaderboard", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /admin/predictions/leaderboard - Prediction leaderboard endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /admin/predictions/leaderboard - Prediction leaderboard endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /admin/predictions/leaderboard - Prediction leaderboard", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /admin/predictions/leaderboard - Prediction leaderboard", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 9. GET /api/v1/predictions/confidence/123 (confidence score)
+        response, error = self.make_request("GET", "/predictions/confidence/123", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /predictions/confidence/123 - Confidence score endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("GET /predictions/confidence/123 - Confidence score", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /predictions/confidence/123 - Confidence score", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 10. POST /api/v1/admin/predictions/train (train models)
+        train_data = {"model_type": "neural_network", "dataset": "recent_matches"}
+        response, error = self.make_request("POST", "/admin/predictions/train", train_data, auth_token=ADMIN_TOKEN)
         if response and response.status_code in [200, 201, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Player Predictions - Admin generate predictions endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("POST /admin/predictions/train - Train models endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Player Predictions - Admin generate predictions", True, f"Status: {response.status_code}")
+                self.log_result("POST /admin/predictions/train - Train models", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Player Predictions - Admin generate predictions", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /admin/predictions/train - Train models", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_tournament_brackets(self):
         """Test Automated Tournament Brackets (4 types)"""

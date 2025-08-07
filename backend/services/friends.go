@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fantasy-esports-backend/models"
 	"fmt"
-	"time"
 )
 
 type FriendService struct {

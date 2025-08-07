@@ -425,7 +425,7 @@ func (s *Server) setupRoutes() {
 
 	// WebSocket routes for real-time updates
 	v1.GET("/ws/leaderboard/:contest_id", realtimeHandler.HandleLeaderboardWebSocket)
-	adminRoutes.GET("/ws/live-scoring/:match_id", adminHandler.HandleLiveScoringWebSocket)
+	adminRoutes.GET("/ws/live-scoring/:id", adminHandler.HandleLiveScoringWebSocket)
 }
 
 func (s *Server) Start(addr string) error {

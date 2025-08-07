@@ -448,6 +448,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "⚠️ PARTIALLY FIXED - FAQ section creation is now working but routing issue persists: ✅ CREATE FAQ SECTION: Successfully creates FAQ sections using correct field name 'name' instead of 'title' (Created section ID: 5) ✅ PUBLIC FAQ SECTIONS: Working correctly (200 status) ✅ VALIDATION: Proper field validation working (rejects missing required fields) ❌ ROUTING ISSUE: Admin FAQ sections endpoint still returns 404 instead of 401 for unauthorized access, indicating routing problem ❌ AUTHENTICATION: Cannot properly test auth middleware due to routing issue. The corrected field names have fixed creation but there's still a routing issue with the admin FAQ sections endpoint. Success rate: 75% (creation and public access work, admin routing fails)."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ROUTING ISSUE CONFIRMED - Comprehensive testing reveals the exact problem: ✅ FAQ SECTION CREATION: POST /api/v1/admin/content/faq/sections works correctly (returns 401 without auth, 201 with auth) ✅ FAQ SECTION UPDATE: PUT /api/v1/admin/content/faq/sections/:id works correctly ✅ FAQ ITEMS ENDPOINTS: All FAQ items endpoints work correctly ✅ PUBLIC FAQ ENDPOINTS: All public FAQ endpoints work correctly ❌ MISSING ROUTE: GET /api/v1/admin/content/faq/sections returns 404 'page not found' - THIS ROUTE IS NOT DEFINED IN server.go! Root cause identified: The server.go file is missing the GET route for admin FAQ sections listing. All other FAQ routes exist and work properly. This is a simple missing route registration issue, not a complex routing problem. Success rate: 85.7% (6/7 routes work, only the GET admin sections route is missing)."
 
   - task: "Content Management System - Legal Document Management"
     implemented: true

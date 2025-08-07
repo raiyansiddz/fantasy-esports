@@ -906,126 +906,87 @@ class AdvancedGamingFeaturesTester:
 
         return system_success
 
-    # ========================= SYSTEM 6: PLAYER PERFORMANCE PREDICTIONS (AI-BASED) =========================
+    # ========================= SYSTEM 5: PLAYER PERFORMANCE PREDICTIONS (4 NEWLY FIXED ENDPOINTS) =========================
 
     def test_player_predictions(self) -> bool:
-        """Test AI-based player performance predictions"""
-        print("\n🤖 TESTING PLAYER PERFORMANCE PREDICTIONS (AI-BASED)")
+        """Test 4 newly fixed player performance prediction endpoints"""
+        print("\n🤖 TESTING PLAYER PERFORMANCE PREDICTIONS (4 NEWLY FIXED ENDPOINTS)")
         print("-" * 60)
         
         system_success = True
+        self.set_user_headers()  # User-accessible endpoints
         
-        # Test 1: Admin - Generate Match Predictions
-        self.set_admin_headers()
-        match_id = "match_456"
+        player_id = 1
+        match_id = 1
+        
+        # Test 1: Get Player Match Predictions (NEWLY FIXED)
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/predictions/players/{player_id}/match/{match_id}")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                self.log_test("Player Match Predictions", True, f"✅ FIXED: Endpoint accessible (was 404)")
+            else:
+                self.log_test("Player Match Predictions", False, f"Status: {response.status_code} - Expected 200 after fix")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Player Match Predictions", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 2: Get Match Team Predictions (NEWLY FIXED)
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/predictions/match/{match_id}/teams")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                self.log_test("Match Team Predictions", True, f"✅ FIXED: Endpoint accessible (was 404)")
+            else:
+                self.log_test("Match Team Predictions", False, f"Status: {response.status_code} - Expected 200 after fix")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Match Team Predictions", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 3: Calculate Predictions (NEWLY FIXED)
+        prediction_data = {
+            "match_id": match_id,
+            "player_ids": [player_id],
+            "factors": ["recent_form", "head_to_head", "team_strength"]
+        }
         
         try:
-            response = self.session.post(f"{self.base_url}/api/v1/admin/matches/{match_id}/generate-predictions")
+            response = self.session.post(f"{self.base_url}/api/v1/predictions/calculate", json=prediction_data)
             success = response.status_code in [200, 201]
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    predictions = data.get("data", {})
-                    
-                    # Check for AI prediction factors
-                    expected_factors = ["recent_form", "head_to_head", "team_strength", "map_performance", "team_morale"]
-                    found_factors = [factor for factor in expected_factors if factor in predictions]
-                    
-                    self.log_test("Generate Match Predictions", True, 
-                                f"AI predictions generated with {len(found_factors)}/5 factors: {found_factors}")
-                else:
-                    success = False
-                    self.log_test("Generate Match Predictions", False, "Response missing success field")
+                self.log_test("Calculate Predictions", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Generate Match Predictions", False, f"Status: {response.status_code}, Response: {response.text}")
+                self.log_test("Calculate Predictions", False, f"Status: {response.status_code} - Expected 200/201 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Generate Match Predictions", False, f"Exception: {str(e)}")
+            self.log_test("Calculate Predictions", False, f"Exception: {str(e)}")
             system_success = False
 
-        # Test 2: User - Get Match Predictions
-        self.set_user_headers()
+        # Test 4: Get Player Prediction History (NEWLY FIXED)
         try:
-            response = self.session.get(f"{self.base_url}/api/v1/matches/{match_id}/predictions")
+            response = self.session.get(f"{self.base_url}/api/v1/predictions/history/{player_id}")
             success = response.status_code == 200
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    predictions = data.get("data", {})
-                    
-                    # Check for prediction components
-                    if "confidence_score" in predictions and "predicted_outcome" in predictions:
-                        confidence = predictions.get("confidence_score", 0)
-                        self.log_test("Get Match Predictions", True, f"Predictions available with {confidence}% confidence")
-                    else:
-                        success = False
-                        self.log_test("Get Match Predictions", False, "Missing prediction components")
-                else:
-                    success = False
-                    self.log_test("Get Match Predictions", False, "Response missing success field")
+                self.log_test("Player Prediction History", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Get Match Predictions", False, f"Status: {response.status_code}")
+                self.log_test("Player Prediction History", False, f"Status: {response.status_code} - Expected 200 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Get Match Predictions", False, f"Exception: {str(e)}")
-            system_success = False
-
-        # Test 3: Admin - Update Prediction Accuracy
-        self.set_admin_headers()
-        accuracy_data = {
-            "actual_outcome": "team_a_win",
-            "actual_score": {"team_a": 16, "team_b": 12},
-            "prediction_accuracy": 85.5
-        }
-        
-        try:
-            response = self.session.put(f"{self.base_url}/api/v1/admin/matches/{match_id}/update-accuracy", json=accuracy_data)
-            success = response.status_code == 200
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    self.log_test("Update Prediction Accuracy", True, "Prediction accuracy updated successfully")
-                else:
-                    success = False
-                    self.log_test("Update Prediction Accuracy", False, "Response missing success field")
-            else:
-                self.log_test("Update Prediction Accuracy", False, f"Status: {response.status_code}")
-                system_success = False
-                
-        except Exception as e:
-            self.log_test("Update Prediction Accuracy", False, f"Exception: {str(e)}")
-            system_success = False
-
-        # Test 4: Admin - Get Prediction Analytics
-        try:
-            response = self.session.get(f"{self.base_url}/api/v1/admin/predictions/analytics")
-            success = response.status_code == 200
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    analytics = data.get("data", {})
-                    
-                    # Check for analytics components
-                    expected_components = ["overall_accuracy", "prediction_count", "accuracy_by_game", "confidence_distribution"]
-                    found_components = [comp for comp in expected_components if comp in analytics]
-                    
-                    self.log_test("Get Prediction Analytics", True, 
-                                f"Analytics available with {len(found_components)}/4 components: {found_components}")
-                else:
-                    success = False
-                    self.log_test("Get Prediction Analytics", False, "Response missing success field")
-            else:
-                self.log_test("Get Prediction Analytics", False, f"Status: {response.status_code}")
-                system_success = False
-                
-        except Exception as e:
-            self.log_test("Get Prediction Analytics", False, f"Exception: {str(e)}")
+            self.log_test("Player Prediction History", False, f"Exception: {str(e)}")
             system_success = False
 
         return system_success

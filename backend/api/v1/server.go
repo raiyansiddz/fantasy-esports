@@ -362,8 +362,8 @@ func (s *Server) setupRoutes() {
 		adminRoutes.DELETE("/achievements/:id", achievementHandler.DeleteAchievement)
 
 		// Advanced Analytics
-		adminRoutes.GET("/analytics/summary", advancedAnalyticsHandler.GetAnalyticsSummary)
-		adminRoutes.POST("/analytics/generate", advancedAnalyticsHandler.GenerateAnalytics)
+		adminRoutes.GET("/analytics/summary", advancedAnalyticsHandler.GetAdvancedGameMetrics) // Placeholder - using existing method
+		adminRoutes.POST("/analytics/generate", advancedAnalyticsHandler.GetAdvancedGameMetrics) // Placeholder - using existing method
 		adminRoutes.GET("/games/:game_id/advanced-metrics", advancedAnalyticsHandler.GetAdvancedGameMetrics)
 		adminRoutes.GET("/games/:game_id/metrics-history", advancedAnalyticsHandler.GetAdvancedMetricsHistory)
 		adminRoutes.GET("/games/compare", advancedAnalyticsHandler.CompareGames)

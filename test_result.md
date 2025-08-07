@@ -535,7 +535,6 @@ test_plan:
   current_focus:
     []
   stuck_tasks:
-    - "Content Management System - SEO Content Management"
     - "Content Management System - FAQ Management"
   test_all: false
   test_priority: "high_first"

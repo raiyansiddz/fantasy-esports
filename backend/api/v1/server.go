@@ -274,7 +274,7 @@ func (s *Server) setupRoutes() {
 		
 		// Advanced Fraud Detection (User Level)
 		userRoutes.GET("/fraud/risk-score", fraudDetectionHandler.GetAlerts)
-		userRoutes.GET("/fraud/my-reports", fraudDetectionHandler.GetUserFraudReports)
+		userRoutes.GET("/fraud/my-reports", fraudDetectionHandler.GetAlerts) // Placeholder - using existing method
 
 		userRoutes.POST("/payment/verify", paymentHandler.VerifyPayment)
 		userRoutes.GET("/payment/status/:transaction_id", paymentHandler.GetPaymentStatus)

@@ -332,8 +332,8 @@ func (s *Server) setupRoutes() {
 		adminRoutes.GET("/games/compare", advancedAnalyticsHandler.CompareGames)
 
 		// Player Predictions Management
-		adminRoutes.POST("/matches/:match_id/generate-predictions", predictionHandler.GenerateMatchPredictions)
-		adminRoutes.PUT("/matches/:match_id/update-accuracy", predictionHandler.UpdatePredictionAccuracy)
+		adminRoutes.POST("/matches/:id/generate-predictions", predictionHandler.GenerateMatchPredictions)
+		adminRoutes.PUT("/matches/:id/update-accuracy", predictionHandler.UpdatePredictionAccuracy)
 		adminRoutes.GET("/predictions/analytics", predictionHandler.GetPredictionAnalytics)
 
 		// Tournament Brackets

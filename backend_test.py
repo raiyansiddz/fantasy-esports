@@ -470,10 +470,10 @@ class GameFeatureTester:
             self.log_result("PUT /admin/social/campaigns/123 - Update campaign", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_advanced_game_analytics(self):
-        """Test Advanced Game Analytics (7 metrics)"""
-        print("\n📊 TESTING ADVANCED GAME ANALYTICS (7 METRICS)")
+        """Test Advanced Game Analytics (10 endpoints - 7 metrics)"""
+        print("\n📊 TESTING ADVANCED GAME ANALYTICS (10 ENDPOINTS - 7 METRICS)")
         
-        game_id = "1"  # Using integer game ID
+        game_id = "1"
         metrics = [
             "player-efficiency",
             "team-synergy", 
@@ -484,25 +484,51 @@ class GameFeatureTester:
             "adaptability-score"
         ]
         
-        for metric in metrics:
-            response, error = self.make_request("GET", f"/analytics/games/{game_id}/{metric}", auth_token=USER_TOKEN)
+        # Test 1-7: GET /api/v1/analytics/metrics/{metric}/1 (7 different metrics)
+        for i, metric in enumerate(metrics, 1):
+            response, error = self.make_request("GET", f"/analytics/metrics/{metric}/{game_id}", auth_token=USER_TOKEN)
             if response and response.status_code in [200, 400, 401]:
                 if response.status_code == 401:
-                    self.log_result(f"Advanced Analytics - {metric} endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                    self.log_result(f"GET /analytics/metrics/{metric}/{game_id} - {metric} endpoint accessible", True, "Returns 401 (auth required) instead of 404")
                 else:
-                    self.log_result(f"Advanced Analytics - {metric}", True, f"Status: {response.status_code}")
+                    self.log_result(f"GET /analytics/metrics/{metric}/{game_id} - {metric}", True, f"Status: {response.status_code}")
             else:
-                self.log_result(f"Advanced Analytics - {metric}", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+                self.log_result(f"GET /analytics/metrics/{metric}/{game_id} - {metric}", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test admin advanced metrics
-        response, error = self.make_request("GET", f"/admin/games/{game_id}/advanced-metrics", auth_token=ADMIN_TOKEN)
+        # 8. GET /api/v1/admin/analytics/summary (admin summary)
+        response, error = self.make_request("GET", "/admin/analytics/summary", auth_token=ADMIN_TOKEN)
         if response and response.status_code in [200, 401]:
             if response.status_code == 401:
-                self.log_result("Advanced Analytics - Admin advanced metrics endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /admin/analytics/summary - Admin analytics summary endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /admin/analytics/summary - Admin analytics summary endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
             else:
-                self.log_result("Advanced Analytics - Admin advanced metrics", True, f"Status: {response.status_code}")
+                self.log_result("GET /admin/analytics/summary - Admin analytics summary", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Advanced Analytics - Admin advanced metrics", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /admin/analytics/summary - Admin analytics summary", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 9. POST /api/v1/admin/analytics/generate (generate analytics)
+        generate_data = {"game_id": game_id, "metrics": ["player-efficiency", "team-synergy"]}
+        response, error = self.make_request("POST", "/admin/analytics/generate", generate_data, auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 201, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("POST /admin/analytics/generate - Generate analytics endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("POST /admin/analytics/generate - Generate analytics endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("POST /admin/analytics/generate - Generate analytics", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("POST /admin/analytics/generate - Generate analytics", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 10. GET /api/v1/analytics/compare/games/1/2 (game comparison)
+        response, error = self.make_request("GET", "/analytics/compare/games/1/2", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /analytics/compare/games/1/2 - Game comparison endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("GET /analytics/compare/games/1/2 - Game comparison", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /analytics/compare/games/1/2 - Game comparison", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_player_predictions(self):
         """Test Player Performance Predictions"""

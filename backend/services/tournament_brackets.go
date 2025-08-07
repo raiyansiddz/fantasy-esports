@@ -456,7 +456,7 @@ func (s *TournamentBracketService) generateRoundRobinSchedule(teams []BracketTea
 			
 			if team1Idx != team2Idx {
 				// Skip BYE matches
-				if teams[team1Idx].ID != -1 && teams[team2Idx].ID != -1 {
+				if teams[team1Idx].TeamID != -1 && teams[team2Idx].TeamID != -1 {
 					roundMatches = append(roundMatches, map[string]interface{}{
 						"match_id": fmt.Sprintf("R%d-M%d", round+1, len(roundMatches)+1),
 						"round":    round + 1,

@@ -119,7 +119,7 @@ class GamingFeaturesBinaryTester:
         print("\n🎯 TESTING GAMING FEATURES ACCESSIBILITY")
         print("-" * 60)
         
-        # The 5 gaming feature endpoints to test
+        # The 5 gaming feature endpoints to test (CORRECTED PATHS)
         gaming_endpoints = [
             ("/api/v1/achievements", "Achievement System"),
             ("/api/v1/friends", "Friend System"), 

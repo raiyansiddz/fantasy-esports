@@ -388,7 +388,7 @@ backend:
 
   - task: "Content Management System - Email Template Management"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/api/v1/handlers/content.go"
     stuck_count: 1
     priority: "high"
@@ -397,6 +397,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL JSON UNMARSHALING ISSUE - Email template management has data structure problems: ❌ CREATE TEMPLATE: 400 error with 'json: cannot unmarshal array into Go struct field .variables of type models.JSONMap' - the variables field expects JSONMap type but receives array ✅ LIST TEMPLATES: Working correctly (200 status) but returns empty array (no sample data). The endpoint exists and is authenticated but the Go struct expects different data types than provided. Success rate: 50% (1/2 template tests passed)."
+      - working: true
+        agent: "testing"
+        comment: "✅ FULLY FUNCTIONAL - Email template management is now working perfectly! The JSON unmarshaling issue has been completely resolved: ✅ CREATE TEMPLATE: Successfully creates email templates using correct data types - variables field now uses JSONMap instead of array (Created template ID: 3) ✅ LIST TEMPLATES: Returns 200 with proper data structure and shows sample data ✅ VALIDATION: Proper field validation working (name, description, subject, html_content, category required) ✅ AUTHENTICATION: Properly returns 401 for unauthorized access. The corrected data structure (variables as JSONMap: {'FirstName': 'string', 'Email': 'string'}) has resolved the previous JSON unmarshaling errors. Success rate: 100% for email template functionality."
 
   - task: "Content Management System - Marketing Campaign Management"
     implemented: true

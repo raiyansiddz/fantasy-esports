@@ -441,7 +441,7 @@ func (s *TournamentBracketService) generateRoundRobinSchedule(teams []BracketTea
 	
 	// Add dummy team for odd number of teams
 	if numTeams%2 == 1 {
-		teams = append(teams, BracketTeam{ID: -1, Name: "BYE", Seed: 999})
+		teams = append(teams, BracketTeam{TeamID: -1, Name: "BYE", Seed: 999})
 		numTeams++
 	}
 

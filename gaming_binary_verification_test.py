@@ -64,12 +64,12 @@ class GamingBinaryVerificationTester:
     def authenticate_user(self) -> bool:
         """Authenticate as regular user using mobile verification + OTP"""
         try:
-            # Step 1: Send OTP
+            # Step 1: Verify Mobile (send OTP)
             mobile_data = {"mobile": "+919876543210"}
-            response = self.session.post(f"{self.base_url}/api/v1/auth/send-otp", json=mobile_data)
+            response = self.session.post(f"{self.base_url}/api/v1/auth/verify-mobile", json=mobile_data)
             
             if response.status_code != 200:
-                self.log_test("User Authentication - Send OTP", False, f"Send OTP failed. Status: {response.status_code}", response.text)
+                self.log_test("User Authentication - Verify Mobile", False, f"Verify mobile failed. Status: {response.status_code}", response.text)
                 return False
             
             # Step 2: Verify OTP

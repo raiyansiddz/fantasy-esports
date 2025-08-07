@@ -84,12 +84,43 @@ func (h *PlayerPredictionHandler) GenerateMatchPredictions(c *gin.Context) {
 }
 
 func (h *PlayerPredictionHandler) GetMatchPredictions(c *gin.Context) {
-	matchID, err := strconv.ParseInt(c.Param("match_id"), 10, 64)
+	matchIDStr := c.Param("id")
+	matchID, err := strconv.ParseInt(matchIDStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{
 			Success: false,
-			Error:   "Invalid match ID",
-			Code:    "INVALID_ID",
+			Error:   fmt.Sprintf("Invalid match ID '%s': must be a positive integer", matchIDStr),
+			Code:    "INVALID_MATCH_ID",
+		})
+		return
+	}
+
+	if matchID <= 0 {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Success: false,
+			Error:   "Match ID must be a positive integer",
+			Code:    "INVALID_MATCH_ID",
+		})
+		return
+	}
+
+	// Check if match exists
+	var exists bool
+	err = h.db.QueryRow("SELECT EXISTS(SELECT 1 FROM matches WHERE id = $1)", matchID).Scan(&exists)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+			Success: false,
+			Error:   "Database error while checking match",
+			Code:    "DATABASE_ERROR",
+		})
+		return
+	}
+
+	if !exists {
+		c.JSON(http.StatusNotFound, models.ErrorResponse{
+			Success: false,
+			Error:   fmt.Sprintf("Match with ID %d not found", matchID),
+			Code:    "MATCH_NOT_FOUND",
 		})
 		return
 	}
@@ -98,7 +129,7 @@ func (h *PlayerPredictionHandler) GetMatchPredictions(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
 			Success: false,
-			Error:   "Failed to fetch predictions",
+			Error:   fmt.Sprintf("Failed to fetch predictions: %v", err.Error()),
 			Code:    "FETCH_FAILED",
 		})
 		return

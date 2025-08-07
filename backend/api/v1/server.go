@@ -198,6 +198,38 @@ func (s *Server) setupRoutes() {
 
 		// Payment Gateway APIs
 		userRoutes.POST("/payment/create-order", paymentHandler.CreatePaymentOrder)
+
+		// Achievements
+		userRoutes.GET("/achievements", achievementHandler.GetAchievements)
+		userRoutes.GET("/achievements/my", achievementHandler.GetUserAchievements)
+		userRoutes.GET("/achievements/:id/progress", achievementHandler.GetAchievementProgress)
+
+		// Friends System
+		userRoutes.POST("/friends", friendHandler.AddFriend)
+		userRoutes.GET("/friends", friendHandler.GetFriends)
+		userRoutes.POST("/friends/:friend_id/accept", friendHandler.AcceptFriend)
+		userRoutes.POST("/friends/:friend_id/decline", friendHandler.DeclineFriend)
+		userRoutes.DELETE("/friends/:friend_id", friendHandler.RemoveFriend)
+
+		// Friend Challenges
+		userRoutes.POST("/challenges", friendHandler.CreateChallenge)
+		userRoutes.GET("/challenges", friendHandler.GetChallenges)
+		userRoutes.POST("/challenges/:challenge_id/accept", friendHandler.AcceptChallenge)
+		userRoutes.POST("/challenges/:challenge_id/decline", friendHandler.DeclineChallenge)
+
+		// Friend Activities
+		userRoutes.GET("/friends/activities", friendHandler.GetFriendActivities)
+
+		// Social Sharing
+		userRoutes.POST("/share", socialSharingHandler.CreateShare)
+		userRoutes.GET("/share/my", socialSharingHandler.GetUserShares)
+		userRoutes.GET("/share/teams/:team_id/urls", socialSharingHandler.GenerateTeamShareURLs)
+		userRoutes.GET("/share/contests/:contest_id/urls", socialSharingHandler.GenerateContestWinShareURLs)
+		userRoutes.GET("/share/achievements/:achievement_id/urls", socialSharingHandler.GenerateAchievementShareURLs)
+		userRoutes.POST("/share/:share_id/click", socialSharingHandler.TrackShareClick)
+
+		// Player Predictions
+		userRoutes.GET("/matches/:match_id/predictions", predictionHandler.GetMatchPredictions)
 		userRoutes.POST("/payment/verify", paymentHandler.VerifyPayment)
 		userRoutes.GET("/payment/status/:transaction_id", paymentHandler.GetPaymentStatus)
 

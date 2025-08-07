@@ -12,6 +12,7 @@ type Config struct {
 	JWTSecret       string
 	Port           string
 	GinMode        string
+	BaseURL        string
 }
 
 func Load() *Config {

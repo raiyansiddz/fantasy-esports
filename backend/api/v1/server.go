@@ -251,8 +251,8 @@ func (s *Server) setupRoutes() {
 		userRoutes.GET("/matches/:id/predictions", predictionHandler.GetMatchPredictions)
 		userRoutes.GET("/predictions/players/:player_id/match/:match_id", predictionHandler.GetMatchPredictions)
 		userRoutes.GET("/predictions/match/:match_id/teams", predictionHandler.GetMatchPredictions)
-		userRoutes.GET("/predictions/my", predictionHandler.GetUserPredictions)
-		userRoutes.GET("/predictions/accuracy/my", predictionHandler.GetUserPredictionAccuracy)
+		userRoutes.GET("/predictions/my", predictionHandler.GetMatchPredictions) // Placeholder - using existing method
+		userRoutes.GET("/predictions/accuracy/my", predictionHandler.GetPredictionAnalytics) // Placeholder - using existing method
 		userRoutes.POST("/predictions/calculate", predictionHandler.GenerateMatchPredictions)
 		userRoutes.GET("/predictions/history/:player_id", predictionHandler.GetPredictionAnalytics)
 

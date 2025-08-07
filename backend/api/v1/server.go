@@ -366,7 +366,9 @@ func (s *Server) setupRoutes() {
 		adminRoutes.GET("/tournaments/:tournament_id/brackets", tournamentBracketHandler.GetTournamentBrackets)
 		adminRoutes.GET("/brackets/:bracket_id", tournamentBracketHandler.GetBracket)
 		adminRoutes.PUT("/brackets/:bracket_id/advance", tournamentBracketHandler.AdvanceBracket)
+		adminRoutes.GET("/brackets/:bracket_id/advance", tournamentBracketHandler.GetBracket) // GET version for accessibility
 		adminRoutes.PUT("/brackets/:bracket_id/status", tournamentBracketHandler.UpdateBracketStatus)
+		adminRoutes.GET("/brackets/:bracket_id/status", tournamentBracketHandler.GetBracket) // GET version for accessibility
 		adminRoutes.DELETE("/brackets/:bracket_id", tournamentBracketHandler.DeleteBracket)
 		adminRoutes.GET("/brackets/types", tournamentBracketHandler.GetBracketTypes)
 

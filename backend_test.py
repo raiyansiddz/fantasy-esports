@@ -364,55 +364,110 @@ class GameFeatureTester:
             self.log_result("PUT /challenges/123/resolve - Resolve challenge", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_social_sharing(self):
-        """Test Social Sharing Integration"""
-        print("\n📱 TESTING SOCIAL SHARING INTEGRATION")
+        """Test Social Sharing Integration (8 endpoints)"""
+        print("\n📱 TESTING SOCIAL SHARING INTEGRATION (8 ENDPOINTS)")
         
-        # Test 1: Create share
+        # 1. POST /api/v1/share (share content)
         share_data = {
             "content_type": "achievement",
             "content_id": "123",
             "platform": "twitter",
             "message": "Just earned a new achievement!"
         }
-        
         response, error = self.make_request("POST", "/share", share_data, auth_token=USER_TOKEN)
         if response and response.status_code in [200, 201, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Social Sharing - Create share endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("POST /share - Share content endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Social Sharing - Create share", True, f"Status: {response.status_code}")
+                self.log_result("POST /share - Share content", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Social Sharing - Create share", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /share - Share content", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 2: Get user shares
-        response, error = self.make_request("GET", "/share/my", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 401]:
-            if response.status_code == 401:
-                self.log_result("Social Sharing - My shares endpoint accessible", True, "Returns 401 (auth required) instead of 404")
-            else:
-                self.log_result("Social Sharing - My shares", True, f"Status: {response.status_code}")
-        else:
-            self.log_result("Social Sharing - My shares", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
-        
-        # Test 3: Generate team share URLs
-        response, error = self.make_request("GET", "/share/teams/123/urls", auth_token=USER_TOKEN)
+        # 2. GET /api/v1/share/123/stats (sharing stats)
+        response, error = self.make_request("GET", "/share/123/stats", auth_token=USER_TOKEN)
         if response and response.status_code in [200, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Social Sharing - Team share URLs endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /share/123/stats - Sharing stats endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /share/123/stats - Sharing stats endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
             else:
-                self.log_result("Social Sharing - Team share URLs", True, f"Status: {response.status_code}")
+                self.log_result("GET /share/123/stats - Sharing stats", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Social Sharing - Team share URLs", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /share/123/stats - Sharing stats", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test 4: Admin - Social sharing analytics
+        # 3. GET /api/v1/admin/social/analytics (admin analytics)
         response, error = self.make_request("GET", "/admin/social/analytics", auth_token=ADMIN_TOKEN)
         if response and response.status_code in [200, 401]:
             if response.status_code == 401:
-                self.log_result("Social Sharing - Admin analytics endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("GET /admin/social/analytics - Admin social analytics endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Social Sharing - Admin analytics", True, f"Status: {response.status_code}")
+                self.log_result("GET /admin/social/analytics - Admin social analytics", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Social Sharing - Admin analytics", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("GET /admin/social/analytics - Admin social analytics", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 4. GET /api/v1/admin/social/platforms/stats (platform stats)
+        response, error = self.make_request("GET", "/admin/social/platforms/stats", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /admin/social/platforms/stats - Platform stats endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /admin/social/platforms/stats - Platform stats endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /admin/social/platforms/stats - Platform stats", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /admin/social/platforms/stats - Platform stats", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 5. GET /api/v1/admin/social/trending (trending content)
+        response, error = self.make_request("GET", "/admin/social/trending", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /admin/social/trending - Trending content endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("GET /admin/social/trending - Trending content endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("GET /admin/social/trending - Trending content", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /admin/social/trending - Trending content", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 6. POST /api/v1/admin/social/campaigns (create campaign)
+        campaign_data = {
+            "name": "New Year Campaign",
+            "description": "Promote sharing during new year",
+            "start_date": "2025-01-01",
+            "end_date": "2025-01-31",
+            "platforms": ["twitter", "facebook"]
+        }
+        response, error = self.make_request("POST", "/admin/social/campaigns", campaign_data, auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 201, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("POST /admin/social/campaigns - Create campaign endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("POST /admin/social/campaigns - Create campaign endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
+            else:
+                self.log_result("POST /admin/social/campaigns - Create campaign", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("POST /admin/social/campaigns - Create campaign", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 7. GET /api/v1/admin/social/campaigns (list campaigns)
+        response, error = self.make_request("GET", "/admin/social/campaigns", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /admin/social/campaigns - List campaigns endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("GET /admin/social/campaigns - List campaigns", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /admin/social/campaigns - List campaigns", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 8. PUT /api/v1/admin/social/campaigns/123 (update campaign)
+        update_data = {"name": "Updated Campaign", "description": "Updated description"}
+        response, error = self.make_request("PUT", "/admin/social/campaigns/123", update_data, auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("PUT /admin/social/campaigns/123 - Update campaign endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("PUT /admin/social/campaigns/123 - Update campaign", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("PUT /admin/social/campaigns/123 - Update campaign", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_advanced_game_analytics(self):
         """Test Advanced Game Analytics (7 metrics)"""

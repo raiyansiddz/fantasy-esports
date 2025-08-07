@@ -29,7 +29,7 @@ import random
 from typing import Dict, Any, Optional, Tuple, List
 from datetime import datetime, timedelta
 
-class ContentManagementTester:
+class AdvancedGamingFeaturesTester:
     def __init__(self, base_url: str = "http://localhost:8001"):
         self.base_url = base_url
         self.session = requests.Session()
@@ -37,17 +37,17 @@ class ContentManagementTester:
         self.user_token = None
         self.test_results = []
         self.created_resources = {
-            "banners": [],
-            "email_templates": [],
-            "campaigns": [],
-            "seo_content": [],
-            "faq_sections": [],
-            "faq_items": [],
-            "legal_documents": []
+            "achievements": [],
+            "friends": [],
+            "challenges": [],
+            "shares": [],
+            "brackets": [],
+            "predictions": [],
+            "fraud_reports": []
         }
         
     def log_test(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
-        """Log test results"""
+        """Log test results with comprehensive details"""
         result = {
             "test": test_name,
             "success": success,
@@ -64,29 +64,11 @@ class ContentManagementTester:
             print(f"   Response: {response_data}")
         print()
 
-    # ========================= PHASE 1: AUTHENTICATION & DATABASE VERIFICATION =========================
-
-    def test_health_check(self) -> bool:
-        """Test basic health check endpoint"""
-        try:
-            response = self.session.get(f"{self.base_url}/health")
-            success = response.status_code == 200
-            
-            self.log_test(
-                "Phase 1 - Health Check",
-                success,
-                f"Status: {response.status_code}, Response: {response.text[:100]}",
-                response.text if success else response.text
-            )
-            return success
-        except Exception as e:
-            self.log_test("Phase 1 - Health Check", False, f"Exception: {str(e)}")
-            return False
+    # ========================= AUTHENTICATION SETUP =========================
 
     def authenticate_admin(self) -> bool:
-        """Authenticate as admin user"""
+        """Authenticate as admin user with multiple methods"""
         try:
-            # Try multiple admin authentication methods
             auth_methods = [
                 {"username": "admin", "password": "admin123"},
                 {"email": "admin@fantasy-esports.com", "password": "admin123"},
@@ -100,869 +82,1161 @@ class ContentManagementTester:
                     data = response.json()
                     if data.get("success") and "access_token" in data:
                         self.admin_token = data["access_token"]
-                        self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
-                        self.log_test("Phase 1 - Admin Authentication", True, f"Successfully authenticated with {auth_data}")
+                        self.log_test("Admin Authentication", True, f"Successfully authenticated with {auth_data}")
                         return True
             
-            self.log_test(
-                "Phase 1 - Admin Authentication", 
-                False, 
-                f"All authentication methods failed. Last status: {response.status_code}",
-                response.text
-            )
+            self.log_test("Admin Authentication", False, f"All authentication methods failed. Last status: {response.status_code}")
             return False
             
         except Exception as e:
-            self.log_test("Phase 1 - Admin Authentication", False, f"Exception: {str(e)}")
+            self.log_test("Admin Authentication", False, f"Exception: {str(e)}")
             return False
 
-    def test_database_tables_verification(self) -> bool:
-        """Test if CMS database tables exist and are accessible"""
+    def authenticate_user(self) -> bool:
+        """Authenticate as regular user with mobile OTP"""
         try:
-            # Test by accessing admin endpoints - 200/401 means table exists, 404 means missing
-            endpoints_to_test = [
-                ("/api/v1/admin/content/banners", "banners table"),
-                ("/api/v1/admin/content/email-templates", "email_templates table"),
-                ("/api/v1/admin/content/campaigns", "marketing_campaigns table"),
-                ("/api/v1/admin/content/seo", "seo_content table"),
-                ("/api/v1/admin/content/faq/sections", "faq_sections table"),
-                ("/api/v1/admin/content/legal", "legal_documents table")
-            ]
+            # Step 1: Verify mobile number
+            mobile_data = {"mobile": "+919876543210"}
+            response = self.session.post(f"{self.base_url}/api/v1/auth/verify-mobile", json=mobile_data)
             
-            accessible_tables = 0
-            total_tables = len(endpoints_to_test)
-            table_status = []
+            if response.status_code != 200:
+                self.log_test("User Authentication - Mobile Verify", False, f"Mobile verification failed: {response.status_code}")
+                return False
             
-            for endpoint, table_name in endpoints_to_test:
-                try:
-                    response = self.session.get(f"{self.base_url}{endpoint}")
-                    # 200 (success) or 401 (auth required) means endpoint/table exists
-                    # 404 means endpoint/table doesn't exist
-                    if response.status_code in [200, 401]:
-                        accessible_tables += 1
-                        table_status.append(f"✅ {table_name}")
-                    else:
-                        table_status.append(f"❌ {table_name} (status: {response.status_code})")
-                except Exception as e:
-                    table_status.append(f"❌ {table_name} (error: {str(e)})")
-            
-            success = accessible_tables == total_tables
-            details = f"Database Tables: {accessible_tables}/{total_tables} accessible. " + "; ".join(table_status)
-            
-            self.log_test("Phase 1 - Database Tables Verification", success, details)
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 1 - Database Tables Verification", False, f"Exception: {str(e)}")
-            return False
-
-    def test_sample_data_verification(self) -> bool:
-        """Test if sample data was inserted successfully"""
-        if not self.admin_token:
-            self.log_test("Phase 1 - Sample Data Verification", False, "No admin token available")
-            return False
-            
-        try:
-            # Check for existing data in each table
-            endpoints_to_check = [
-                ("/api/v1/admin/content/banners", "banners"),
-                ("/api/v1/admin/content/email-templates", "email templates"),
-                ("/api/v1/admin/content/campaigns", "campaigns"),
-                ("/api/v1/admin/content/seo", "SEO content"),
-                ("/api/v1/admin/content/faq/sections", "FAQ sections"),
-                ("/api/v1/admin/content/legal", "legal documents")
-            ]
-            
-            data_found = 0
-            total_endpoints = len(endpoints_to_check)
-            data_status = []
-            
-            for endpoint, content_type in endpoints_to_check:
-                try:
-                    response = self.session.get(f"{self.base_url}{endpoint}")
-                    if response.status_code == 200:
-                        data = response.json()
-                        # Check for data in various response formats
-                        has_data = False
-                        if isinstance(data, dict):
-                            # Check common data field names
-                            for field in ['data', 'banners', 'templates', 'campaigns', 'contents', 'sections', 'documents']:
-                                if field in data and data[field] and len(data[field]) > 0:
-                                    has_data = True
-                                    break
-                        
-                        if has_data:
-                            data_found += 1
-                            data_status.append(f"✅ {content_type} (has sample data)")
-                        else:
-                            data_status.append(f"⚠️ {content_type} (empty - no sample data)")
-                    else:
-                        data_status.append(f"❌ {content_type} (status: {response.status_code})")
-                except Exception as e:
-                    data_status.append(f"❌ {content_type} (error: {str(e)})")
-            
-            # Sample data is not critical for functionality, so we'll mark as success if tables are accessible
-            success = True  # Tables being accessible is more important than sample data
-            details = f"Sample Data Check: {data_found}/{total_endpoints} tables have sample data. " + "; ".join(data_status)
-            
-            self.log_test("Phase 1 - Sample Data Verification", success, details)
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 1 - Sample Data Verification", False, f"Exception: {str(e)}")
-            return False
-
-    # ========================= PHASE 2: CORRECTED REQUEST TESTING =========================
-
-    def test_banner_create_corrected(self) -> bool:
-        """Test banner creation with CORRECT field names based on Go struct"""
-        if not self.admin_token:
-            self.log_test("Phase 2 - Banner Create (Corrected)", False, "No admin token available")
-            return False
-            
-        try:
-            # Using CORRECT field names as per BannerCreateRequest struct
-            banner_data = {
-                "title": "Welcome to Fantasy Esports 2025",
-                "description": "Join the ultimate fantasy esports experience and win real money!",
-                "image_url": "https://example.com/banner-image.jpg",
-                "link_url": "https://fantasy-esports.com/signup",
-                "position": "top",  # oneof=top middle bottom sidebar
-                "type": "promotion",  # oneof=promotion announcement sponsored
-                "priority": 1,
-                "start_date": "2025-01-01T00:00:00Z",
-                "end_date": "2025-12-31T23:59:59Z",
-                "target_roles": {"all_users": True},
-                "metadata": {"campaign": "new_year_2025", "source": "test"}
+            # Step 2: Verify OTP
+            otp_data = {
+                "mobile": "+919876543210",
+                "otp": "123456",
+                "name": "Arjun Sharma",
+                "email": "arjun.sharma@gmail.com",
+                "referral_code": ""
             }
+            response = self.session.post(f"{self.base_url}/api/v1/auth/verify-otp", json=otp_data)
             
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/banners", json=banner_data)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") and "access_token" in data:
+                    self.user_token = data["access_token"]
+                    self.log_test("User Authentication", True, "Successfully authenticated user with mobile +919876543210")
+                    return True
             
-            success = response.status_code == 201
-            details = f"Status: {response.status_code}"
+            self.log_test("User Authentication", False, f"OTP verification failed: {response.status_code}")
+            return False
+            
+        except Exception as e:
+            self.log_test("User Authentication", False, f"Exception: {str(e)}")
+            return False
+
+    def set_admin_headers(self):
+        """Set admin authorization headers"""
+        if self.admin_token:
+            self.session.headers.update({"Authorization": f"Bearer {self.admin_token}"})
+
+    def set_user_headers(self):
+        """Set user authorization headers"""
+        if self.user_token:
+            self.session.headers.update({"Authorization": f"Bearer {self.user_token}"})
+
+    # ========================= SYSTEM 1: ACHIEVEMENT SYSTEM & BADGE MANAGEMENT =========================
+
+    def test_achievement_system(self) -> bool:
+        """Test comprehensive achievement system functionality"""
+        print("\n🏆 TESTING ACHIEVEMENT SYSTEM & BADGE MANAGEMENT")
+        print("-" * 60)
+        
+        system_success = True
+        
+        # Test 1: Admin - Create Achievement
+        self.set_admin_headers()
+        achievement_data = {
+            "name": "First Victory",
+            "description": "Win your first contest in Fantasy Esports",
+            "category": "contest",
+            "trigger_type": "contest_win",
+            "trigger_criteria": {"min_contests": 1},
+            "reward_type": "badge_and_bonus",
+            "reward_amount": 100,
+            "badge_icon": "trophy-gold",
+            "badge_color": "#FFD700",
+            "is_active": True,
+            "rarity": "common"
+        }
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/admin/achievements", json=achievement_data)
+            success = response.status_code in [200, 201]
             
             if success:
                 data = response.json()
                 if data.get("success") and "data" in data:
-                    banner_id = data["data"].get("id")
-                    if banner_id:
-                        self.created_resources["banners"].append(banner_id)
-                        details += f" - Banner created successfully with ID: {banner_id}"
+                    achievement_id = data["data"].get("id")
+                    if achievement_id:
+                        self.created_resources["achievements"].append(achievement_id)
+                        self.log_test("Achievement Creation", True, f"Created achievement ID: {achievement_id}")
                     else:
                         success = False
-                        details += " - Response missing banner ID"
+                        self.log_test("Achievement Creation", False, "Response missing achievement ID")
                 else:
                     success = False
-                    details += " - Response missing expected data structure"
-            
-            self.log_test(
-                "Phase 2 - Banner Create (Corrected)",
-                success,
-                details,
-                response.json() if response.status_code in [200, 201] else response.text
-            )
-            return success
-            
+                    self.log_test("Achievement Creation", False, "Invalid response structure")
+            else:
+                self.log_test("Achievement Creation", False, f"Status: {response.status_code}, Response: {response.text}")
+                system_success = False
+                
         except Exception as e:
-            self.log_test("Phase 2 - Banner Create (Corrected)", False, f"Exception: {str(e)}")
-            return False
+            self.log_test("Achievement Creation", False, f"Exception: {str(e)}")
+            system_success = False
 
-    def test_campaign_create_corrected(self) -> bool:
-        """Test campaign creation with CORRECT field names based on Go struct"""
-        if not self.admin_token:
-            self.log_test("Phase 2 - Campaign Create (Corrected)", False, "No admin token available")
-            return False
-            
+        # Test 2: Admin - List Achievements
         try:
-            # Using CORRECT field names as per MarketingCampaignCreateRequest struct
-            campaign_data = {
-                "name": "New Year Promotion 2025",
-                "subject": "Welcome to Fantasy Esports - Special New Year Offer!",
-                "email_template": "welcome_template",  # This field is required
-                "target_segment": "all_users",  # This field is required
-                "target_criteria": {"min_age": 18, "country": "IN"},
-                "scheduled_at": "2025-01-15T10:00:00Z"
-            }
-            
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/campaigns", json=campaign_data)
-            
-            success = response.status_code == 201
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success") and "data" in data:
-                    campaign_id = data["data"].get("id")
-                    if campaign_id:
-                        self.created_resources["campaigns"].append(campaign_id)
-                        details += f" - Campaign created successfully with ID: {campaign_id}"
-                    else:
-                        success = False
-                        details += " - Response missing campaign ID"
-                else:
-                    success = False
-                    details += " - Response missing expected data structure"
-            
-            self.log_test(
-                "Phase 2 - Campaign Create (Corrected)",
-                success,
-                details,
-                response.json() if response.status_code in [200, 201] else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 2 - Campaign Create (Corrected)", False, f"Exception: {str(e)}")
-            return False
-
-    def test_seo_content_create_corrected(self) -> bool:
-        """Test SEO content creation with CORRECT field names based on Go struct"""
-        if not self.admin_token:
-            self.log_test("Phase 2 - SEO Content Create (Corrected)", False, "No admin token available")
-            return False
-            
-        try:
-            # Using CORRECT field names as per SEOContentCreateRequest struct
-            seo_data = {
-                "page_type": "home",  # This field is required
-                "page_slug": "home-page",  # This field is required
-                "meta_title": "Fantasy Esports - Ultimate Gaming Experience",  # This field is required
-                "meta_description": "Join the ultimate fantasy esports platform. Create teams, compete in tournaments, and win real money prizes.",  # This field is required
-                "keywords": ["fantasy esports", "gaming", "tournaments", "esports betting", "real money"],
-                "og_title": "Fantasy Esports - Ultimate Gaming Experience",
-                "og_description": "Join the ultimate fantasy esports platform and win real money",
-                "og_image": "https://example.com/og-image.jpg",
-                "twitter_card": "summary_large_image",
-                "structured_data": {"@type": "WebSite", "name": "Fantasy Esports", "url": "https://fantasy-esports.com"},
-                "content": "<h1>Welcome to Fantasy Esports</h1><p>Create your dream team and compete for real money prizes!</p>"
-            }
-            
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/seo", json=seo_data)
-            
-            success = response.status_code == 201
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success") and "data" in data:
-                    seo_id = data["data"].get("id")
-                    if seo_id:
-                        self.created_resources["seo_content"].append(seo_id)
-                        details += f" - SEO content created successfully with ID: {seo_id}"
-                    else:
-                        success = False
-                        details += " - Response missing SEO content ID"
-                else:
-                    success = False
-                    details += " - Response missing expected data structure"
-            
-            self.log_test(
-                "Phase 2 - SEO Content Create (Corrected)",
-                success,
-                details,
-                response.json() if response.status_code in [200, 201] else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 2 - SEO Content Create (Corrected)", False, f"Exception: {str(e)}")
-            return False
-
-    def test_faq_section_create_corrected(self) -> bool:
-        """Test FAQ section creation with CORRECT field names based on Go struct"""
-        if not self.admin_token:
-            self.log_test("Phase 2 - FAQ Section Create (Corrected)", False, "No admin token available")
-            return False
-            
-        try:
-            # Using CORRECT field names as per FAQSectionCreateRequest struct
-            section_data = {
-                "name": "Getting Started",  # This field is required (not 'title')
-                "description": "Basic questions about using Fantasy Esports platform",
-                "sort_order": 1
-            }
-            
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/faq/sections", json=section_data)
-            
-            success = response.status_code == 201
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success") and "data" in data:
-                    section_id = data["data"].get("id")
-                    if section_id:
-                        self.created_resources["faq_sections"].append(section_id)
-                        details += f" - FAQ section created successfully with ID: {section_id}"
-                    else:
-                        success = False
-                        details += " - Response missing FAQ section ID"
-                else:
-                    success = False
-                    details += " - Response missing expected data structure"
-            
-            self.log_test(
-                "Phase 2 - FAQ Section Create (Corrected)",
-                success,
-                details,
-                response.json() if response.status_code in [200, 201] else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 2 - FAQ Section Create (Corrected)", False, f"Exception: {str(e)}")
-            return False
-
-    def test_email_template_create_corrected(self) -> bool:
-        """Test email template creation with CORRECT field names and data types"""
-        if not self.admin_token:
-            self.log_test("Phase 2 - Email Template Create (Corrected)", False, "No admin token available")
-            return False
-            
-        try:
-            # Using CORRECT field names and JSONMap type for variables (not array)
-            template_data = {
-                "name": "Welcome Email Template",
-                "description": "Welcome email template for new users",
-                "subject": "Welcome to Fantasy Esports!",
-                "html_content": "<h1>Welcome {{.FirstName}}!</h1><p>Thanks for joining Fantasy Esports. Get ready to win real money!</p>",
-                "text_content": "Welcome {{.FirstName}}! Thanks for joining Fantasy Esports. Get ready to win real money!",
-                "category": "welcome",  # oneof=welcome promotional transactional newsletter
-                "variables": {"FirstName": "string", "Email": "string", "SignupDate": "date"}  # JSONMap, not array
-            }
-            
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/email-templates", json=template_data)
-            
-            success = response.status_code == 201
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success") and "data" in data:
-                    template_id = data["data"].get("id")
-                    if template_id:
-                        self.created_resources["email_templates"].append(template_id)
-                        details += f" - Email template created successfully with ID: {template_id}"
-                    else:
-                        success = False
-                        details += " - Response missing email template ID"
-                else:
-                    success = False
-                    details += " - Response missing expected data structure"
-            
-            self.log_test(
-                "Phase 2 - Email Template Create (Corrected)",
-                success,
-                details,
-                response.json() if response.status_code in [200, 201] else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 2 - Email Template Create (Corrected)", False, f"Exception: {str(e)}")
-            return False
-
-    def test_legal_document_create_corrected(self) -> bool:
-        """Test legal document creation with CORRECT field names"""
-        if not self.admin_token:
-            self.log_test("Phase 2 - Legal Document Create (Corrected)", False, "No admin token available")
-            return False
-            
-        try:
-            # Using CORRECT field names as per LegalDocumentCreateRequest struct
-            legal_data = {
-                "document_type": "terms",  # oneof=terms privacy refund cookie disclaimer
-                "title": "Terms of Service - Fantasy Esports",
-                "content": "These terms of service govern your use of the Fantasy Esports platform. By using our service, you agree to these terms...",
-                "version": "2.0",  # New version to avoid duplicate constraint
-                "effective_date": "2025-01-01T00:00:00Z",
-                "metadata": {"last_reviewed": "2025-01-01", "review_frequency": "quarterly", "approved_by": "legal_team"}
-            }
-            
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/legal", json=legal_data)
-            
-            success = response.status_code == 201
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success") and "data" in data:
-                    legal_id = data["data"].get("id")
-                    if legal_id:
-                        self.created_resources["legal_documents"].append(legal_id)
-                        details += f" - Legal document created successfully with ID: {legal_id}"
-                    else:
-                        success = False
-                        details += " - Response missing legal document ID"
-                else:
-                    success = False
-                    details += " - Response missing expected data structure"
-            
-            self.log_test(
-                "Phase 2 - Legal Document Create (Corrected)",
-                success,
-                details,
-                response.json() if response.status_code in [200, 201] else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 2 - Legal Document Create (Corrected)", False, f"Exception: {str(e)}")
-            return False
-
-    def test_admin_list_endpoints(self) -> bool:
-        """Test all admin list endpoints work correctly"""
-        if not self.admin_token:
-            self.log_test("Phase 2 - Admin List Endpoints", False, "No admin token available")
-            return False
-            
-        try:
-            endpoints_to_test = [
-                ("/api/v1/admin/content/banners", "banners"),
-                ("/api/v1/admin/content/email-templates", "email templates"),
-                ("/api/v1/admin/content/campaigns", "campaigns"),
-                ("/api/v1/admin/content/seo", "SEO content"),
-                ("/api/v1/admin/content/faq/sections", "FAQ sections"),
-                ("/api/v1/admin/content/legal", "legal documents")
-            ]
-            
-            successful_endpoints = 0
-            total_endpoints = len(endpoints_to_test)
-            endpoint_status = []
-            
-            for endpoint, content_type in endpoints_to_test:
-                try:
-                    response = self.session.get(f"{self.base_url}{endpoint}")
-                    if response.status_code == 200:
-                        successful_endpoints += 1
-                        data = response.json()
-                        if data.get("success"):
-                            endpoint_status.append(f"✅ {content_type} (200 OK)")
-                        else:
-                            endpoint_status.append(f"⚠️ {content_type} (200 but success=false)")
-                    else:
-                        endpoint_status.append(f"❌ {content_type} (status: {response.status_code})")
-                except Exception as e:
-                    endpoint_status.append(f"❌ {content_type} (error: {str(e)})")
-            
-            success = successful_endpoints == total_endpoints
-            details = f"Admin List Endpoints: {successful_endpoints}/{total_endpoints} working. " + "; ".join(endpoint_status)
-            
-            self.log_test("Phase 2 - Admin List Endpoints", success, details)
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 2 - Admin List Endpoints", False, f"Exception: {str(e)}")
-            return False
-
-    # ========================= PHASE 3: PUBLIC ENDPOINT TESTING =========================
-
-    def test_public_active_banners(self) -> bool:
-        """Test public active banners endpoint (no auth required)"""
-        try:
-            # Remove admin auth for public endpoint
-            original_headers = self.session.headers.copy()
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            response = self.session.get(f"{self.base_url}/api/v1/banners/active")
-            
-            # Restore admin headers
-            self.session.headers.clear()
-            self.session.headers.update(original_headers)
-            
+            response = self.session.get(f"{self.base_url}/api/v1/admin/achievements")
             success = response.status_code == 200
-            details = f"Status: {response.status_code}"
             
             if success:
                 data = response.json()
                 if data.get("success"):
-                    banners = data.get("data", [])
-                    count = data.get("count", 0)
-                    details += f" - Found {count} active banners"
+                    achievements = data.get("data", [])
+                    self.log_test("Admin List Achievements", True, f"Found {len(achievements)} achievements")
                 else:
                     success = False
-                    details += " - Response missing success field"
-            
-            self.log_test(
-                "Phase 3 - Public Active Banners",
-                success,
-                details,
-                response.json() if success else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 3 - Public Active Banners", False, f"Exception: {str(e)}")
-            return False
-
-    def test_public_faq_sections(self) -> bool:
-        """Test public FAQ sections endpoint (no auth required)"""
-        try:
-            # Remove admin auth for public endpoint
-            original_headers = self.session.headers.copy()
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            response = self.session.get(f"{self.base_url}/api/v1/faq/sections")
-            
-            # Restore admin headers
-            self.session.headers.clear()
-            self.session.headers.update(original_headers)
-            
-            success = response.status_code == 200
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    sections = data.get("data", [])
-                    details += f" - Found {len(sections)} FAQ sections"
-                else:
-                    success = False
-                    details += " - Response missing success field"
-            
-            self.log_test(
-                "Phase 3 - Public FAQ Sections",
-                success,
-                details,
-                response.json() if success else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 3 - Public FAQ Sections", False, f"Exception: {str(e)}")
-            return False
-
-    def test_public_legal_document(self) -> bool:
-        """Test public legal document endpoint (no auth required)"""
-        try:
-            # Remove admin auth for public endpoint
-            original_headers = self.session.headers.copy()
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            response = self.session.get(f"{self.base_url}/api/v1/legal/terms")
-            
-            # Restore admin headers
-            self.session.headers.clear()
-            self.session.headers.update(original_headers)
-            
-            success = response.status_code == 200
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    legal_doc = data.get("data", {})
-                    details += f" - Legal document retrieved"
-                    if legal_doc.get("title"):
-                        details += f" - Title: {legal_doc['title']}"
-                else:
-                    success = False
-                    details += " - Response missing success field"
-            
-            self.log_test(
-                "Phase 3 - Public Legal Document",
-                success,
-                details,
-                response.json() if success else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 3 - Public Legal Document", False, f"Exception: {str(e)}")
-            return False
-
-    def test_public_seo_by_slug(self) -> bool:
-        """Test public SEO content by slug endpoint (no auth required)"""
-        try:
-            # Remove admin auth for public endpoint
-            original_headers = self.session.headers.copy()
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            # Test with a common slug
-            response = self.session.get(f"{self.base_url}/api/v1/seo/home")
-            
-            # Restore admin headers
-            self.session.headers.clear()
-            self.session.headers.update(original_headers)
-            
-            success = response.status_code == 200
-            details = f"Status: {response.status_code}"
-            
-            if success:
-                data = response.json()
-                if data.get("success"):
-                    seo_data = data.get("data", {})
-                    details += f" - SEO data retrieved for slug 'home'"
-                    if seo_data.get("meta_title"):
-                        details += f" - Title: {seo_data['meta_title'][:50]}..."
-                else:
-                    success = False
-                    details += " - Response missing success field"
-            
-            self.log_test(
-                "Phase 3 - Public SEO by Slug",
-                success,
-                details,
-                response.json() if success else response.text
-            )
-            return success
-            
-        except Exception as e:
-            self.log_test("Phase 3 - Public SEO by Slug", False, f"Exception: {str(e)}")
-            return False
-
-    # ========================= PHASE 4: COMPREHENSIVE VALIDATION TESTING =========================
-
-    def test_field_validation_errors(self) -> bool:
-        """Test field validation for all content types"""
-        if not self.admin_token:
-            self.log_test("Phase 4 - Field Validation", False, "No admin token available")
-            return False
-            
-        validation_tests_passed = 0
-        total_validation_tests = 0
-        
-        # Test 1: Banner with missing required fields
-        total_validation_tests += 1
-        try:
-            invalid_banner = {"description": "Missing required title field"}
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/banners", json=invalid_banner)
-            
-            if response.status_code == 400:
-                validation_tests_passed += 1
-                self.log_test("Validation - Missing Banner Title", True, "Correctly rejected missing title")
+                    self.log_test("Admin List Achievements", False, "Response missing success field")
             else:
-                self.log_test("Validation - Missing Banner Title", False, f"Expected 400, got {response.status_code}")
+                self.log_test("Admin List Achievements", False, f"Status: {response.status_code}")
+                system_success = False
+                
         except Exception as e:
-            self.log_test("Validation - Missing Banner Title", False, f"Exception: {str(e)}")
-        
-        # Test 2: Banner with invalid position
-        total_validation_tests += 1
+            self.log_test("Admin List Achievements", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 3: User - Get Available Achievements
+        self.set_user_headers()
         try:
-            invalid_banner = {
-                "title": "Test Banner",
-                "image_url": "https://example.com/image.jpg",
-                "position": "invalid_position",  # Should be oneof=top middle bottom sidebar
-                "type": "promotion",
-                "start_date": "2025-01-01T00:00:00Z",
-                "end_date": "2025-12-31T23:59:59Z"
+            response = self.session.get(f"{self.base_url}/api/v1/achievements")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    achievements = data.get("data", [])
+                    self.log_test("User Available Achievements", True, f"User can see {len(achievements)} achievements")
+                else:
+                    success = False
+                    self.log_test("User Available Achievements", False, "Response missing success field")
+            else:
+                self.log_test("User Available Achievements", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("User Available Achievements", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 4: User - Get My Achievements
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/achievements/my")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    my_achievements = data.get("data", [])
+                    self.log_test("User My Achievements", True, f"User has {len(my_achievements)} earned achievements")
+                else:
+                    success = False
+                    self.log_test("User My Achievements", False, "Response missing success field")
+            else:
+                self.log_test("User My Achievements", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("User My Achievements", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 5: Achievement Progress Tracking
+        if self.created_resources["achievements"]:
+            achievement_id = self.created_resources["achievements"][0]
+            try:
+                response = self.session.get(f"{self.base_url}/api/v1/achievements/{achievement_id}/progress")
+                success = response.status_code == 200
+                
+                if success:
+                    data = response.json()
+                    if data.get("success"):
+                        progress = data.get("data", {})
+                        self.log_test("Achievement Progress Tracking", True, f"Progress tracking working for achievement {achievement_id}")
+                    else:
+                        success = False
+                        self.log_test("Achievement Progress Tracking", False, "Response missing success field")
+                else:
+                    self.log_test("Achievement Progress Tracking", False, f"Status: {response.status_code}")
+                    system_success = False
+                    
+            except Exception as e:
+                self.log_test("Achievement Progress Tracking", False, f"Exception: {str(e)}")
+                system_success = False
+
+        return system_success
+
+    # ========================= SYSTEM 2: FRIEND SYSTEM & CHALLENGES =========================
+
+    def test_friend_system(self) -> bool:
+        """Test comprehensive friend system and challenges"""
+        print("\n👥 TESTING FRIEND SYSTEM & CHALLENGES")
+        print("-" * 60)
+        
+        system_success = True
+        self.set_user_headers()
+        
+        # Test 1: Add Friend by Username
+        friend_data = {"username": "rajesh_kumar", "message": "Let's compete in Fantasy Esports!"}
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/friends", json=friend_data)
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    self.log_test("Add Friend by Username", True, "Friend request sent successfully")
+                else:
+                    success = False
+                    self.log_test("Add Friend by Username", False, "Response missing success field")
+            else:
+                self.log_test("Add Friend by Username", False, f"Status: {response.status_code}, Response: {response.text}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Add Friend by Username", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 2: Get Friends List
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/friends")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    friends = data.get("data", [])
+                    self.log_test("Get Friends List", True, f"User has {len(friends)} friends/requests")
+                else:
+                    success = False
+                    self.log_test("Get Friends List", False, "Response missing success field")
+            else:
+                self.log_test("Get Friends List", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get Friends List", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 3: Create Friend Challenge
+        challenge_data = {
+            "friend_id": "friend_user_123",
+            "contest_id": "contest_456",
+            "entry_fee": 50,
+            "challenge_message": "Ready for an epic battle in BGMI tournament?",
+            "expires_at": (datetime.now() + timedelta(days=7)).isoformat()
+        }
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/challenges", json=challenge_data)
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    challenge_id = data["data"].get("id")
+                    if challenge_id:
+                        self.created_resources["challenges"].append(challenge_id)
+                        self.log_test("Create Friend Challenge", True, f"Challenge created with ID: {challenge_id}")
+                    else:
+                        success = False
+                        self.log_test("Create Friend Challenge", False, "Response missing challenge ID")
+                else:
+                    success = False
+                    self.log_test("Create Friend Challenge", False, "Invalid response structure")
+            else:
+                self.log_test("Create Friend Challenge", False, f"Status: {response.status_code}, Response: {response.text}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Create Friend Challenge", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 4: Get Challenges List
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/challenges")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    challenges = data.get("data", [])
+                    self.log_test("Get Challenges List", True, f"User has {len(challenges)} challenges")
+                else:
+                    success = False
+                    self.log_test("Get Challenges List", False, "Response missing success field")
+            else:
+                self.log_test("Get Challenges List", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get Challenges List", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 5: Friend Activities Feed
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/friends/activities")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    activities = data.get("data", [])
+                    self.log_test("Friend Activities Feed", True, f"Found {len(activities)} friend activities")
+                else:
+                    success = False
+                    self.log_test("Friend Activities Feed", False, "Response missing success field")
+            else:
+                self.log_test("Friend Activities Feed", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Friend Activities Feed", False, f"Exception: {str(e)}")
+            system_success = False
+
+        return system_success
+
+    # ========================= SYSTEM 3: SOCIAL SHARING INTEGRATION =========================
+
+    def test_social_sharing(self) -> bool:
+        """Test comprehensive social sharing integration"""
+        print("\n📱 TESTING SOCIAL SHARING INTEGRATION")
+        print("-" * 60)
+        
+        system_success = True
+        self.set_user_headers()
+        
+        # Test 1: Create Shareable Content
+        share_data = {
+            "content_type": "team_victory",
+            "content_id": "team_789",
+            "title": "My Dream Team Won Big!",
+            "description": "Just won ₹5,000 with my BGMI dream team in Fantasy Esports! 🏆",
+            "image_url": "https://example.com/team-victory.jpg",
+            "platforms": ["twitter", "facebook", "whatsapp", "instagram"]
+        }
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/share", json=share_data)
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    share_id = data["data"].get("id")
+                    if share_id:
+                        self.created_resources["shares"].append(share_id)
+                        self.log_test("Create Shareable Content", True, f"Share created with ID: {share_id}")
+                    else:
+                        success = False
+                        self.log_test("Create Shareable Content", False, "Response missing share ID")
+                else:
+                    success = False
+                    self.log_test("Create Shareable Content", False, "Invalid response structure")
+            else:
+                self.log_test("Create Shareable Content", False, f"Status: {response.status_code}, Response: {response.text}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Create Shareable Content", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 2: Generate Team Share URLs
+        team_id = "team_456"
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/share/teams/{team_id}/urls")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    urls = data.get("data", {})
+                    platforms = ["twitter", "facebook", "whatsapp", "instagram"]
+                    found_platforms = [p for p in platforms if p in urls]
+                    self.log_test("Generate Team Share URLs", True, f"Generated URLs for {len(found_platforms)} platforms: {found_platforms}")
+                else:
+                    success = False
+                    self.log_test("Generate Team Share URLs", False, "Response missing success field")
+            else:
+                self.log_test("Generate Team Share URLs", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Generate Team Share URLs", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 3: Generate Contest Win Share URLs
+        contest_id = "contest_789"
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/share/contests/{contest_id}/urls")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    urls = data.get("data", {})
+                    platforms = ["twitter", "facebook", "whatsapp", "instagram"]
+                    found_platforms = [p for p in platforms if p in urls]
+                    self.log_test("Generate Contest Win Share URLs", True, f"Generated URLs for {len(found_platforms)} platforms: {found_platforms}")
+                else:
+                    success = False
+                    self.log_test("Generate Contest Win Share URLs", False, "Response missing success field")
+            else:
+                self.log_test("Generate Contest Win Share URLs", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Generate Contest Win Share URLs", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 4: Generate Achievement Share URLs
+        achievement_id = "achievement_123"
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/share/achievements/{achievement_id}/urls")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    urls = data.get("data", {})
+                    platforms = ["twitter", "facebook", "whatsapp", "instagram"]
+                    found_platforms = [p for p in platforms if p in urls]
+                    self.log_test("Generate Achievement Share URLs", True, f"Generated URLs for {len(found_platforms)} platforms: {found_platforms}")
+                else:
+                    success = False
+                    self.log_test("Generate Achievement Share URLs", False, "Response missing success field")
+            else:
+                self.log_test("Generate Achievement Share URLs", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Generate Achievement Share URLs", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 5: Track Share Click
+        if self.created_resources["shares"]:
+            share_id = self.created_resources["shares"][0]
+            try:
+                response = self.session.post(f"{self.base_url}/api/v1/share/{share_id}/click")
+                success = response.status_code == 200
+                
+                if success:
+                    data = response.json()
+                    if data.get("success"):
+                        self.log_test("Track Share Click", True, f"Share click tracked for ID: {share_id}")
+                    else:
+                        success = False
+                        self.log_test("Track Share Click", False, "Response missing success field")
+                else:
+                    self.log_test("Track Share Click", False, f"Status: {response.status_code}")
+                    system_success = False
+                    
+            except Exception as e:
+                self.log_test("Track Share Click", False, f"Exception: {str(e)}")
+                system_success = False
+
+        # Test 6: Get User Sharing History
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/share/my")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    shares = data.get("data", [])
+                    self.log_test("Get User Sharing History", True, f"User has {len(shares)} shares in history")
+                else:
+                    success = False
+                    self.log_test("Get User Sharing History", False, "Response missing success field")
+            else:
+                self.log_test("Get User Sharing History", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get User Sharing History", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 7: Admin - Social Sharing Analytics
+        self.set_admin_headers()
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/social/analytics")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    analytics = data.get("data", {})
+                    self.log_test("Admin Social Sharing Analytics", True, "Social sharing analytics accessible")
+                else:
+                    success = False
+                    self.log_test("Admin Social Sharing Analytics", False, "Response missing success field")
+            else:
+                self.log_test("Admin Social Sharing Analytics", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Admin Social Sharing Analytics", False, f"Exception: {str(e)}")
+            system_success = False
+
+        return system_success
+
+    # ========================= SYSTEM 4: ADVANCED GAME ANALYTICS (7 METRICS) =========================
+
+    def test_advanced_game_analytics(self) -> bool:
+        """Test all 7 sophisticated game analytics metrics"""
+        print("\n📊 TESTING ADVANCED GAME ANALYTICS (7 SOPHISTICATED METRICS)")
+        print("-" * 60)
+        
+        system_success = True
+        self.set_admin_headers()
+        
+        game_id = "bgmi_2025"  # Using realistic game ID
+        
+        # Test 1: Get Advanced Game Metrics (All 7 Metrics)
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/games/{game_id}/advanced-metrics")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    metrics = data.get("data", {})
+                    
+                    # Check for all 7 sophisticated metrics
+                    expected_metrics = [
+                        "player_efficiency",      # Kill/death ratios, objective completion rates
+                        "team_synergy",          # Team coordination and assist patterns
+                        "strategic_diversity",   # Role distribution and tactical variety
+                        "comeback_potential",    # Performance under pressure scenarios
+                        "clutch_performance",    # Critical moment execution statistics
+                        "consistency_index",     # Performance stability across matches
+                        "adaptability_score"     # Performance across different maps/opponents
+                    ]
+                    
+                    found_metrics = [metric for metric in expected_metrics if metric in metrics]
+                    self.log_test("Advanced Game Metrics (7 Metrics)", True, 
+                                f"Found {len(found_metrics)}/7 sophisticated metrics: {found_metrics}")
+                else:
+                    success = False
+                    self.log_test("Advanced Game Metrics (7 Metrics)", False, "Response missing success field")
+            else:
+                self.log_test("Advanced Game Metrics (7 Metrics)", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Advanced Game Metrics (7 Metrics)", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 2: Get Advanced Metrics History
+        try:
+            params = {"days": 30, "interval": "daily"}
+            response = self.session.get(f"{self.base_url}/api/v1/admin/games/{game_id}/metrics-history", params=params)
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    history = data.get("data", [])
+                    self.log_test("Advanced Metrics History", True, f"Retrieved {len(history)} historical data points")
+                else:
+                    success = False
+                    self.log_test("Advanced Metrics History", False, "Response missing success field")
+            else:
+                self.log_test("Advanced Metrics History", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Advanced Metrics History", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 3: Game Comparison Analytics
+        try:
+            params = {"games": "bgmi_2025,valorant_2025", "metrics": "player_efficiency,team_synergy,clutch_performance"}
+            response = self.session.get(f"{self.base_url}/api/v1/admin/games/compare", params=params)
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    comparison = data.get("data", {})
+                    self.log_test("Game Comparison Analytics", True, "Game comparison analytics working")
+                else:
+                    success = False
+                    self.log_test("Game Comparison Analytics", False, "Response missing success field")
+            else:
+                self.log_test("Game Comparison Analytics", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Game Comparison Analytics", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 4: Validate Individual Metric Calculations
+        # Test Player Efficiency Metric
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/games/{game_id}/advanced-metrics?metric=player_efficiency")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    efficiency = data.get("data", {}).get("player_efficiency", {})
+                    if "kill_death_ratio" in efficiency and "objective_completion_rate" in efficiency:
+                        self.log_test("Player Efficiency Calculation", True, "Kill/death ratios and objective completion rates calculated")
+                    else:
+                        success = False
+                        self.log_test("Player Efficiency Calculation", False, "Missing efficiency components")
+                else:
+                    success = False
+                    self.log_test("Player Efficiency Calculation", False, "Response missing success field")
+            else:
+                self.log_test("Player Efficiency Calculation", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Player Efficiency Calculation", False, f"Exception: {str(e)}")
+            system_success = False
+
+        return system_success
+
+    # ========================= SYSTEM 5: TOURNAMENT BRACKETS (4 TYPES) =========================
+
+    def test_tournament_brackets(self) -> bool:
+        """Test all 4 tournament bracket types"""
+        print("\n🏆 TESTING TOURNAMENT BRACKETS (4 TYPES)")
+        print("-" * 60)
+        
+        system_success = True
+        self.set_admin_headers()
+        
+        # Test 1: Get Available Bracket Types
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/brackets/types")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    bracket_types = data.get("data", [])
+                    expected_types = ["single_elimination", "double_elimination", "round_robin", "swiss_system"]
+                    found_types = [bt for bt in expected_types if bt in [b.get("type") for b in bracket_types]]
+                    self.log_test("Available Bracket Types", True, f"Found {len(found_types)}/4 bracket types: {found_types}")
+                else:
+                    success = False
+                    self.log_test("Available Bracket Types", False, "Response missing success field")
+            else:
+                self.log_test("Available Bracket Types", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Available Bracket Types", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 2: Create Single Elimination Bracket
+        bracket_data = {
+            "tournament_id": "tournament_123",
+            "bracket_type": "single_elimination",
+            "name": "BGMI Championship - Single Elimination",
+            "max_participants": 16,
+            "seeding_method": "random",
+            "settings": {
+                "best_of": 3,
+                "allow_third_place": True
             }
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/banners", json=invalid_banner)
-            
-            if response.status_code == 400:
-                validation_tests_passed += 1
-                self.log_test("Validation - Invalid Banner Position", True, "Correctly rejected invalid position")
-            else:
-                self.log_test("Validation - Invalid Banner Position", False, f"Expected 400, got {response.status_code}")
-        except Exception as e:
-            self.log_test("Validation - Invalid Banner Position", False, f"Exception: {str(e)}")
+        }
         
-        # Test 3: Campaign with missing required fields
-        total_validation_tests += 1
         try:
-            invalid_campaign = {"name": "Test Campaign"}  # Missing subject, email_template, target_segment
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/campaigns", json=invalid_campaign)
+            response = self.session.post(f"{self.base_url}/api/v1/admin/tournaments/brackets", json=bracket_data)
+            success = response.status_code in [200, 201]
             
-            if response.status_code == 400:
-                validation_tests_passed += 1
-                self.log_test("Validation - Missing Campaign Fields", True, "Correctly rejected missing required fields")
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    bracket_id = data["data"].get("id")
+                    if bracket_id:
+                        self.created_resources["brackets"].append(bracket_id)
+                        self.log_test("Create Single Elimination Bracket", True, f"Created bracket ID: {bracket_id}")
+                    else:
+                        success = False
+                        self.log_test("Create Single Elimination Bracket", False, "Response missing bracket ID")
+                else:
+                    success = False
+                    self.log_test("Create Single Elimination Bracket", False, "Invalid response structure")
             else:
-                self.log_test("Validation - Missing Campaign Fields", False, f"Expected 400, got {response.status_code}")
+                self.log_test("Create Single Elimination Bracket", False, f"Status: {response.status_code}, Response: {response.text}")
+                system_success = False
+                
         except Exception as e:
-            self.log_test("Validation - Missing Campaign Fields", False, f"Exception: {str(e)}")
-        
-        # Test 4: SEO content with missing required fields
-        total_validation_tests += 1
-        try:
-            invalid_seo = {"page_slug": "test"}  # Missing page_type, meta_title, meta_description
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/seo", json=invalid_seo)
-            
-            if response.status_code == 400:
-                validation_tests_passed += 1
-                self.log_test("Validation - Missing SEO Fields", True, "Correctly rejected missing required fields")
-            else:
-                self.log_test("Validation - Missing SEO Fields", False, f"Expected 400, got {response.status_code}")
-        except Exception as e:
-            self.log_test("Validation - Missing SEO Fields", False, f"Exception: {str(e)}")
-        
-        # Test 5: Legal document with invalid type
-        total_validation_tests += 1
-        try:
-            invalid_legal = {
-                "document_type": "invalid_type",  # Should be oneof=terms privacy refund cookie disclaimer
-                "title": "Test Document",
-                "content": "Test content",
-                "version": "1.0",
-                "effective_date": "2025-01-01T00:00:00Z"
-            }
-            response = self.session.post(f"{self.base_url}/api/v1/admin/content/legal", json=invalid_legal)
-            
-            if response.status_code == 400:
-                validation_tests_passed += 1
-                self.log_test("Validation - Invalid Legal Type", True, "Correctly rejected invalid document type")
-            else:
-                self.log_test("Validation - Invalid Legal Type", False, f"Expected 400, got {response.status_code}")
-        except Exception as e:
-            self.log_test("Validation - Invalid Legal Type", False, f"Exception: {str(e)}")
-        
-        success = validation_tests_passed == total_validation_tests
-        self.log_test(
-            "Phase 4 - Field Validation Overall",
-            success,
-            f"Passed {validation_tests_passed}/{total_validation_tests} validation tests"
-        )
-        
-        return success
+            self.log_test("Create Single Elimination Bracket", False, f"Exception: {str(e)}")
+            system_success = False
 
-    def test_authentication_enforcement(self) -> bool:
-        """Test that admin endpoints require authentication"""
-        auth_tests_passed = 0
-        total_auth_tests = 0
+        # Test 3: Create Double Elimination Bracket
+        bracket_data["bracket_type"] = "double_elimination"
+        bracket_data["name"] = "BGMI Championship - Double Elimination"
         
-        # Remove admin auth
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/admin/tournaments/brackets", json=bracket_data)
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    bracket_id = data["data"].get("id")
+                    if bracket_id:
+                        self.created_resources["brackets"].append(bracket_id)
+                        self.log_test("Create Double Elimination Bracket", True, f"Created bracket ID: {bracket_id}")
+                    else:
+                        success = False
+                        self.log_test("Create Double Elimination Bracket", False, "Response missing bracket ID")
+                else:
+                    success = False
+                    self.log_test("Create Double Elimination Bracket", False, "Invalid response structure")
+            else:
+                self.log_test("Create Double Elimination Bracket", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Create Double Elimination Bracket", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 4: Create Round Robin Bracket
+        bracket_data["bracket_type"] = "round_robin"
+        bracket_data["name"] = "BGMI Championship - Round Robin"
+        bracket_data["max_participants"] = 8  # Smaller for round robin
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/admin/tournaments/brackets", json=bracket_data)
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    bracket_id = data["data"].get("id")
+                    if bracket_id:
+                        self.created_resources["brackets"].append(bracket_id)
+                        self.log_test("Create Round Robin Bracket", True, f"Created bracket ID: {bracket_id}")
+                    else:
+                        success = False
+                        self.log_test("Create Round Robin Bracket", False, "Response missing bracket ID")
+                else:
+                    success = False
+                    self.log_test("Create Round Robin Bracket", False, "Invalid response structure")
+            else:
+                self.log_test("Create Round Robin Bracket", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Create Round Robin Bracket", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 5: Create Swiss System Bracket
+        bracket_data["bracket_type"] = "swiss_system"
+        bracket_data["name"] = "BGMI Championship - Swiss System"
+        bracket_data["max_participants"] = 16
+        bracket_data["settings"]["rounds"] = 5
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/admin/tournaments/brackets", json=bracket_data)
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    bracket_id = data["data"].get("id")
+                    if bracket_id:
+                        self.created_resources["brackets"].append(bracket_id)
+                        self.log_test("Create Swiss System Bracket", True, f"Created bracket ID: {bracket_id}")
+                    else:
+                        success = False
+                        self.log_test("Create Swiss System Bracket", False, "Response missing bracket ID")
+                else:
+                    success = False
+                    self.log_test("Create Swiss System Bracket", False, "Invalid response structure")
+            else:
+                self.log_test("Create Swiss System Bracket", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Create Swiss System Bracket", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 6: Get Tournament Brackets
+        tournament_id = "tournament_123"
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/tournaments/{tournament_id}/brackets")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    brackets = data.get("data", [])
+                    self.log_test("Get Tournament Brackets", True, f"Tournament has {len(brackets)} brackets")
+                else:
+                    success = False
+                    self.log_test("Get Tournament Brackets", False, "Response missing success field")
+            else:
+                self.log_test("Get Tournament Brackets", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get Tournament Brackets", False, f"Exception: {str(e)}")
+            system_success = False
+
+        return system_success
+
+    # ========================= SYSTEM 6: PLAYER PERFORMANCE PREDICTIONS (AI-BASED) =========================
+
+    def test_player_predictions(self) -> bool:
+        """Test AI-based player performance predictions"""
+        print("\n🤖 TESTING PLAYER PERFORMANCE PREDICTIONS (AI-BASED)")
+        print("-" * 60)
+        
+        system_success = True
+        
+        # Test 1: Admin - Generate Match Predictions
+        self.set_admin_headers()
+        match_id = "match_456"
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/admin/matches/{match_id}/generate-predictions")
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    predictions = data.get("data", {})
+                    
+                    # Check for AI prediction factors
+                    expected_factors = ["recent_form", "head_to_head", "team_strength", "map_performance", "team_morale"]
+                    found_factors = [factor for factor in expected_factors if factor in predictions]
+                    
+                    self.log_test("Generate Match Predictions", True, 
+                                f"AI predictions generated with {len(found_factors)}/5 factors: {found_factors}")
+                else:
+                    success = False
+                    self.log_test("Generate Match Predictions", False, "Response missing success field")
+            else:
+                self.log_test("Generate Match Predictions", False, f"Status: {response.status_code}, Response: {response.text}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Generate Match Predictions", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 2: User - Get Match Predictions
+        self.set_user_headers()
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/matches/{match_id}/predictions")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    predictions = data.get("data", {})
+                    
+                    # Check for prediction components
+                    if "confidence_score" in predictions and "predicted_outcome" in predictions:
+                        confidence = predictions.get("confidence_score", 0)
+                        self.log_test("Get Match Predictions", True, f"Predictions available with {confidence}% confidence")
+                    else:
+                        success = False
+                        self.log_test("Get Match Predictions", False, "Missing prediction components")
+                else:
+                    success = False
+                    self.log_test("Get Match Predictions", False, "Response missing success field")
+            else:
+                self.log_test("Get Match Predictions", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get Match Predictions", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 3: Admin - Update Prediction Accuracy
+        self.set_admin_headers()
+        accuracy_data = {
+            "actual_outcome": "team_a_win",
+            "actual_score": {"team_a": 16, "team_b": 12},
+            "prediction_accuracy": 85.5
+        }
+        
+        try:
+            response = self.session.put(f"{self.base_url}/api/v1/admin/matches/{match_id}/update-accuracy", json=accuracy_data)
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    self.log_test("Update Prediction Accuracy", True, "Prediction accuracy updated successfully")
+                else:
+                    success = False
+                    self.log_test("Update Prediction Accuracy", False, "Response missing success field")
+            else:
+                self.log_test("Update Prediction Accuracy", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Update Prediction Accuracy", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 4: Admin - Get Prediction Analytics
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/predictions/analytics")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    analytics = data.get("data", {})
+                    
+                    # Check for analytics components
+                    expected_components = ["overall_accuracy", "prediction_count", "accuracy_by_game", "confidence_distribution"]
+                    found_components = [comp for comp in expected_components if comp in analytics]
+                    
+                    self.log_test("Get Prediction Analytics", True, 
+                                f"Analytics available with {len(found_components)}/4 components: {found_components}")
+                else:
+                    success = False
+                    self.log_test("Get Prediction Analytics", False, "Response missing success field")
+            else:
+                self.log_test("Get Prediction Analytics", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get Prediction Analytics", False, f"Exception: {str(e)}")
+            system_success = False
+
+        return system_success
+
+    # ========================= SYSTEM 7: ADVANCED FRAUD DETECTION SYSTEM =========================
+
+    def test_fraud_detection(self) -> bool:
+        """Test advanced fraud detection system"""
+        print("\n🛡️ TESTING ADVANCED FRAUD DETECTION SYSTEM")
+        print("-" * 60)
+        
+        system_success = True
+        
+        # Test 1: Public - Report Suspicious Activity
+        # Remove auth headers for public endpoint
         original_headers = self.session.headers.copy()
         if 'Authorization' in self.session.headers:
             del self.session.headers['Authorization']
         
-        admin_endpoints = [
-            "/api/v1/admin/content/banners",
-            "/api/v1/admin/content/email-templates",
-            "/api/v1/admin/content/campaigns",
-            "/api/v1/admin/content/seo",
-            "/api/v1/admin/content/faq/sections",
-            "/api/v1/admin/content/legal"
-        ]
+        fraud_report = {
+            "report_type": "suspicious_betting_pattern",
+            "user_id": "user_789",
+            "description": "User placing unusually large bets with perfect win rate",
+            "evidence": {
+                "bet_amounts": [5000, 7500, 10000],
+                "win_rate": 100,
+                "time_pattern": "always_bets_just_before_match_start"
+            },
+            "reporter_contact": "security@fantasy-esports.com"
+        }
         
-        for endpoint in admin_endpoints:
-            total_auth_tests += 1
-            try:
-                response = self.session.get(f"{self.base_url}{endpoint}")
-                
-                if response.status_code == 401:
-                    auth_tests_passed += 1
-                    self.log_test(f"Auth - {endpoint}", True, "Correctly returned 401 for unauthorized access")
-                else:
-                    self.log_test(f"Auth - {endpoint}", False, f"Expected 401, got {response.status_code}")
-            except Exception as e:
-                self.log_test(f"Auth - {endpoint}", False, f"Exception: {str(e)}")
-        
-        # Restore admin headers
-        self.session.headers.clear()
-        self.session.headers.update(original_headers)
-        
-        success = auth_tests_passed == total_auth_tests
-        self.log_test(
-            "Phase 4 - Authentication Enforcement Overall",
-            success,
-            f"Passed {auth_tests_passed}/{total_auth_tests} authentication tests"
-        )
-        
-        return success
-
-    def test_banner_click_tracking(self) -> bool:
-        """Test banner click tracking functionality"""
-        if not self.created_resources["banners"]:
-            self.log_test("Phase 4 - Banner Click Tracking", False, "No banner ID available for testing")
-            return False
-            
         try:
-            banner_id = self.created_resources["banners"][0]
-            
-            # Remove admin auth for public endpoint
-            original_headers = self.session.headers.copy()
-            if 'Authorization' in self.session.headers:
-                del self.session.headers['Authorization']
-            
-            response = self.session.post(f"{self.base_url}/api/v1/banners/{banner_id}/click")
-            
-            # Restore admin headers
-            self.session.headers.clear()
-            self.session.headers.update(original_headers)
-            
-            success = response.status_code == 200
-            details = f"Status: {response.status_code}"
+            response = self.session.post(f"{self.base_url}/api/v1/fraud/report", json=fraud_report)
+            success = response.status_code in [200, 201]
             
             if success:
                 data = response.json()
                 if data.get("success"):
-                    details += " - Banner click tracked successfully"
+                    report_id = data.get("data", {}).get("id")
+                    if report_id:
+                        self.created_resources["fraud_reports"].append(report_id)
+                        self.log_test("Report Suspicious Activity", True, f"Fraud report created with ID: {report_id}")
+                    else:
+                        self.log_test("Report Suspicious Activity", True, "Fraud report submitted successfully")
                 else:
                     success = False
-                    details += " - Click tracking failed"
-            
-            self.log_test(
-                "Phase 4 - Banner Click Tracking",
-                success,
-                details,
-                response.json() if success else response.text
-            )
-            return success
-            
+                    self.log_test("Report Suspicious Activity", False, "Response missing success field")
+            else:
+                self.log_test("Report Suspicious Activity", False, f"Status: {response.status_code}, Response: {response.text}")
+                system_success = False
+                
         except Exception as e:
-            self.log_test("Phase 4 - Banner Click Tracking", False, f"Exception: {str(e)}")
-            return False
+            self.log_test("Report Suspicious Activity", False, f"Exception: {str(e)}")
+            system_success = False
 
-    def run_comprehensive_cms_tests(self):
-        """Run all CMS tests in the 4-phase approach"""
-        print("🚀 Starting Comprehensive Content Management System Re-Testing")
-        print("Using CORRECTED field names based on GoLang struct validation tags")
+        # Restore headers
+        self.session.headers.clear()
+        self.session.headers.update(original_headers)
+
+        # Test 2: Admin - Get Fraud Alerts
+        self.set_admin_headers()
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/fraud/alerts")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    alerts = data.get("data", [])
+                    self.log_test("Get Fraud Alerts", True, f"Found {len(alerts)} fraud alerts")
+                else:
+                    success = False
+                    self.log_test("Get Fraud Alerts", False, "Response missing success field")
+            else:
+                self.log_test("Get Fraud Alerts", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get Fraud Alerts", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 3: Admin - Get Fraud Statistics
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/admin/fraud/statistics")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    stats = data.get("data", {})
+                    
+                    # Check for fraud statistics components
+                    expected_stats = ["total_reports", "active_alerts", "resolved_cases", "detection_accuracy"]
+                    found_stats = [stat for stat in expected_stats if stat in stats]
+                    
+                    self.log_test("Get Fraud Statistics", True, 
+                                f"Statistics available with {len(found_stats)}/4 components: {found_stats}")
+                else:
+                    success = False
+                    self.log_test("Get Fraud Statistics", False, "Response missing success field")
+            else:
+                self.log_test("Get Fraud Statistics", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Get Fraud Statistics", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 4: Admin - Update Alert Status
+        # Create a mock alert ID for testing
+        alert_id = "alert_123"
+        status_data = {
+            "status": "investigating",
+            "notes": "Reviewing user betting patterns and account activity",
+            "assigned_to": "security_team_lead"
+        }
+        
+        try:
+            response = self.session.put(f"{self.base_url}/api/v1/admin/fraud/alerts/{alert_id}/status", json=status_data)
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    self.log_test("Update Alert Status", True, f"Alert {alert_id} status updated to investigating")
+                else:
+                    success = False
+                    self.log_test("Update Alert Status", False, "Response missing success field")
+            else:
+                self.log_test("Update Alert Status", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Update Alert Status", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 5: Fraud Webhook (Public endpoint)
+        # Remove auth headers for public endpoint
+        original_headers = self.session.headers.copy()
+        if 'Authorization' in self.session.headers:
+            del self.session.headers['Authorization']
+        
+        webhook_data = {
+            "event_type": "suspicious_activity_detected",
+            "user_id": "user_456",
+            "detection_algorithm": "ml_betting_pattern_analyzer",
+            "confidence_score": 92.5,
+            "details": {
+                "anomaly_type": "unusual_win_rate",
+                "risk_level": "high",
+                "recommended_action": "account_review"
+            }
+        }
+        
+        try:
+            response = self.session.post(f"{self.base_url}/api/v1/fraud/webhook", json=webhook_data)
+            success = response.status_code in [200, 201]
+            
+            if success:
+                data = response.json()
+                if data.get("success"):
+                    self.log_test("Fraud Webhook", True, "Fraud webhook processed successfully")
+                else:
+                    success = False
+                    self.log_test("Fraud Webhook", False, "Response missing success field")
+            else:
+                self.log_test("Fraud Webhook", False, f"Status: {response.status_code}")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Fraud Webhook", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Restore headers
+        self.session.headers.clear()
+        self.session.headers.update(original_headers)
+
+        return system_success
+
+    # ========================= COMPREHENSIVE TEST RUNNER =========================
+
+    def run_comprehensive_gaming_features_tests(self):
+        """Run all 7 Advanced Gaming Features tests"""
+        print("🎯 STARTING COMPREHENSIVE ADVANCED GAMING FEATURES TESTING")
+        print("Fantasy Esports GoLang Backend - All 7 Systems Validation")
         print("=" * 80)
         
-        # ========================= PHASE 1: AUTHENTICATION & DATABASE VERIFICATION =========================
-        print("\n🔐 PHASE 1: AUTHENTICATION & DATABASE VERIFICATION")
-        print("-" * 60)
+        # Authentication Setup
+        print("\n🔐 AUTHENTICATION SETUP")
+        print("-" * 40)
         
-        if not self.test_health_check():
-            print("❌ Backend is not healthy. Stopping tests.")
+        admin_auth = self.authenticate_admin()
+        user_auth = self.authenticate_user()
+        
+        if not admin_auth:
+            print("❌ Admin authentication failed. Some tests will be skipped.")
+        
+        if not user_auth:
+            print("❌ User authentication failed. Some tests will be skipped.")
+        
+        if not admin_auth and not user_auth:
+            print("❌ Both authentications failed. Cannot proceed with testing.")
             return
         
-        if not self.authenticate_admin():
-            print("❌ Admin authentication failed. Cannot test admin endpoints.")
-            return
+        # Run all 7 system tests
+        system_results = {}
         
-        self.test_database_tables_verification()
-        self.test_sample_data_verification()
+        system_results["Achievement System"] = self.test_achievement_system()
+        system_results["Friend System"] = self.test_friend_system()
+        system_results["Social Sharing"] = self.test_social_sharing()
+        system_results["Advanced Analytics"] = self.test_advanced_game_analytics()
+        system_results["Tournament Brackets"] = self.test_tournament_brackets()
+        system_results["Player Predictions"] = self.test_player_predictions()
+        system_results["Fraud Detection"] = self.test_fraud_detection()
         
-        # ========================= PHASE 2: CORRECTED REQUEST TESTING =========================
-        print("\n✅ PHASE 2: CORRECTED REQUEST TESTING")
-        print("-" * 60)
-        
-        self.test_banner_create_corrected()
-        self.test_campaign_create_corrected()
-        self.test_seo_content_create_corrected()
-        self.test_faq_section_create_corrected()
-        self.test_email_template_create_corrected()
-        self.test_legal_document_create_corrected()
-        self.test_admin_list_endpoints()
-        
-        # ========================= PHASE 3: PUBLIC ENDPOINT TESTING =========================
-        print("\n🌐 PHASE 3: PUBLIC ENDPOINT TESTING")
-        print("-" * 60)
-        
-        self.test_public_active_banners()
-        self.test_public_faq_sections()
-        self.test_public_legal_document()
-        self.test_public_seo_by_slug()
-        
-        # ========================= PHASE 4: COMPREHENSIVE VALIDATION TESTING =========================
-        print("\n🔍 PHASE 4: COMPREHENSIVE VALIDATION TESTING")
-        print("-" * 60)
-        
-        self.test_field_validation_errors()
-        self.test_authentication_enforcement()
-        self.test_banner_click_tracking()
-        
-        # Generate Summary
-        self.generate_summary()
+        # Generate comprehensive summary
+        self.generate_comprehensive_summary(system_results)
 
-    def generate_summary(self):
-        """Generate comprehensive test summary"""
+    def generate_comprehensive_summary(self, system_results: Dict[str, bool]):
+        """Generate comprehensive test summary for all 7 systems"""
         print("\n" + "=" * 80)
-        print("📊 CONTENT MANAGEMENT SYSTEM RE-TESTING SUMMARY")
+        print("📊 COMPREHENSIVE ADVANCED GAMING FEATURES TEST SUMMARY")
         print("=" * 80)
         
         total_tests = len(self.test_results)
@@ -970,96 +1244,123 @@ class ContentManagementTester:
         failed_tests = total_tests - passed_tests
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
-        print(f"Total Tests: {total_tests}")
-        print(f"Passed: {passed_tests} ✅")
-        print(f"Failed: {failed_tests} ❌")
-        print(f"Success Rate: {success_rate:.1f}%")
+        print(f"Total Tests Executed: {total_tests}")
+        print(f"Tests Passed: {passed_tests} ✅")
+        print(f"Tests Failed: {failed_tests} ❌")
+        print(f"Overall Success Rate: {success_rate:.1f}%")
         print()
         
-        # Phase-wise breakdown
-        phases = {
-            "Phase 1 - Authentication & Database": [],
-            "Phase 2 - Corrected Request Testing": [],
-            "Phase 3 - Public Endpoint Testing": [],
-            "Phase 4 - Validation Testing": []
-        }
+        # System-wise results
+        print("🎯 SYSTEM-WISE RESULTS:")
+        print("-" * 40)
         
+        working_systems = 0
+        total_systems = len(system_results)
+        
+        for system_name, system_success in system_results.items():
+            status = "✅ WORKING" if system_success else "❌ ISSUES FOUND"
+            print(f"  {system_name}: {status}")
+            if system_success:
+                working_systems += 1
+        
+        system_success_rate = (working_systems / total_systems * 100) if total_systems > 0 else 0
+        print(f"\nSystems Working: {working_systems}/{total_systems} ({system_success_rate:.1f}%)")
+        
+        # Detailed test breakdown
+        print("\n📋 DETAILED TEST BREAKDOWN:")
+        print("-" * 40)
+        
+        system_test_counts = {}
         for result in self.test_results:
             test_name = result["test"]
-            if "Phase 1" in test_name:
-                phases["Phase 1 - Authentication & Database"].append(result)
-            elif "Phase 2" in test_name:
-                phases["Phase 2 - Corrected Request Testing"].append(result)
-            elif "Phase 3" in test_name:
-                phases["Phase 3 - Public Endpoint Testing"].append(result)
-            elif "Phase 4" in test_name or "Validation" in test_name or "Auth -" in test_name:
-                phases["Phase 4 - Validation Testing"].append(result)
+            
+            # Categorize tests by system
+            if "Achievement" in test_name:
+                system = "Achievement System"
+            elif "Friend" in test_name or "Challenge" in test_name:
+                system = "Friend System"
+            elif "Share" in test_name or "Social" in test_name:
+                system = "Social Sharing"
+            elif "Analytics" in test_name or "Metric" in test_name:
+                system = "Advanced Analytics"
+            elif "Bracket" in test_name or "Tournament" in test_name:
+                system = "Tournament Brackets"
+            elif "Prediction" in test_name:
+                system = "Player Predictions"
+            elif "Fraud" in test_name:
+                system = "Fraud Detection"
+            else:
+                system = "Authentication"
+            
+            if system not in system_test_counts:
+                system_test_counts[system] = {"passed": 0, "total": 0}
+            
+            system_test_counts[system]["total"] += 1
+            if result["success"]:
+                system_test_counts[system]["passed"] += 1
         
-        print("📋 PHASE-WISE RESULTS:")
-        for phase, results in phases.items():
-            if results:
-                passed = sum(1 for r in results if r["success"])
-                total = len(results)
-                rate = (passed / total * 100) if total > 0 else 0
-                print(f"  {phase}: {passed}/{total} passed ({rate:.1f}%)")
+        for system, counts in system_test_counts.items():
+            rate = (counts["passed"] / counts["total"] * 100) if counts["total"] > 0 else 0
+            print(f"  {system}: {counts['passed']}/{counts['total']} passed ({rate:.1f}%)")
         
-        print("\n" + "=" * 80)
-        print("🔍 DETAILED FINDINGS")
-        print("=" * 80)
-        
-        # Show failed tests
+        # Failed tests details
         failed_results = [r for r in self.test_results if not r["success"]]
         if failed_results:
-            print("❌ FAILED TESTS:")
+            print("\n❌ FAILED TESTS DETAILS:")
+            print("-" * 40)
             for result in failed_results:
                 print(f"  • {result['test']}: {result['details']}")
-        else:
-            print("✅ ALL TESTS PASSED!")
         
-        print("\n" + "=" * 80)
-        print("🎯 CONTENT MANAGEMENT SYSTEM STATUS")
-        print("=" * 80)
-        
-        # Overall assessment based on success rate
-        if success_rate >= 90:
-            print("🎉 EXCELLENT: Content Management System is working excellently!")
-            print("   The corrected field names have resolved the previous issues.")
-        elif success_rate >= 75:
-            print("✅ GOOD: Content Management System is working well with minor issues.")
-            print("   Most functionality is working correctly with the corrected field names.")
-        elif success_rate >= 50:
-            print("⚠️  MODERATE: Content Management System has some issues that need attention.")
-            print("   Some functionality is working but there are still implementation problems.")
-        else:
-            print("❌ CRITICAL: Content Management System has significant issues requiring immediate attention.")
-            print("   Major problems persist even with corrected field names.")
-        
-        # Key functionality assessment
-        phase2_tests = [r for r in self.test_results if "Phase 2" in r["test"]]
-        phase3_tests = [r for r in self.test_results if "Phase 3" in r["test"]]
-        
-        if phase2_tests:
-            phase2_success = sum(1 for r in phase2_tests if r["success"]) / len(phase2_tests) * 100
-            print(f"\nAdmin Content Management: {phase2_success:.1f}% functional")
-        
-        if phase3_tests:
-            phase3_success = sum(1 for r in phase3_tests if r["success"]) / len(phase3_tests) * 100
-            print(f"Public Content APIs: {phase3_success:.1f}% functional")
-        
-        # Show created resources for reference
+        # Created resources summary
         print(f"\n📝 CREATED TEST RESOURCES:")
+        print("-" * 40)
+        total_resources = 0
         for resource_type, ids in self.created_resources.items():
             if ids:
-                print(f"  {resource_type}: {len(ids)} items created (IDs: {ids})")
+                print(f"  {resource_type}: {len(ids)} items created")
+                total_resources += len(ids)
         
-        print(f"\n🔧 CORRECTED FIELD NAMES USED:")
-        print("  • Banner: title, description, image_url, link_url, position, type, priority, start_date, end_date, target_roles, metadata")
-        print("  • Campaign: name, subject, email_template, target_segment, target_criteria, scheduled_at")
-        print("  • SEO: page_type, page_slug, meta_title, meta_description, keywords, og_title, og_description, og_image")
-        print("  • FAQ Section: name (not title), description, sort_order")
-        print("  • Email Template: variables as JSONMap (not array)")
-        print("  • Legal Document: document_type, title, content, version, effective_date, metadata")
+        if total_resources == 0:
+            print("  No resources were created during testing")
+        
+        # Overall assessment
+        print("\n" + "=" * 80)
+        print("🎯 FINAL ASSESSMENT")
+        print("=" * 80)
+        
+        if success_rate >= 90:
+            print("🎉 EXCELLENT: All 7 Advanced Gaming Features are working excellently!")
+            print("   The Fantasy Esports backend has production-ready gaming functionality.")
+        elif success_rate >= 75:
+            print("✅ GOOD: Most Advanced Gaming Features are working well with minor issues.")
+            print("   The majority of gaming functionality is production-ready.")
+        elif success_rate >= 50:
+            print("⚠️  MODERATE: Some Advanced Gaming Features have issues that need attention.")
+            print("   Several gaming systems need fixes before production deployment.")
+        else:
+            print("❌ CRITICAL: Advanced Gaming Features have significant issues requiring immediate attention.")
+            print("   Major problems found in multiple gaming systems.")
+        
+        # Recommendations
+        print(f"\n💡 RECOMMENDATIONS:")
+        print("-" * 40)
+        
+        if system_success_rate == 100:
+            print("  • All 7 gaming systems are functional - ready for production!")
+            print("  • Consider performance optimization and load testing")
+            print("  • Implement monitoring and alerting for production deployment")
+        elif system_success_rate >= 75:
+            print("  • Focus on fixing the failing systems identified above")
+            print("  • Most systems are ready for production use")
+            print("  • Consider gradual rollout of working features")
+        else:
+            print("  • Significant development work needed on multiple systems")
+            print("  • Review implementation approach for failing systems")
+            print("  • Consider prioritizing the most critical gaming features")
+        
+        print(f"\n🔧 TESTING COMPLETED: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 80)
 
 if __name__ == "__main__":
-    tester = ContentManagementTester()
-    tester.run_comprehensive_cms_tests()
+    tester = AdvancedGamingFeaturesTester()
+    tester.run_comprehensive_gaming_features_tests()

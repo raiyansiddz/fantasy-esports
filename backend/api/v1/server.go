@@ -329,6 +329,7 @@ func (s *Server) setupRoutes() {
 		adminRoutes.DELETE("/content/seo/:id", contentHandler.DeleteSEOContent)
 
 		// Content Management - FAQ Management
+		adminRoutes.GET("/content/faq/sections", contentHandler.ListFAQSections)
 		adminRoutes.POST("/content/faq/sections", contentHandler.CreateFAQSection)
 		adminRoutes.PUT("/content/faq/sections/:id", contentHandler.UpdateFAQSection)
 		adminRoutes.POST("/content/faq/items", contentHandler.CreateFAQItem)

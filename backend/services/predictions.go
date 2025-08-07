@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type PlayerPredictionService struct {

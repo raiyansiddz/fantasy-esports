@@ -20,7 +20,7 @@ type ContentHandler struct {
 	cdnClient      *cdn.CloudinaryClient
 }
 
-func NewContentHandler(db *sql.DB, cfg *config.Config, cdnClient cdn.Client) *ContentHandler {
+func NewContentHandler(db *sql.DB, cfg *config.Config, cdnClient *cdn.CloudinaryClient) *ContentHandler {
 	return &ContentHandler{
 		contentService: services.NewContentService(db),
 		db:             db,

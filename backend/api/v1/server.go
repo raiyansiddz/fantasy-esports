@@ -78,6 +78,12 @@ func (s *Server) setupRoutes() {
 	paymentHandler := internal_handlers.NewPaymentHandler(s.db, s.config, paymentService)
 	contentHandler := handlers.NewContentHandler(s.db, s.config, cdnClient)
 	fraudDetectionHandler := handlers.NewFraudDetectionHandler(s.db, s.config)
+	achievementHandler := handlers.NewAchievementHandler(s.db, s.config)
+	friendHandler := handlers.NewFriendHandler(s.db, s.config)
+	socialSharingHandler := handlers.NewSocialSharingHandler(s.db, s.config)
+	advancedAnalyticsHandler := handlers.NewAdvancedAnalyticsHandler(s.db, s.config)
+	predictionHandler := handlers.NewPlayerPredictionHandler(s.db, s.config)
+	tournamentBracketHandler := handlers.NewTournamentBracketHandler(s.db, s.config)
 
 	// Health check
 	s.router.GET("/health", func(c *gin.Context) {

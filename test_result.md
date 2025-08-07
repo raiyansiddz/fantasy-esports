@@ -463,7 +463,7 @@ backend:
 
   - task: "Content Management System - Public Content APIs"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/api/v1/handlers/content.go"
     stuck_count: 0
     priority: "high"
@@ -472,6 +472,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ MOSTLY FUNCTIONAL - Public content APIs are working well: ✅ PUBLIC BANNERS: Working correctly (200 status) but returns empty array (no active banners) ✅ PUBLIC FAQ SECTIONS: Working correctly (200 status) but returns empty array (no sections) ✅ PUBLIC LEGAL DOCUMENT: Working correctly (200 status) and returns existing Terms document ❌ PUBLIC SEO BY SLUG: 500 error due to database NULL handling issue with og_image column. Most public endpoints work but SEO endpoint has database schema problem. Success rate: 75% (3/4 public API tests passed)."
+      - working: false
+        agent: "testing"
+        comment: "⚠️ MOSTLY FUNCTIONAL - Public content APIs are working well with one persistent issue: ✅ PUBLIC BANNERS: Working correctly (200 status) and now returns active banners (found 1 active banner) ✅ PUBLIC FAQ SECTIONS: Working correctly (200 status) but returns empty array (no sections) ✅ PUBLIC LEGAL DOCUMENT: Working correctly (200 status) and returns existing Terms document with title ❌ PUBLIC SEO BY SLUG: Still has 500 error due to database NULL handling issue with og_image column ('sql: Scan error on column index 8, name \"og_image\": converting NULL to string is unsupported'). The corrected field names have improved functionality but the SEO endpoint still has the database schema problem. Success rate: 75% (3/4 public API tests passed)."
 
   - task: "Content Management System - Analytics Tracking"
     implemented: true

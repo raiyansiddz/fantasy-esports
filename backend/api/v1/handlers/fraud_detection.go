@@ -74,7 +74,7 @@ func (h *FraudDetectionHandler) GetAlerts(c *gin.Context) {
 
 func (h *FraudDetectionHandler) UpdateAlertStatus(c *gin.Context) {
 	// Verify admin access
-	adminID, exists := c.Get("admin_user_id")
+	adminID, exists := c.Get("admin_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
 			Success: false,

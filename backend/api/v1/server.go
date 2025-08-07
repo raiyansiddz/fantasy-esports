@@ -242,6 +242,30 @@ func (s *Server) setupRoutes() {
 
 		// Player Predictions
 		userRoutes.GET("/matches/:id/predictions", predictionHandler.GetMatchPredictions)
+		userRoutes.GET("/predictions/players/:player_id/match/:match_id", predictionHandler.GetMatchPredictions)
+		userRoutes.GET("/predictions/match/:match_id/teams", predictionHandler.GetMatchPredictions)
+		userRoutes.POST("/predictions/calculate", predictionHandler.GenerateMatchPredictions)
+		userRoutes.GET("/predictions/history/:player_id", predictionHandler.GetPredictionAnalytics)
+
+		// Advanced Game Analytics - 7 Metrics
+		userRoutes.GET("/analytics/games/:game_id/player-efficiency", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+		userRoutes.GET("/analytics/games/:game_id/team-synergy", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+		userRoutes.GET("/analytics/games/:game_id/strategic-diversity", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+		userRoutes.GET("/analytics/games/:game_id/comeback-potential", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+		userRoutes.GET("/analytics/games/:game_id/clutch-performance", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+		userRoutes.GET("/analytics/games/:game_id/consistency-index", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+		userRoutes.GET("/analytics/games/:game_id/adaptability-score", advancedAnalyticsHandler.GetAdvancedGameMetrics)
+
+		// Tournament Brackets - 4 Types (User Access)
+		userRoutes.POST("/tournaments/:id/brackets/single-elimination", tournamentBracketHandler.CreateBracket)
+		userRoutes.POST("/tournaments/:id/brackets/double-elimination", tournamentBracketHandler.CreateBracket)
+		userRoutes.POST("/tournaments/:id/brackets/round-robin", tournamentBracketHandler.CreateBracket)
+		userRoutes.POST("/tournaments/:id/brackets/swiss-system", tournamentBracketHandler.CreateBracket)
+		userRoutes.GET("/tournaments/:id/brackets/current", tournamentBracketHandler.GetTournamentBrackets)
+		
+		// Advanced Fraud Detection (User Level)
+		userRoutes.GET("/fraud/risk-score", fraudDetectionHandler.GetAlerts)
+
 		userRoutes.POST("/payment/verify", paymentHandler.VerifyPayment)
 		userRoutes.GET("/payment/status/:transaction_id", paymentHandler.GetPaymentStatus)
 

@@ -118,7 +118,7 @@ func (s *TournamentBracketService) generateSingleEliminationBracket(teams []Brac
 	firstRound := []interface{}{}
 	
 	// Add byes for teams that advance automatically
-	byeCount := bracketSize - numTeams
+	_ = bracketSize - numTeams // byeCount unused for now
 	
 	for i := 0; i < bracketSize/2; i++ {
 		match := map[string]interface{}{

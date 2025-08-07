@@ -50,10 +50,25 @@ func (h *FriendHandler) AddFriend(c *gin.Context) {
 
 	err = h.friendService.AddFriend(userID, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, models.ErrorResponse{
+		// Determine appropriate status code based on error type
+		statusCode := http.StatusInternalServerError
+		errorCode := "ADD_FRIEND_FAILED"
+		
+		errMsg := err.Error()
+		
+		// Check for user input validation errors (should be 400)
+		if strings.Contains(errMsg, "user not found") || 
+		   strings.Contains(errMsg, "must provide") ||
+		   strings.Contains(errMsg, "cannot add yourself") ||
+		   strings.Contains(errMsg, "friendship already exists") {
+			statusCode = http.StatusBadRequest
+			errorCode = "INVALID_REQUEST"
+		}
+		
+		c.JSON(statusCode, models.ErrorResponse{
 			Success: false,
-			Error:   err.Error(),
-			Code:    "ADD_FRIEND_FAILED",
+			Error:   errMsg,
+			Code:    errorCode,
 		})
 		return
 	}

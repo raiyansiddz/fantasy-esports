@@ -382,3 +382,72 @@ func (s *SocialSharingService) GetShareAnalytics(userID *int64, platform string,
 
 	return analytics, nil
 }
+
+// Enhanced content validation
+func (s *SocialSharingService) validateContentID(shareType string, contentID *int64) error {
+	switch shareType {
+	case "team_composition":
+		if contentID == nil {
+			return fmt.Errorf("content_id is required for team_composition shares")
+		}
+		// Verify team exists
+		var exists bool
+		err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM user_teams WHERE id = $1)", *contentID).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("database error while checking team: %v", err)
+		}
+		if !exists {
+			return fmt.Errorf("team with ID %d not found", *contentID)
+		}
+		
+	case "contest_win":
+		if contentID == nil {
+			return fmt.Errorf("content_id is required for contest_win shares")
+		}
+		// Verify contest exists
+		var exists bool
+		err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM contests WHERE id = $1)", *contentID).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("database error while checking contest: %v", err)
+		}
+		if !exists {
+			return fmt.Errorf("contest with ID %d not found", *contentID)
+		}
+		
+	case "achievement_unlock":
+		if contentID == nil {
+			return fmt.Errorf("content_id is required for achievement_unlock shares")
+		}
+		// Verify achievement exists
+		var exists bool
+		err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM achievements WHERE id = $1)", *contentID).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("database error while checking achievement: %v", err)
+		}
+		if !exists {
+			return fmt.Errorf("achievement with ID %d not found", *contentID)
+		}
+		
+	case "challenge_result":
+		if contentID == nil {
+			return fmt.Errorf("content_id is required for challenge_result shares")
+		}
+		// Verify challenge exists
+		var exists bool
+		err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM friend_challenges WHERE id = $1)", *contentID).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("database error while checking challenge: %v", err)
+		}
+		if !exists {
+			return fmt.Errorf("challenge with ID %d not found", *contentID)
+		}
+		
+	default:
+		// For other share types, content_id is optional
+		if contentID != nil && *contentID <= 0 {
+			return fmt.Errorf("content_id must be a positive integer when provided")
+		}
+	}
+	
+	return nil
+}

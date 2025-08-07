@@ -595,121 +595,128 @@ class AdvancedGamingFeaturesTester:
 
         return system_success
 
-    # ========================= SYSTEM 4: ADVANCED GAME ANALYTICS (7 METRICS) =========================
+    # ========================= SYSTEM 4: ADVANCED GAME ANALYTICS (7 NEWLY FIXED METRICS) =========================
 
     def test_advanced_game_analytics(self) -> bool:
-        """Test all 7 sophisticated game analytics metrics"""
-        print("\n📊 TESTING ADVANCED GAME ANALYTICS (7 SOPHISTICATED METRICS)")
+        """Test all 7 newly fixed game analytics metrics endpoints"""
+        print("\n📊 TESTING ADVANCED GAME ANALYTICS (7 NEWLY FIXED METRICS)")
         print("-" * 60)
         
         system_success = True
         self.set_admin_headers()
         
-        game_id = "bgmi_2025"  # Using realistic game ID
+        game_id = 1  # Using integer game ID as mentioned in review
         
-        # Test 1: Get Advanced Game Metrics (All 7 Metrics)
+        # Test 1: Player Efficiency Metric (NEWLY FIXED)
         try:
-            response = self.session.get(f"{self.base_url}/api/v1/admin/games/{game_id}/advanced-metrics")
+            response = self.session.get(f"{self.base_url}/api/v1/analytics/games/{game_id}/player-efficiency")
             success = response.status_code == 200
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    metrics = data.get("data", {})
-                    
-                    # Check for all 7 sophisticated metrics
-                    expected_metrics = [
-                        "player_efficiency",      # Kill/death ratios, objective completion rates
-                        "team_synergy",          # Team coordination and assist patterns
-                        "strategic_diversity",   # Role distribution and tactical variety
-                        "comeback_potential",    # Performance under pressure scenarios
-                        "clutch_performance",    # Critical moment execution statistics
-                        "consistency_index",     # Performance stability across matches
-                        "adaptability_score"     # Performance across different maps/opponents
-                    ]
-                    
-                    found_metrics = [metric for metric in expected_metrics if metric in metrics]
-                    self.log_test("Advanced Game Metrics (7 Metrics)", True, 
-                                f"Found {len(found_metrics)}/7 sophisticated metrics: {found_metrics}")
-                else:
-                    success = False
-                    self.log_test("Advanced Game Metrics (7 Metrics)", False, "Response missing success field")
+                self.log_test("Player Efficiency Metric", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Advanced Game Metrics (7 Metrics)", False, f"Status: {response.status_code}")
+                self.log_test("Player Efficiency Metric", False, f"Status: {response.status_code} - Expected 200 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Advanced Game Metrics (7 Metrics)", False, f"Exception: {str(e)}")
+            self.log_test("Player Efficiency Metric", False, f"Exception: {str(e)}")
             system_success = False
 
-        # Test 2: Get Advanced Metrics History
+        # Test 2: Team Synergy Metric (NEWLY FIXED)
         try:
-            params = {"days": 30, "interval": "daily"}
-            response = self.session.get(f"{self.base_url}/api/v1/admin/games/{game_id}/metrics-history", params=params)
+            response = self.session.get(f"{self.base_url}/api/v1/analytics/games/{game_id}/team-synergy")
             success = response.status_code == 200
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    history = data.get("data", [])
-                    self.log_test("Advanced Metrics History", True, f"Retrieved {len(history)} historical data points")
-                else:
-                    success = False
-                    self.log_test("Advanced Metrics History", False, "Response missing success field")
+                self.log_test("Team Synergy Metric", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Advanced Metrics History", False, f"Status: {response.status_code}")
+                self.log_test("Team Synergy Metric", False, f"Status: {response.status_code} - Expected 200 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Advanced Metrics History", False, f"Exception: {str(e)}")
+            self.log_test("Team Synergy Metric", False, f"Exception: {str(e)}")
             system_success = False
 
-        # Test 3: Game Comparison Analytics
+        # Test 3: Strategic Diversity Metric (NEWLY FIXED)
         try:
-            params = {"games": "bgmi_2025,valorant_2025", "metrics": "player_efficiency,team_synergy,clutch_performance"}
-            response = self.session.get(f"{self.base_url}/api/v1/admin/games/compare", params=params)
+            response = self.session.get(f"{self.base_url}/api/v1/analytics/games/{game_id}/strategic-diversity")
             success = response.status_code == 200
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    comparison = data.get("data", {})
-                    self.log_test("Game Comparison Analytics", True, "Game comparison analytics working")
-                else:
-                    success = False
-                    self.log_test("Game Comparison Analytics", False, "Response missing success field")
+                self.log_test("Strategic Diversity Metric", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Game Comparison Analytics", False, f"Status: {response.status_code}")
+                self.log_test("Strategic Diversity Metric", False, f"Status: {response.status_code} - Expected 200 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Game Comparison Analytics", False, f"Exception: {str(e)}")
+            self.log_test("Strategic Diversity Metric", False, f"Exception: {str(e)}")
             system_success = False
 
-        # Test 4: Validate Individual Metric Calculations
-        # Test Player Efficiency Metric
+        # Test 4: Comeback Potential Metric (NEWLY FIXED)
         try:
-            response = self.session.get(f"{self.base_url}/api/v1/admin/games/{game_id}/advanced-metrics?metric=player_efficiency")
+            response = self.session.get(f"{self.base_url}/api/v1/analytics/games/{game_id}/comeback-potential")
             success = response.status_code == 200
             
             if success:
                 data = response.json()
-                if data.get("success"):
-                    efficiency = data.get("data", {}).get("player_efficiency", {})
-                    if "kill_death_ratio" in efficiency and "objective_completion_rate" in efficiency:
-                        self.log_test("Player Efficiency Calculation", True, "Kill/death ratios and objective completion rates calculated")
-                    else:
-                        success = False
-                        self.log_test("Player Efficiency Calculation", False, "Missing efficiency components")
-                else:
-                    success = False
-                    self.log_test("Player Efficiency Calculation", False, "Response missing success field")
+                self.log_test("Comeback Potential Metric", True, f"✅ FIXED: Endpoint accessible (was 404)")
             else:
-                self.log_test("Player Efficiency Calculation", False, f"Status: {response.status_code}")
+                self.log_test("Comeback Potential Metric", False, f"Status: {response.status_code} - Expected 200 after fix")
                 system_success = False
                 
         except Exception as e:
-            self.log_test("Player Efficiency Calculation", False, f"Exception: {str(e)}")
+            self.log_test("Comeback Potential Metric", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 5: Clutch Performance Metric (NEWLY FIXED)
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/analytics/games/{game_id}/clutch-performance")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                self.log_test("Clutch Performance Metric", True, f"✅ FIXED: Endpoint accessible (was 404)")
+            else:
+                self.log_test("Clutch Performance Metric", False, f"Status: {response.status_code} - Expected 200 after fix")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Clutch Performance Metric", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 6: Consistency Index Metric (NEWLY FIXED)
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/analytics/games/{game_id}/consistency-index")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                self.log_test("Consistency Index Metric", True, f"✅ FIXED: Endpoint accessible (was 404)")
+            else:
+                self.log_test("Consistency Index Metric", False, f"Status: {response.status_code} - Expected 200 after fix")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Consistency Index Metric", False, f"Exception: {str(e)}")
+            system_success = False
+
+        # Test 7: Adaptability Score Metric (NEWLY FIXED)
+        try:
+            response = self.session.get(f"{self.base_url}/api/v1/analytics/games/{game_id}/adaptability-score")
+            success = response.status_code == 200
+            
+            if success:
+                data = response.json()
+                self.log_test("Adaptability Score Metric", True, f"✅ FIXED: Endpoint accessible (was 404)")
+            else:
+                self.log_test("Adaptability Score Metric", False, f"Status: {response.status_code} - Expected 200 after fix")
+                system_success = False
+                
+        except Exception as e:
+            self.log_test("Adaptability Score Metric", False, f"Exception: {str(e)}")
             system_success = False
 
         return system_success

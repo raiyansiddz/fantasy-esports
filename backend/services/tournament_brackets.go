@@ -6,7 +6,6 @@ import (
 	"fantasy-esports-backend/models"
 	"fmt"
 	"math"
-	"time"
 )
 
 type TournamentBracketService struct {

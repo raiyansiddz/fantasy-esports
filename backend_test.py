@@ -655,8 +655,8 @@ class GameFeatureTester:
             self.log_result("POST /admin/predictions/train - Train models", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_tournament_brackets(self):
-        """Test Automated Tournament Brackets (4 types)"""
-        print("\n🏆 TESTING AUTOMATED TOURNAMENT BRACKETS (4 TYPES)")
+        """Test Automated Tournament Brackets (8 endpoints - 4 types)"""
+        print("\n🏆 TESTING AUTOMATED TOURNAMENT BRACKETS (8 ENDPOINTS - 4 TYPES)")
         
         tournament_id = "1"
         bracket_types = [
@@ -666,41 +666,64 @@ class GameFeatureTester:
             "swiss-system"
         ]
         
-        # Test user access to bracket creation
+        # Test 1-4: GET /api/v1/tournaments/1/brackets/{type} (4 bracket types)
         for bracket_type in bracket_types:
-            bracket_data = {
-                "type": bracket_type,
-                "participants": ["team1", "team2", "team3", "team4"]
-            }
-            
-            response, error = self.make_request("POST", f"/tournaments/{tournament_id}/brackets/{bracket_type}", bracket_data, auth_token=USER_TOKEN)
-            if response and response.status_code in [200, 201, 400, 401]:
+            response, error = self.make_request("GET", f"/tournaments/{tournament_id}/brackets/{bracket_type}", auth_token=USER_TOKEN)
+            if response and response.status_code in [200, 400, 401]:
                 if response.status_code == 401:
-                    self.log_result(f"Tournament Brackets - {bracket_type} endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                    self.log_result(f"GET /tournaments/{tournament_id}/brackets/{bracket_type} - {bracket_type} endpoint accessible", True, "Returns 401 (auth required) instead of 404")
                 else:
-                    self.log_result(f"Tournament Brackets - {bracket_type}", True, f"Status: {response.status_code}")
+                    self.log_result(f"GET /tournaments/{tournament_id}/brackets/{bracket_type} - {bracket_type}", True, f"Status: {response.status_code}")
             else:
-                self.log_result(f"Tournament Brackets - {bracket_type}", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+                self.log_result(f"GET /tournaments/{tournament_id}/brackets/{bracket_type} - {bracket_type}", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test get current brackets
-        response, error = self.make_request("GET", f"/tournaments/{tournament_id}/brackets/current", auth_token=USER_TOKEN)
-        if response and response.status_code in [200, 401]:
+        # 5. POST /api/v1/admin/tournaments/1/brackets/generate (generate bracket)
+        bracket_data = {
+            "type": "single-elimination",
+            "participants": ["team1", "team2", "team3", "team4"],
+            "seeding": "random"
+        }
+        response, error = self.make_request("POST", f"/admin/tournaments/{tournament_id}/brackets/generate", bracket_data, auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 201, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Tournament Brackets - Get current brackets endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("POST /admin/tournaments/1/brackets/generate - Generate bracket endpoint accessible", True, "Returns 401 (auth required) instead of 404")
             else:
-                self.log_result("Tournament Brackets - Get current brackets", True, f"Status: {response.status_code}")
+                self.log_result("POST /admin/tournaments/1/brackets/generate - Generate bracket", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Tournament Brackets - Get current brackets", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("POST /admin/tournaments/1/brackets/generate - Generate bracket", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
         
-        # Test admin bracket management
-        response, error = self.make_request("GET", "/admin/brackets/types", auth_token=ADMIN_TOKEN)
-        if response and response.status_code in [200, 401]:
+        # 6. PUT /api/v1/tournaments/1/brackets/123/advance (advance bracket)
+        advance_data = {"winner_id": "team1", "match_result": "2-1"}
+        response, error = self.make_request("PUT", f"/tournaments/{tournament_id}/brackets/123/advance", advance_data, auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
             if response.status_code == 401:
-                self.log_result("Tournament Brackets - Admin bracket types endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+                self.log_result("PUT /tournaments/1/brackets/123/advance - Advance bracket endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            elif response.status_code == 404 and "page not found" in response.text.lower():
+                self.log_result("PUT /tournaments/1/brackets/123/advance - Advance bracket endpoint accessible", False, "Returns 404 (page not found) - endpoint not implemented")
             else:
-                self.log_result("Tournament Brackets - Admin bracket types", True, f"Status: {response.status_code}")
+                self.log_result("PUT /tournaments/1/brackets/123/advance - Advance bracket", True, f"Status: {response.status_code}")
         else:
-            self.log_result("Tournament Brackets - Admin bracket types", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+            self.log_result("PUT /tournaments/1/brackets/123/advance - Advance bracket", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 7. GET /api/v1/tournaments/1/brackets/123/status (bracket status)
+        response, error = self.make_request("GET", f"/tournaments/{tournament_id}/brackets/123/status", auth_token=USER_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("GET /tournaments/1/brackets/123/status - Bracket status endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("GET /tournaments/1/brackets/123/status - Bracket status", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("GET /tournaments/1/brackets/123/status - Bracket status", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
+        
+        # 8. PUT /api/v1/admin/tournaments/1/brackets/123/reset (reset bracket)
+        response, error = self.make_request("PUT", f"/admin/tournaments/{tournament_id}/brackets/123/reset", auth_token=ADMIN_TOKEN)
+        if response and response.status_code in [200, 400, 401]:
+            if response.status_code == 401:
+                self.log_result("PUT /admin/tournaments/1/brackets/123/reset - Reset bracket endpoint accessible", True, "Returns 401 (auth required) instead of 404")
+            else:
+                self.log_result("PUT /admin/tournaments/1/brackets/123/reset - Reset bracket", True, f"Status: {response.status_code}")
+        else:
+            self.log_result("PUT /admin/tournaments/1/brackets/123/reset - Reset bracket", False, f"Status: {response.status_code if response else 'No response'}, Error: {error}")
 
     def test_fraud_detection(self):
         """Test Advanced Fraud Detection"""

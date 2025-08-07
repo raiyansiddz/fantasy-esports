@@ -1049,8 +1049,8 @@ class AdvancedGamingFeaturesTester:
         system_results["Friend System"] = self.test_friend_system()
         system_results["Social Sharing"] = self.test_social_sharing()
         system_results["Advanced Analytics"] = self.test_advanced_game_analytics()
-        system_results["Tournament Brackets"] = self.test_tournament_brackets()
         system_results["Player Predictions"] = self.test_player_predictions()
+        system_results["Tournament Brackets"] = self.test_tournament_brackets()
         system_results["Fraud Detection"] = self.test_fraud_detection()
         
         # Generate comprehensive summary

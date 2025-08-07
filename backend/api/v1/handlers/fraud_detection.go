@@ -30,7 +30,7 @@ func NewFraudDetectionHandler(db *sql.DB, cfg *config.Config) *FraudDetectionHan
 // Admin endpoints
 func (h *FraudDetectionHandler) GetAlerts(c *gin.Context) {
 	// Verify admin access
-	_, exists := c.Get("admin_user_id")
+	_, exists := c.Get("admin_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, models.ErrorResponse{
 			Success: false,

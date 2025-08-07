@@ -52,10 +52,10 @@ type SocialShare struct {
 }
 
 type CreateShareRequest struct {
-	ShareType string                 `json:"share_type" validate:"required"`
-	Platform  string                 `json:"platform" validate:"required"`
-	ContentID *int64                 `json:"content_id"`
-	ShareData map[string]interface{} `json:"share_data" validate:"required"`
+	ShareType string                 `json:"share_type" validate:"required" binding:"required"`
+	Platform  string                 `json:"platform" validate:"required" binding:"required"`
+	ContentID ContentIDValue         `json:"content_id"`
+	ShareData map[string]interface{} `json:"share_data" validate:"required" binding:"required"`
 }
 
 type ShareContent struct {
